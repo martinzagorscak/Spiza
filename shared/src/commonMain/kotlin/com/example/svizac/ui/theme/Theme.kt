@@ -25,63 +25,66 @@ private val BeigeAccent = Color(0xFFC4A484)
 private val White = Color(0xFFFFFFFF)
 private val Error = Color(0xFFB00020)
 
-private val DarkColorScheme = darkColorScheme(
-    primary = SkyBlue,
-    onPrimary = DeepBlue,
-    primaryContainer = OceanBlue,
-    onPrimaryContainer = Mist,
-    inversePrimary = OceanBlue,
-    secondary = Sand,
-    onSecondary = DarkBrown,
-    secondaryContainer = Brown,
-    onSecondaryContainer = LightSand,
-    tertiary = WarmBeige,
-    onTertiary = DarkWood,
-    tertiaryContainer = DarkBeige,
-    onTertiaryContainer = Ivory,
-    background = DeepBlue,
-    onBackground = Mist,
-    surface = DeepBlue,
-    onSurface = Mist,
-    error = Error,
-    onError = White,
-)
+private val DarkColorScheme =
+    darkColorScheme(
+        primary = SkyBlue,
+        onPrimary = DeepBlue,
+        primaryContainer = OceanBlue,
+        onPrimaryContainer = Mist,
+        inversePrimary = OceanBlue,
+        secondary = Sand,
+        onSecondary = DarkBrown,
+        secondaryContainer = Brown,
+        onSecondaryContainer = LightSand,
+        tertiary = WarmBeige,
+        onTertiary = DarkWood,
+        tertiaryContainer = DarkBeige,
+        onTertiaryContainer = Ivory,
+        background = DeepBlue,
+        onBackground = Mist,
+        surface = DeepBlue,
+        onSurface = Mist,
+        error = Error,
+        onError = White,
+    )
 
-private val LightColorScheme = lightColorScheme(
-    primary = OceanBlue,
-    onPrimary = White,
-    primaryContainer = Mist,
-    onPrimaryContainer = DeepBlue,
-    inversePrimary = SkyBlue,
-    secondary = LightBrown,
-    onSecondary = White,
-    secondaryContainer = Beige,
-    onSecondaryContainer = DarkBrown,
-    tertiary = BeigeAccent,
-    onTertiary = DeepBlue,
-    tertiaryContainer = Ivory,
-    onTertiaryContainer = DarkWood,
-    background = Ivory,
-    onBackground = DeepBlue,
-    surface = Mist,
-    onSurface = DeepBlue,
-    error = Error,
-    onError = White,
-)
+private val LightColorScheme =
+    lightColorScheme(
+        primary = OceanBlue,
+        onPrimary = White,
+        primaryContainer = Mist,
+        onPrimaryContainer = DeepBlue,
+        inversePrimary = SkyBlue,
+        secondary = LightBrown,
+        onSecondary = White,
+        secondaryContainer = Beige,
+        onSecondaryContainer = DarkBrown,
+        tertiary = BeigeAccent,
+        onTertiary = DeepBlue,
+        tertiaryContainer = Ivory,
+        onTertiaryContainer = DarkWood,
+        background = Ivory,
+        onBackground = DeepBlue,
+        surface = Mist,
+        onSurface = DeepBlue,
+        error = Error,
+        onError = White,
+    )
 
 @Composable
 fun TheAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme =
+        when {
+            darkTheme -> DarkColorScheme
+            else -> LightColorScheme
+        }
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
-        content = content
+        content = content,
     )
 }

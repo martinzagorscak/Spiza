@@ -17,11 +17,12 @@ import com.example.svizac.ui.theme.TheAppTheme
 fun App() {
     TheAppTheme {
         Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
+            modifier =
+                Modifier
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .safeContentPadding()
+                    .fillMaxSize(),
         ) {
             with(MaterialTheme.typography) {
                 listOf(
