@@ -1,4 +1,4 @@
-rootProject.name = "Svizac"
+rootProject.name = "Spiza"
 
 pluginManagement {
     repositories {

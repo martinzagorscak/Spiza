@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		A2DAAC682BC3FAD41EC6E59E /* Svizac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Svizac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2DAAC682BC3FAD41EC6E59E /* Spiza.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Spiza.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -59,7 +59,7 @@
 		B92A0E0F942C36B022604855 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A2DAAC682BC3FAD41EC6E59E /* Svizac.app */,
+				A2DAAC682BC3FAD41EC6E59E /* Spiza.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,7 +87,7 @@
 			packageProductDependencies = (
 			);
 			productName = iosApp;
-			productReference = A2DAAC682BC3FAD41EC6E59E /* Svizac.app */;
+			productReference = A2DAAC682BC3FAD41EC6E59E /* Spiza.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

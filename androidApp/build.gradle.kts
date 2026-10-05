@@ -20,11 +20,11 @@ dependencies {
 }
 
 android {
-    namespace = "com.example.svizac"
+    namespace = "com.mzagorscak.spiza"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.svizac"
+        applicationId = "com.mzagorscak.spiza"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

@@ -21,7 +21,7 @@ kotlin {
     }
 
     android {
-        namespace = "com.example.svizac.shared"
+        namespace = "com.mzagorscak.spiza.shared"
         compileSdk =
             libs.versions.android.compileSdk
                 .get()
