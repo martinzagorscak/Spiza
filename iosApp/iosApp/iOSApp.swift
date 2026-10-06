@@ -16,6 +16,10 @@ struct iOSApp: App {
     // register app delegate for Firebase setup
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
+    init() {
+        InitKoinIosKt.doInitKoinIos(crashLoggerBridge: SwiftCrashLoggerBridge())
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

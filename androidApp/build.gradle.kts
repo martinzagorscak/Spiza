@@ -18,7 +18,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 
     implementation(libs.compose.uiToolingPreview)
-    implementation(libs.firebase.crashlytics)
     debugImplementation(libs.compose.uiTooling)
 }
 
