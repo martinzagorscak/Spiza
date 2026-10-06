@@ -49,6 +49,7 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            implementation(libs.firebase.crashlytics)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
         }
