@@ -47,6 +47,10 @@ kotlin {
             implementation(libs.compose.uiTooling)
             api(libs.firebase.crashlytics)
             api(libs.koin.android)
+            implementation(libs.firebase.auth)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.playServicesAuth)
+            implementation(libs.googleid)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
