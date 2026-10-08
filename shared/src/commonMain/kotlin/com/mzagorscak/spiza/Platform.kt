@@ -1,7 +1,8 @@
 package com.mzagorscak.spiza
 
-interface Platform {
-    val name: String
+enum class Platform {
+    Android,
+    Ios,
 }
 
 expect fun getPlatform(): Platform

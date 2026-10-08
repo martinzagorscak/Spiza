@@ -2,6 +2,11 @@ package com.mzagorscak.spiza.auth
 
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Apple Auth Provider should be implemented within Firebase console
+ * Since I need to enroll as Apple Developer (and pay membership), I will implement it later when it needs to be published on Apple App Store
+ * TODO: #ImplementAppleAuthProvider
+ */
 enum class AuthProvider { Google, Apple }
 
 data class AuthUser(
