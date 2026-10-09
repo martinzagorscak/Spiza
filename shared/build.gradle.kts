@@ -51,6 +51,10 @@ kotlin {
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.playServicesAuth)
             implementation(libs.googleid)
+            implementation(libs.ktor.client.android)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -64,6 +68,9 @@ kotlin {
             implementation(libs.kermit)
             implementation(libs.koin.core)
             implementation(libs.koin.compose.viewmodel.navigation)
+            implementation(libs.compottie.lite)
+            implementation(libs.compose.coil)
+            implementation(libs.coil.network.ktor)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
