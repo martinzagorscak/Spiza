@@ -96,11 +96,11 @@ fun AppNavigation(isSignedIn: Boolean) {
                         state = state,
                         callbacks = remember {
                             CreateHouseholdCallbacks(
-                                onBackClick = { backStack.removeLastOrNull() },
+                                onBackClick = { backStack.popIfTop(Route.CreateHousehold) },
                                 onNameChange = viewModel::onNameChange,
                                 onDescriptionChange = viewModel::onDescriptionChange,
                                 onCreateClick = viewModel::onCreateClicked,
-                                onCreated = { backStack.removeLastOrNull() },
+                                onCreated = { backStack.popIfTop(Route.CreateHousehold) },
                             )
                         },
                     )
@@ -112,7 +112,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                         state = state,
                         callbacks = remember {
                             SettingsScreenCallbacks(
-                                onBackClick = { backStack.removeLastOrNull() },
+                                onBackClick = { backStack.popIfTop(Route.Settings) },
                                 onThemeModeSelected = viewModel::onThemeModeSelected,
                                 onLanguageSelected = viewModel::onLanguageSelected,
                                 onHouseholdManagementClick = {},
@@ -124,4 +124,10 @@ fun AppNavigation(isSignedIn: Boolean) {
                 }
             },
     )
+}
+
+private fun androidx.navigation3.runtime.NavBackStack<NavKey>.popIfTop(route: Route) {
+    if (size > 1 && lastOrNull() == route) {
+        removeLastOrNull()
+    }
 }
