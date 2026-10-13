@@ -63,6 +63,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                         callbacks = remember {
                             LoginCallbacks(
                                 onSignInWithGoogle = viewModel::onSignInWithGoogleClicked,
+                                onLoginErrorShown = viewModel::onLoginErrorShown,
                             )
                         },
                     )

@@ -25,9 +25,14 @@ internal class LoginViewModelImpl(
             val error =
                 when (val result = signIn(AuthProvider.Google)) {
                     is AuthResult.Failure -> result.error.message ?: "Sign in failed"
-                    is AuthResult.Cancelled, is AuthResult.Success -> null
+                    is AuthResult.Cancelled -> result.message ?: "Sign in failed"
+                    is AuthResult.Success -> null
                 }
             state.update { LoginState(isLoading = false, error = error) }
         }
+    }
+
+    override fun onLoginErrorShown() {
+        state.update { it.copy(error = null) }
     }
 }
