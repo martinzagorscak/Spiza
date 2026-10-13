@@ -33,6 +33,7 @@
     <string name="create_household_title">New household</string>
     <string name="create_household_name_label">Name</string>
     <string name="create_household_description_label">Description</string>
+    <string name="text_field_optional_template">%1$s (optional)</string>
     <string name="create_household_submit">Create</string>
     <string name="create_household_error">Couldn't create the household. Please try again.</string>
 </resources>

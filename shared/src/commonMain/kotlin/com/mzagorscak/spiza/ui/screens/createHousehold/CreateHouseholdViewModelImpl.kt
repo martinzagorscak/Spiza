@@ -20,10 +20,12 @@ internal class CreateHouseholdViewModelImpl(
     override fun state(): StateFlow<CreateHouseholdState> = state.asStateFlow()
 
     override fun onNameChange(name: String) {
+        if (name.length > CreateHouseholdState.MAX_NAME_LENGTH) return
         state.update { it.copy(name = name, hasError = false) }
     }
 
     override fun onDescriptionChange(description: String) {
+        if (description.length > CreateHouseholdState.MAX_DESCRIPTION_LENGTH) return
         state.update { it.copy(description = description, hasError = false) }
     }
 

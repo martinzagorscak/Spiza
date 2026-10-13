@@ -10,6 +10,11 @@ data class CreateHouseholdState(
     val hasError: Boolean = false,
     val isCreated: Boolean = false,
 ) {
+    companion object {
+        const val MAX_NAME_LENGTH = 50
+        const val MAX_DESCRIPTION_LENGTH = 200
+    }
+
     val canSubmit: Boolean get() = name.isNotBlank() && !isSubmitting
 }
 

@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,9 +18,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import com.mzagorscak.spiza.ui.theme.padding200
+import org.jetbrains.compose.resources.stringResource
+import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.text_field_optional_template
 
 private const val SINGLE_LINE_COUNT = 1
 private const val MAX_LINE_COUNT = 5
@@ -34,8 +39,10 @@ data class TextFieldAppearance(
     val variant: TextFieldVariant,
     val singleLine: Boolean,
     val readOnly: Boolean = false,
+    val isOptional: Boolean = false,
     val label: String? = null,
     val placeholder: String? = null,
+    val supportingText: String? = null,
     val leadingIcon: @Composable (() -> Unit)? = null,
     val trailingIcon: @Composable (() -> Unit)? = null,
 ) {
@@ -77,24 +84,41 @@ fun TextField(
                 isError = isError,
                 textStyle = MaterialTheme.typography.bodyMedium,
                 colors = colors,
-                placeholder =
-                    appearance.placeholder?.let { placeholderText ->
-                        @Composable {
-                            Text(
-                                text = placeholderText,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    },
-                label =
-                    appearance.label?.let { labelText ->
-                        @Composable {
-                            Text(
-                                text = labelText,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    },
+                placeholder = appearance.placeholder?.let { placeholderText ->
+                    @Composable {
+                        Text(
+                            text = placeholderText,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                },
+                label = appearance.label?.let { labelText ->
+                    @Composable {
+                        Text(
+                            text = labelText.let {
+                                if (appearance.isOptional) {
+                                    stringResource(
+                                        Res.string.text_field_optional_template,
+                                        it,
+                                    )
+                                } else {
+                                    it
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                },
+                supportingText = appearance.supportingText?.let { supportingText ->
+                    @Composable {
+                        Text(
+                            text = supportingText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                },
                 readOnly = appearance.readOnly,
                 leadingIcon = appearance.leadingIcon,
                 trailingIcon = appearance.trailingIcon,
@@ -112,24 +136,31 @@ fun TextField(
                 onValueChange = onTextChange,
                 isError = isError,
                 textStyle = MaterialTheme.typography.bodyMedium,
-                placeholder =
-                    appearance.placeholder?.let { placeholderText ->
-                        @Composable {
-                            Text(
-                                text = placeholderText,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    },
-                label =
-                    appearance.label?.let { labelText ->
-                        @Composable {
-                            Text(
-                                text = labelText,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    },
+                placeholder = appearance.placeholder?.let { placeholderText ->
+                    @Composable {
+                        Text(
+                            text = placeholderText,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                },
+                label = appearance.label?.let { labelText ->
+                    @Composable {
+                        Text(
+                            text = labelText.let {
+                                if (appearance.isOptional) {
+                                    stringResource(
+                                        Res.string.text_field_optional_template,
+                                        it,
+                                    )
+                                } else {
+                                    it
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                },
                 readOnly = appearance.readOnly,
                 leadingIcon = appearance.leadingIcon,
                 trailingIcon = appearance.trailingIcon,
@@ -210,6 +241,7 @@ private fun TextFieldLayoutPreview() {
                 singleLine = true,
                 placeholder = "Outlined TextField",
                 label = "Label",
+                supportingText = "9/20",
             ),
         )
     }

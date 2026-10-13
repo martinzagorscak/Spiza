@@ -33,6 +33,7 @@
     <string name="create_household_title">Novo kućanstvo</string>
     <string name="create_household_name_label">Naziv</string>
     <string name="create_household_description_label">Opis</string>
+    <string name="text_field_optional_template">%1$s (opcionalno)</string>
     <string name="create_household_submit">Stvori</string>
     <string name="create_household_error">Kućanstvo nije stvoreno. Pokušaj ponovno.</string>
 </resources>

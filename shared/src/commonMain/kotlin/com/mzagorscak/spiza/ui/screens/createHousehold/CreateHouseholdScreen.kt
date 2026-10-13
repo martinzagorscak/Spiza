@@ -85,6 +85,7 @@ fun CreateHouseholdScreen(
                     variant = TextFieldVariant.Outlined,
                     singleLine = true,
                     label = stringResource(Res.string.create_household_name_label),
+                    supportingText = "${state.name.length}/${CreateHouseholdState.MAX_NAME_LENGTH}",
                 ),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
@@ -96,7 +97,9 @@ fun CreateHouseholdScreen(
                 appearance = TextFieldAppearance(
                     variant = TextFieldVariant.Outlined,
                     singleLine = false,
+                    isOptional = true,
                     label = stringResource(Res.string.create_household_description_label),
+                    supportingText = "${state.description.length}/${CreateHouseholdState.MAX_DESCRIPTION_LENGTH}",
                 ),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
