@@ -49,6 +49,7 @@ kotlin {
             api(libs.firebase.crashlytics)
             api(libs.koin.android)
             implementation(libs.firebase.auth)
+            implementation(libs.firebase.firestore)
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.playServicesAuth)
             implementation(libs.googleid)

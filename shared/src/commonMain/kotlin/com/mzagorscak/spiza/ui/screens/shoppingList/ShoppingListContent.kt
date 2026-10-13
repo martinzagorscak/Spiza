@@ -1,0 +1,209 @@
+package com.mzagorscak.spiza.ui.screens.shoppingList
+
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
+import com.mzagorscak.spiza.ui.components.Draggable
+import com.mzagorscak.spiza.ui.components.EditableCheckListItem
+import com.mzagorscak.spiza.ui.components.FallbackState
+import com.mzagorscak.spiza.ui.model.PresentableArticleItem
+import com.mzagorscak.spiza.ui.theme.padding200
+import com.mzagorscak.spiza.ui.theme.padding400
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
+import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.shopping_list_add_item_placeholder
+import spiza.shared.generated.resources.shopping_list_done_section
+import spiza.shared.generated.resources.shopping_list_empty_description
+import spiza.shared.generated.resources.shopping_list_empty_title
+import kotlin.time.Duration.Companion.milliseconds
+
+private const val TEXT_COMMIT_DEBOUNCE_MS = 600L
+private const val OPTIMISTIC_ORDER_TIMEOUT_MS = 3_000L
+private const val EMPTY_KEY = "empty"
+private const val ADD_ITEM_KEY = "add-item"
+private const val DONE_HEADER_KEY = "done-header"
+
+@Composable
+fun ShoppingListContent(
+    state: ShoppingListState.Body.Content,
+    callbacks: ShoppingListScreenCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    val pending = remember { mutableStateListOf<PresentableArticleItem>().apply { addAll(state.pendingItems) } }
+    var draggedKey by remember { mutableStateOf<String?>(null) }
+    var dragOffset by remember { mutableStateOf(0f) }
+
+    // Outside of a drag the list is rendered straight from the state, so an item that was just checked can never
+    // be in both the pending and done sections. While dragging, a local copy is reordered instead.
+    val stateOrder = state.pendingItems.map { it.id }
+    val pendingIds = stateOrder.toSet()
+    // After a drop the new order is kept until the state confirms it, otherwise the item would jump back to its old
+    // position and animate to the new one once the update arrives.
+    var droppedOrder by remember { mutableStateOf<List<String>?>(null) }
+    val optimisticOrder = droppedOrder?.takeIf { it.toSet() == pendingIds }
+    val displayedPending = when {
+        draggedKey != null -> pending.filter { it.id in pendingIds }
+        optimisticOrder != null -> {
+            val byId = state.pendingItems.associateBy { it.id }
+            optimisticOrder.map { byId.getValue(it) }
+        }
+        else -> state.pendingItems
+    }
+
+    LaunchedEffect(stateOrder, droppedOrder) {
+        if (droppedOrder == stateOrder) droppedOrder = null
+    }
+    // Gives up on the optimistic order if the move was never confirmed (e.g. the write failed).
+    LaunchedEffect(droppedOrder) {
+        if (droppedOrder != null) {
+            delay(OPTIMISTIC_ORDER_TIMEOUT_MS.milliseconds)
+            droppedOrder = null
+        }
+    }
+
+    LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
+        if (state.pendingItems.isEmpty() && state.doneItems.isEmpty()) {
+            item(key = EMPTY_KEY) {
+                FallbackState(
+                    title = stringResource(Res.string.shopping_list_empty_title),
+                    description = stringResource(Res.string.shopping_list_empty_description),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+        items(displayedPending, key = { it.id }) { item ->
+            val isDragging = draggedKey == item.id
+            Draggable(
+                offsetY = if (isDragging) dragOffset else 0f,
+                isDragging = isDragging,
+                onDragStart = {
+                    pending.clear()
+                    pending.addAll(state.pendingItems)
+                    draggedKey = item.id
+                    dragOffset = 0f
+                },
+                onDrag = { dy ->
+                    dragOffset += dy
+                    val infos = listState.layoutInfo.visibleItemsInfo
+                    val current = infos.firstOrNull { it.key == item.id }
+                    if (current != null) {
+                        val center = current.offset + current.size / 2f + dragOffset
+                        if (center < current.offset || center > current.offset + current.size) {
+                            val target = infos.firstOrNull {
+                                it.key != item.id &&
+                                    it.index < pending.size &&
+                                    center >= it.offset &&
+                                    center <= it.offset + it.size
+                            }
+                            if (target != null) {
+                                pending.add(target.index, pending.removeAt(current.index))
+                                dragOffset += current.offset - target.offset
+                            }
+                        }
+                    }
+                },
+                onDragEnd = {
+                    val index = pending.indexOfFirst { it.id == item.id }
+                    droppedOrder = pending.map { it.id }
+                    draggedKey = null
+                    dragOffset = 0f
+                    if (index != state.pendingItems.indexOfFirst { it.id == item.id }) {
+                        callbacks.onItemMoved(item.id, index)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (isDragging) Modifier else Modifier.animateItem()),
+            ) {
+                ArticleRow(item = item, callbacks = callbacks)
+            }
+        }
+        item(key = ADD_ITEM_KEY) {
+            AddItemRow(onAddItem = callbacks.onAddItem)
+        }
+        if (state.doneItems.isNotEmpty()) {
+            item(key = DONE_HEADER_KEY) {
+                Text(
+                    text = stringResource(Res.string.shopping_list_done_section),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(horizontal = padding400, vertical = padding200),
+                )
+            }
+            items(state.doneItems, key = { it.id }) { item ->
+                ArticleRow(item = item, callbacks = callbacks, modifier = Modifier.animateItem())
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArticleRow(
+    item: PresentableArticleItem,
+    callbacks: ShoppingListScreenCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    var text by remember(item.id) { mutableStateOf(item.text) }
+    var lastSyncedText by remember(item.id) { mutableStateOf(item.text) }
+
+    // Adopt remote edits only when there is no unsent local edit that would be overwritten.
+    LaunchedEffect(item.text) {
+        if (text == lastSyncedText) text = item.text
+        lastSyncedText = item.text
+    }
+    LaunchedEffect(text) {
+        if (text != lastSyncedText) {
+            if (text.isNotBlank()) delay(TEXT_COMMIT_DEBOUNCE_MS.milliseconds)
+            callbacks.onItemTextChange(item.id, text)
+        }
+    }
+
+    EditableCheckListItem(
+        text = text,
+        checked = item.isChecked,
+        onTextChange = { text = it },
+        onCheckedChange = { callbacks.onItemCheckedChange(item.id, it) },
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun AddItemRow(
+    onAddItem: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var text by remember { mutableStateOf("") }
+    EditableCheckListItem(
+        text = text,
+        checked = false,
+        onTextChange = { text = it },
+        onCheckedChange = {},
+        placeholder = stringResource(Res.string.shopping_list_add_item_placeholder),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        onKeyboardAction = KeyboardActions(
+            onDone = {
+                if (text.isNotBlank()) onAddItem(text)
+                text = ""
+            },
+        ),
+        modifier = modifier,
+    )
+}

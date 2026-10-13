@@ -19,4 +19,20 @@
     <string name="login_sign_in_with_google">Sign in with Google</string>
     <string name="shopping_list_default_title">Household</string>
     <string name="checklist_item_placeholder">Item</string>
+    <string name="shopping_list_create_household">Create household</string>
+    <string name="shopping_list_loading_error_title">Something went wrong</string>
+    <string name="shopping_list_loading_error_description">We couldn't load your shopping list. Check your connection and try again.</string>
+    <string name="shopping_list_retry">Retry</string>
+    <string name="shopping_list_no_household_title">No household yet</string>
+    <string name="shopping_list_no_household_description">Create a household to start a shared shopping list.</string>
+    <string name="shopping_list_empty_title">Your list is empty</string>
+    <string name="shopping_list_empty_description">Add your first item below.</string>
+    <string name="shopping_list_add_item_placeholder">Add item</string>
+    <string name="shopping_list_done_section">Done</string>
+    <string name="shopping_list_write_error">Couldn't save your change</string>
+    <string name="create_household_title">New household</string>
+    <string name="create_household_name_label">Name</string>
+    <string name="create_household_description_label">Description</string>
+    <string name="create_household_submit">Create</string>
+    <string name="create_household_error">Couldn't create the household. Please try again.</string>
 </resources>

@@ -33,6 +33,7 @@ fun EditableCheckListItem(
     checked: Boolean,
     onTextChange: (String) -> Unit,
     onCheckedChange: (Boolean) -> Unit,
+    placeholder: String = stringResource(Res.string.checklist_item_placeholder),
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     onKeyboardAction: KeyboardActions = KeyboardActions.Default,
     modifier: Modifier = Modifier,
@@ -42,8 +43,8 @@ fun EditableCheckListItem(
         onTextChange = onTextChange,
         appearance = TextFieldAppearance(
             variant = TextFieldVariant.Borderless,
-            singleLine = false,
-            placeholder = stringResource(Res.string.checklist_item_placeholder),
+            singleLine = true,
+            placeholder = placeholder,
             leadingIcon = {
                 Checkbox(
                     checked = checked,

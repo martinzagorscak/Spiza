@@ -2,6 +2,8 @@ package com.mzagorscak.spiza.ui.screens.di
 
 import com.mzagorscak.spiza.ui.screens.app.AppViewModel
 import com.mzagorscak.spiza.ui.screens.app.AppViewModelImpl
+import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
+import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModelImpl
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModel
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModelImpl
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
@@ -21,7 +23,20 @@ val viewModelModule = module {
         )
     }
     viewModel<LoginViewModel> { LoginViewModelImpl(signIn = get()) }
-    viewModel<ShoppingListViewModel> { ShoppingListViewModelImpl() }
+    viewModel<ShoppingListViewModel> {
+        ShoppingListViewModelImpl(
+            observeHouseholds = get(),
+            observeItems = get(),
+            observeSelectedHouseholdId = get(),
+            setSelectedHouseholdId = get(),
+            getCurrentUserProfile = get(),
+            addItem = get(),
+            updateItemText = get(),
+            setItemChecked = get(),
+            moveItem = get(),
+        )
+    }
+    viewModel<CreateHouseholdViewModel> { CreateHouseholdViewModelImpl(createHousehold = get()) }
     viewModel<SettingsViewModel> {
         SettingsViewModelImpl(
             observeUserProfile = get(),

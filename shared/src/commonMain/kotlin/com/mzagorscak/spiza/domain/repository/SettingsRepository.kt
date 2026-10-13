@@ -8,7 +8,12 @@ interface SettingsRepository {
     val themeMode: Flow<ThemeMode>
     val language: Flow<AppLanguage>
 
+    /** The household last opened on this device, or null if none was chosen yet. */
+    val selectedHouseholdId: Flow<String?>
+
     suspend fun setThemeMode(mode: ThemeMode)
 
     suspend fun setLanguage(language: AppLanguage)
+
+    suspend fun setSelectedHouseholdId(householdId: String)
 }

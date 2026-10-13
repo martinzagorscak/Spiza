@@ -16,6 +16,9 @@ sealed interface Route : NavKey {
 
     @Serializable
     data object Settings : Route
+
+    @Serializable
+    data object CreateHousehold : Route
 }
 
 // Every new Route must be registered here so the back stack can be saved/restored on all platforms.
@@ -25,5 +28,6 @@ val routeSerializersModule =
             subclass(Route.Login::class)
             subclass(Route.ShoppingList::class)
             subclass(Route.Settings::class)
+            subclass(Route.CreateHousehold::class)
         }
     }

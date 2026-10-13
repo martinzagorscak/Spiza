@@ -12,6 +12,9 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdCallbacks
+import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdScreen
+import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
 import com.mzagorscak.spiza.ui.screens.login.LoginCallbacks
 import com.mzagorscak.spiza.ui.screens.login.LoginScreen
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModel
@@ -67,11 +70,37 @@ fun AppNavigation(isSignedIn: Boolean) {
                 entry<Route.ShoppingList> {
                     val viewModel = koinViewModel<ShoppingListViewModel>()
                     val headerState by viewModel.headerState().collectAsStateWithLifecycle()
+                    val bodyState by viewModel.bodyState().collectAsStateWithLifecycle()
                     ShoppingListScreen(
                         headerState = headerState,
+                        bodyState = bodyState,
                         callbacks = remember {
                             ShoppingListScreenCallbacks(
                                 onSettingsClick = { backStack.add(Route.Settings) },
+                                onOtherHouseholdClick = viewModel::onHouseholdSelected,
+                                onCreateHouseholdClick = { backStack.add(Route.CreateHousehold) },
+                                onRetryClick = viewModel::onRetryClicked,
+                                onAddItem = viewModel::onAddItem,
+                                onItemTextChange = viewModel::onItemTextChange,
+                                onItemCheckedChange = viewModel::onItemCheckedChange,
+                                onItemMoved = viewModel::onItemMoved,
+                                onWriteErrorShown = viewModel::onWriteErrorShown,
+                            )
+                        },
+                    )
+                }
+                entry<Route.CreateHousehold> {
+                    val viewModel = koinViewModel<CreateHouseholdViewModel>()
+                    val state by viewModel.state().collectAsStateWithLifecycle()
+                    CreateHouseholdScreen(
+                        state = state,
+                        callbacks = remember {
+                            CreateHouseholdCallbacks(
+                                onBackClick = { backStack.removeLastOrNull() },
+                                onNameChange = viewModel::onNameChange,
+                                onDescriptionChange = viewModel::onDescriptionChange,
+                                onCreateClick = viewModel::onCreateClicked,
+                                onCreated = { backStack.removeLastOrNull() },
                             )
                         },
                     )

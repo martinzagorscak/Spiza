@@ -18,7 +18,7 @@ struct iOSApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
     init() {
-        InitKoinIosKt.doInitKoinIos(crashLoggerBridge: SwiftCrashLoggerBridge(), authBridge: SwiftAuthBridge())
+        InitKoinIosKt.doInitKoinIos(crashLoggerBridge: SwiftCrashLoggerBridge(), authBridge: SwiftAuthBridge(), householdBridge: SwiftHouseholdBridge())
     }
     
     var body: some Scene {

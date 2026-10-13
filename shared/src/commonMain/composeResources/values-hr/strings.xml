@@ -19,4 +19,20 @@
     <string name="login_sign_in_with_google">Prijava putem Googlea</string>
     <string name="shopping_list_default_title">Kućanstvo</string>
     <string name="checklist_item_placeholder">Artikl</string>
+    <string name="shopping_list_create_household">Stvori kućanstvo</string>
+    <string name="shopping_list_loading_error_title">Nešto je pošlo po zlu</string>
+    <string name="shopping_list_loading_error_description">Nismo mogli učitati tvoj popis za kupnju. Provjeri vezu i pokušaj ponovno.</string>
+    <string name="shopping_list_retry">Pokušaj ponovno</string>
+    <string name="shopping_list_no_household_title">Još nemaš kućanstvo</string>
+    <string name="shopping_list_no_household_description">Stvori kućanstvo kako bi započeo zajednički popis za kupnju.</string>
+    <string name="shopping_list_empty_title">Tvoj popis je prazan</string>
+    <string name="shopping_list_empty_description">Dodaj prvi artikl u nastavku.</string>
+    <string name="shopping_list_add_item_placeholder">Dodaj artikl</string>
+    <string name="shopping_list_done_section">Gotovo</string>
+    <string name="shopping_list_write_error">Promjena nije spremljena</string>
+    <string name="create_household_title">Novo kućanstvo</string>
+    <string name="create_household_name_label">Naziv</string>
+    <string name="create_household_description_label">Opis</string>
+    <string name="create_household_submit">Stvori</string>
+    <string name="create_household_error">Kućanstvo nije stvoreno. Pokušaj ponovno.</string>
 </resources>

@@ -22,6 +22,7 @@ googleFirebaseCrashlytics = "3.0.8"
 koin = "4.2.2"
 multiplatformSettings = "1.3.0"
 firebaseAuth = "25.0.0"
+firebaseFirestore = "27.0.0"
 androidx-credentials = "1.5.0"
 googleid = "1.2.1"
 compottie = "2.3.3"
@@ -52,6 +53,7 @@ compose-components-resources = { module = "org.jetbrains.compose.components:comp
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebaseCrashlytics" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidx-credentials" }
 androidx-credentials-playServicesAuth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidx-credentials" }
