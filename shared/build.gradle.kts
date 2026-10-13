@@ -53,6 +53,7 @@ kotlin {
             implementation(libs.androidx.credentials.playServicesAuth)
             implementation(libs.googleid)
             implementation(libs.ktor.client.android)
+            implementation(libs.androidx.core.ktx)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -71,6 +72,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.kermit)
             implementation(libs.koin.core)
+            implementation(libs.multiplatform.settings)
             implementation(libs.koin.compose.viewmodel.navigation)
             implementation(libs.compottie.lite)
             implementation(libs.compose.coil)

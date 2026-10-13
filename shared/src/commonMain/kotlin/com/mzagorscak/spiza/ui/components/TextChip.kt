@@ -46,7 +46,7 @@ fun TextChip(
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             maxLines = SINGLE_LINE_COUNT,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(

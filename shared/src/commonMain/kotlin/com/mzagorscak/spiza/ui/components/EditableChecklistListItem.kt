@@ -18,7 +18,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import com.mzagorscak.spiza.ui.theme.padding200
+import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.checklist_item_placeholder
 import spiza.shared.generated.resources.ic_close
 
 private const val ALPHA_CHECKED = 0.5f
@@ -41,7 +43,7 @@ fun EditableCheckListItem(
         appearance = TextFieldAppearance(
             variant = TextFieldVariant.Borderless,
             singleLine = false,
-            placeholder = "Item", // TODO: #Localization
+            placeholder = stringResource(Res.string.checklist_item_placeholder),
             leadingIcon = {
                 Checkbox(
                     checked = checked,

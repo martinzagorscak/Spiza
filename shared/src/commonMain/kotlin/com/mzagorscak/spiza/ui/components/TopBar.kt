@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
@@ -30,11 +32,16 @@ fun TopBar(
     leadingContent: (@Composable () -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null,
 ) {
+    val backgroundColor = MaterialTheme.colorScheme.primary
+    StatusBarAppearance(useLightIcons = backgroundColor.luminance() < 0.5f)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .windowInsetsPadding(insets = WindowInsets.statusBars)
             .fillMaxWidth()
+            // Background must come before the insets padding so it also fills the status bar area.
+            .background(color = backgroundColor)
+            .windowInsetsPadding(insets = WindowInsets.statusBars)
             .padding(horizontal = padding200),
     ) {
         leadingContent?.invoke()
@@ -42,7 +49,7 @@ fun TopBar(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onPrimary,
             overflow = TextOverflow.Ellipsis,
             maxLines = SINGLE_LINE_COUNT,
             modifier = Modifier

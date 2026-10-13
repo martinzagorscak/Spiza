@@ -75,7 +75,7 @@ data class ButtonAppearance(
             ButtonVariant.Secondary -> {
                 ButtonDefaults.outlinedButtonColors().copy(
                     containerColor = Color.Transparent,
-                    contentColor = contentColor ?: MaterialTheme.colorScheme.secondary,
+                    contentColor = contentColor ?: MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -140,7 +140,7 @@ fun Button(
             val border = BorderStroke(
                 width = 1.dp,
                 color = appearance.contentColor
-                    ?: with(MaterialTheme.colorScheme) { if (isEnabled) secondary else onSurface.copy(alpha = 0.1f) },
+                    ?: with(MaterialTheme.colorScheme) { if (isEnabled) primary else onSurface.copy(alpha = 0.1f) },
             )
 
             OutlinedButton(

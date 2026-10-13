@@ -1,0 +1,22 @@
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_profile">Profile</string>
+    <string name="settings_user_key_label">Your key</string>
+    <string name="settings_user_key_hint">Share this key with household owners so they can add you.</string>
+    <string name="settings_copy_key">Copy</string>
+    <string name="settings_key_copied">Key copied</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_section_language">Language</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_croatian">Croatian</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_household_management">Household management</string>
+    <string name="settings_shopping_items_caching">Shopping items caching</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="login_sign_in_with_google">Sign in with Google</string>
+    <string name="shopping_list_default_title">Household</string>
+    <string name="checklist_item_placeholder">Item</string>
+</resources>

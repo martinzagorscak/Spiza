@@ -60,7 +60,7 @@ fun ListingItem(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onBackground,
             )
 
             trailingContent?.let {
@@ -69,7 +69,7 @@ fun ListingItem(
             }
         }
         if (showDivider) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }

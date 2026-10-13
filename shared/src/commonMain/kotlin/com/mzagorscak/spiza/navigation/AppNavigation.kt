@@ -2,8 +2,8 @@ package com.mzagorscak.spiza.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -12,19 +12,20 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
-import com.mzagorscak.spiza.auth.AuthService
-import com.mzagorscak.spiza.ui.screens.landing.LandingScreen
-import com.mzagorscak.spiza.ui.screens.landing.LandingViewModel
+import com.mzagorscak.spiza.ui.screens.login.LoginCallbacks
 import com.mzagorscak.spiza.ui.screens.login.LoginScreen
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModel
-import org.koin.compose.koinInject
+import com.mzagorscak.spiza.ui.screens.settings.SettingsScreen
+import com.mzagorscak.spiza.ui.screens.settings.SettingsScreenCallbacks
+import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
+import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListScreen
+import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListScreenCallbacks
+import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun AppNavigation() {
-    val authService = koinInject<AuthService>()
-    val user by authService.authState.collectAsState(initial = authService.currentUser)
-    val startRoute: Route = if (user == null) Route.Login else Route.Landing
+fun AppNavigation(isSignedIn: Boolean) {
+    val startRoute: Route = if (isSignedIn) Route.ShoppingList else Route.Login
 
     val backStack =
         rememberNavBackStack(
@@ -32,9 +33,10 @@ fun AppNavigation() {
             startRoute,
         )
 
-    // Auth is the source of truth for the root destination: reset the stack when it changes.
+    // Auth is the source of truth for the root destination: reset the stack only when the root no longer matches it,
+    // so a restored back stack (e.g. after a configuration change) is kept.
     LaunchedEffect(startRoute) {
-        if (backStack.lastOrNull() != startRoute) {
+        if (backStack.firstOrNull() != startRoute) {
             backStack.clear()
             backStack.add(startRoute)
         }
@@ -52,18 +54,43 @@ fun AppNavigation() {
             entryProvider<NavKey> {
                 entry<Route.Login> {
                     val viewModel = koinViewModel<LoginViewModel>()
-                    val state by viewModel.state.collectAsStateWithLifecycle()
+                    val state by viewModel.state().collectAsStateWithLifecycle()
                     LoginScreen(
                         state = state,
-                        onSignInWithGoogle = viewModel::onSignInWithGoogleClicked,
+                        callbacks = remember {
+                            LoginCallbacks(
+                                onSignInWithGoogle = viewModel::onSignInWithGoogleClicked,
+                            )
+                        },
                     )
                 }
-                entry<Route.Landing> {
-                    val viewModel = koinViewModel<LandingViewModel>()
-                    val state by viewModel.state.collectAsStateWithLifecycle()
-                    LandingScreen(
+                entry<Route.ShoppingList> {
+                    val viewModel = koinViewModel<ShoppingListViewModel>()
+                    val headerState by viewModel.headerState().collectAsStateWithLifecycle()
+                    ShoppingListScreen(
+                        headerState = headerState,
+                        callbacks = remember {
+                            ShoppingListScreenCallbacks(
+                                onSettingsClick = { backStack.add(Route.Settings) },
+                            )
+                        },
+                    )
+                }
+                entry<Route.Settings> {
+                    val viewModel = koinViewModel<SettingsViewModel>()
+                    val state by viewModel.state().collectAsStateWithLifecycle()
+                    SettingsScreen(
                         state = state,
-                        onSignOut = viewModel::onSignOutClicked,
+                        callbacks = remember {
+                            SettingsScreenCallbacks(
+                                onBackClick = { backStack.removeLastOrNull() },
+                                onThemeModeSelected = viewModel::onThemeModeSelected,
+                                onLanguageSelected = viewModel::onLanguageSelected,
+                                onHouseholdManagementClick = {},
+                                onShoppingItemsCachingClick = {},
+                                onSignOutClick = viewModel::onSignOutClicked,
+                            )
+                        },
                     )
                 }
             },

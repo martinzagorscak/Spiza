@@ -9,7 +9,7 @@ data class LoginState(
 )
 
 abstract class LoginViewModel : ViewModel() {
-    abstract val state: StateFlow<LoginState>
+    abstract fun state(): StateFlow<LoginState>
 
     abstract fun onSignInWithGoogleClicked()
 }

@@ -53,7 +53,7 @@ private fun DialogContent(
         modifier = modifier
             .fillMaxWidth()
             .clip(roundedShape400)
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(padding600),
     ) {
         Text(

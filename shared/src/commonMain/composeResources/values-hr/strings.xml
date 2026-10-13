@@ -1,0 +1,22 @@
+<resources>
+    <string name="settings_title">Postavke</string>
+    <string name="settings_section_profile">Profil</string>
+    <string name="settings_user_key_label">Vaš ključ</string>
+    <string name="settings_user_key_hint">Podijelite ovaj ključ s vlasnicima kućanstava kako bi vas mogli dodati.</string>
+    <string name="settings_copy_key">Kopiraj</string>
+    <string name="settings_key_copied">Ključ kopiran</string>
+    <string name="settings_section_appearance">Izgled</string>
+    <string name="settings_theme_system">Prema sustavu</string>
+    <string name="settings_theme_light">Svijetla</string>
+    <string name="settings_theme_dark">Tamna</string>
+    <string name="settings_section_language">Jezik</string>
+    <string name="settings_language_english">Engleski</string>
+    <string name="settings_language_croatian">Hrvatski</string>
+    <string name="settings_section_general">Općenito</string>
+    <string name="settings_household_management">Upravljanje kućanstvom</string>
+    <string name="settings_shopping_items_caching">Spremanje artikala za kupnju</string>
+    <string name="settings_sign_out">Odjava</string>
+    <string name="login_sign_in_with_google">Prijava putem Googlea</string>
+    <string name="shopping_list_default_title">Kućanstvo</string>
+    <string name="checklist_item_placeholder">Artikl</string>
+</resources>

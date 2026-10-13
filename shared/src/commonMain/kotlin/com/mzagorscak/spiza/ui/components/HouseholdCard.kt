@@ -68,7 +68,7 @@ fun HouseholdCard(
             }
         }
 
-        HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         LazyColumn(modifier = Modifier.padding(top = padding200)) {
             items(members) { member ->

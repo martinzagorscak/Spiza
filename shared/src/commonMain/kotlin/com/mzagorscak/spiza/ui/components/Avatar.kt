@@ -33,9 +33,10 @@ import spiza.shared.generated.resources.ic_profile_placeholder
 enum class AvatarSize(
     val inDp: Dp,
 ) {
-    Small(24.dp),
-    Medium(32.dp),
-    Large(40.dp),
+    Small(32.dp),
+    Medium(52.dp),
+    Large(72.dp),
+    ExtraLarge(102.dp),
 }
 
 @Composable
@@ -48,7 +49,7 @@ fun Avatar(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .clip(CircleShape)
-            .background(color = if (photoUrl != null) Color.Transparent else MaterialTheme.colorScheme.onBackground)
+            .background(color = if (photoUrl != null) Color.Transparent else MaterialTheme.colorScheme.primaryContainer)
             .size(size.inDp),
     ) {
         if (photoUrl != null) {
@@ -68,7 +69,7 @@ fun Avatar(
             Icon(
                 painter = painterResource(Res.drawable.ic_profile_placeholder),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.background,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.fillMaxSize().padding(padding100).clip(CircleShape),
             )
         }
@@ -84,6 +85,7 @@ private fun AvatarLayoutPreview() {
         Avatar(photoUrl = null, size = AvatarSize.Small)
         Avatar(photoUrl = null, size = AvatarSize.Medium)
         Avatar(photoUrl = null, size = AvatarSize.Large)
+        Avatar(photoUrl = null, size = AvatarSize.ExtraLarge)
         Avatar(
             photoUrl = "https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg",
             size = AvatarSize.Small,
@@ -95,6 +97,10 @@ private fun AvatarLayoutPreview() {
         Avatar(
             photoUrl = "https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg",
             size = AvatarSize.Large,
+        )
+        Avatar(
+            photoUrl = "https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg",
+            size = AvatarSize.ExtraLarge,
         )
     }
 }

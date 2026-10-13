@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,7 @@ enum class IconButtonVariant { IconBased, ImageBased }
 data class IconButtonAppearance(
     val variant: IconButtonVariant,
     val size: IconButtonSize,
+    val tintColor: Color? = null,
 ) {
     companion object {
         val Default = IconButtonAppearance(
@@ -43,6 +45,13 @@ data class IconButtonAppearance(
             size = IconButtonSize.Medium,
         )
     }
+
+    @Composable
+    fun getTintColor(): Color =
+        when (variant) {
+            IconButtonVariant.IconBased -> tintColor ?: MaterialTheme.colorScheme.onBackground
+            IconButtonVariant.ImageBased -> MaterialTheme.colorScheme.onBackground
+        }
 
     @Composable
     fun getSizeInDp(): Dp =
@@ -68,7 +77,7 @@ fun IconButton(
                 onClick = onClick,
                 enabled = isEnabled,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)),
+                indication = ripple(color = appearance.getTintColor().copy(alpha = 0.1f)),
             ),
     ) {
         when (appearance.variant) {
@@ -76,7 +85,7 @@ fun IconButton(
                 Icon(
                     painter = painterResource(resource),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = appearance.getTintColor(),
                     modifier = Modifier
                         .size(appearance.getSizeInDp())
                         .padding(padding200),

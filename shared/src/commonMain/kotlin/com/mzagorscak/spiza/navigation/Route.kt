@@ -12,7 +12,10 @@ sealed interface Route : NavKey {
     data object Login : Route
 
     @Serializable
-    data object Landing : Route
+    data object ShoppingList : Route
+
+    @Serializable
+    data object Settings : Route
 }
 
 // Every new Route must be registered here so the back stack can be saved/restored on all platforms.
@@ -20,6 +23,7 @@ val routeSerializersModule =
     SerializersModule {
         polymorphic(NavKey::class) {
             subclass(Route.Login::class)
-            subclass(Route.Landing::class)
+            subclass(Route.ShoppingList::class)
+            subclass(Route.Settings::class)
         }
     }
