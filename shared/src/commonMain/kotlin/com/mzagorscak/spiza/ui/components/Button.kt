@@ -62,8 +62,12 @@ data class ButtonAppearance(
                         ButtonVariant.Tertiary -> contentColor ?: MaterialTheme.colorScheme.primary
                     },
                     disabledContainerColor = when (variant) {
-                        ButtonVariant.Primary -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        ButtonVariant.Primary -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                         ButtonVariant.Tertiary -> Color.Transparent
+                    },
+                    disabledContentColor = when (variant) {
+                        ButtonVariant.Primary -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
+                        ButtonVariant.Tertiary -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                     },
                 )
             }
