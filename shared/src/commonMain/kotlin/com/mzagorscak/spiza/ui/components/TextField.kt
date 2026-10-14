@@ -161,6 +161,16 @@ fun TextField(
                         )
                     }
                 },
+                supportingText = appearance.supportingText?.let { supportingText ->
+                    @Composable {
+                        Text(
+                            text = supportingText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                },
                 readOnly = appearance.readOnly,
                 leadingIcon = appearance.leadingIcon,
                 trailingIcon = appearance.trailingIcon,
