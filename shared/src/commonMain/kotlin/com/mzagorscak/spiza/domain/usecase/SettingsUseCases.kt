@@ -45,6 +45,18 @@ class SetAppLanguageUseCase(
     suspend operator fun invoke(language: AppLanguage) = repository.setLanguage(language)
 }
 
+class ObserveSuggestionsCachingEnabledUseCase(
+    private val repository: SettingsRepository,
+) {
+    operator fun invoke(): Flow<Boolean> = repository.suggestionsCachingEnabled
+}
+
+class SetSuggestionsCachingEnabledUseCase(
+    private val repository: SettingsRepository,
+) {
+    suspend operator fun invoke(enabled: Boolean) = repository.setSuggestionsCachingEnabled(enabled)
+}
+
 class SignInUseCase(
     private val repository: UserRepository,
 ) {

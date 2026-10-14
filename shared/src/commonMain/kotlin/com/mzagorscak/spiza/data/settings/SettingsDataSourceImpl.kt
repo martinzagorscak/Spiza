@@ -14,10 +14,12 @@ internal class SettingsDataSourceImpl(
     private val themeModeState = MutableStateFlow(readThemeMode())
     private val languageState = MutableStateFlow(AppLanguage.fromTag(settings.getStringOrNull(KEY_LANGUAGE)))
     private val selectedHouseholdIdState = MutableStateFlow(settings.getStringOrNull(KEY_SELECTED_HOUSEHOLD_ID))
+    private val suggestionsCachingEnabledState = MutableStateFlow(settings.getBooleanOrNull(KEY_SUGGESTIONS_CACHING_ENABLED) ?: false)
 
     override val themeMode: StateFlow<ThemeMode> = themeModeState.asStateFlow()
     override val language: StateFlow<AppLanguage> = languageState.asStateFlow()
     override val selectedHouseholdId: StateFlow<String?> = selectedHouseholdIdState.asStateFlow()
+    override val suggestionsCachingEnabled: StateFlow<Boolean> = suggestionsCachingEnabledState.asStateFlow()
 
     override fun setThemeMode(mode: ThemeMode) {
         settings.putString(KEY_THEME_MODE, mode.name)
@@ -34,6 +36,11 @@ internal class SettingsDataSourceImpl(
         selectedHouseholdIdState.value = householdId
     }
 
+    override fun setSuggestionsCachingEnabled(enabled: Boolean) {
+        settings.putBoolean(KEY_SUGGESTIONS_CACHING_ENABLED, enabled)
+        suggestionsCachingEnabledState.value = enabled
+    }
+
     private fun readThemeMode(): ThemeMode =
         settings.getStringOrNull(KEY_THEME_MODE)?.let { stored ->
             ThemeMode.entries.firstOrNull { it.name == stored }
@@ -43,5 +50,6 @@ internal class SettingsDataSourceImpl(
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_LANGUAGE = "language"
         const val KEY_SELECTED_HOUSEHOLD_ID = "selected_household_id"
+        const val KEY_SUGGESTIONS_CACHING_ENABLED = "suggestions_caching_enabled"
     }
 }

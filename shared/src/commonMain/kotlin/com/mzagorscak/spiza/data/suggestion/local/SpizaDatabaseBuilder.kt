@@ -1,0 +1,12 @@
+package com.mzagorscak.spiza.data.suggestion.local
+
+import androidx.room.RoomDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+
+fun getSpizaDatabase(builder: RoomDatabase.Builder<SpizaDatabase>): SpizaDatabase =
+    builder
+        .setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
+        .build()

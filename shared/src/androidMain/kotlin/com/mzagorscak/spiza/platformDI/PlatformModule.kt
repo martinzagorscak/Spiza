@@ -6,6 +6,9 @@ import com.mzagorscak.spiza.crash.AndroidCrashLogger
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.data.household.FirestoreHouseholdDataSource
 import com.mzagorscak.spiza.data.household.HouseholdDataSource
+import com.mzagorscak.spiza.data.suggestion.local.SpizaDatabase
+import com.mzagorscak.spiza.data.suggestion.local.getAndroidSpizaDatabaseBuilder
+import com.mzagorscak.spiza.data.suggestion.local.getSpizaDatabase
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
@@ -23,5 +26,9 @@ actual fun platformModule(): Module =
                 activityProvider = get(),
                 webClientId = get(named(WEB_CLIENT_ID)),
             )
+        }
+        single<SpizaDatabase> {
+            val builder = getAndroidSpizaDatabaseBuilder(androidContext())
+            getSpizaDatabase(builder)
         }
     }

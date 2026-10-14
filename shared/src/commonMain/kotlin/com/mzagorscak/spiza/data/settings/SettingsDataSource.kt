@@ -8,10 +8,13 @@ interface SettingsDataSource {
     val themeMode: StateFlow<ThemeMode>
     val language: StateFlow<AppLanguage>
     val selectedHouseholdId: StateFlow<String?>
+    val suggestionsCachingEnabled: StateFlow<Boolean>
 
     fun setThemeMode(mode: ThemeMode)
 
     fun setLanguage(language: AppLanguage)
 
     fun setSelectedHouseholdId(householdId: String)
+
+    fun setSuggestionsCachingEnabled(enabled: Boolean)
 }

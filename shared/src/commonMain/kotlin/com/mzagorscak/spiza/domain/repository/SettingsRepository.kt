@@ -11,9 +11,13 @@ interface SettingsRepository {
     /** The household last opened on this device, or null if none was chosen yet. */
     val selectedHouseholdId: Flow<String?>
 
+    val suggestionsCachingEnabled: Flow<Boolean>
+
     suspend fun setThemeMode(mode: ThemeMode)
 
     suspend fun setLanguage(language: AppLanguage)
 
     suspend fun setSelectedHouseholdId(householdId: String)
+
+    suspend fun setSuggestionsCachingEnabled(enabled: Boolean)
 }

@@ -44,6 +44,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_back
+import spiza.shared.generated.resources.ic_right_chevron
 import spiza.shared.generated.resources.settings_copy_key
 import spiza.shared.generated.resources.settings_household_management
 import spiza.shared.generated.resources.settings_key_copied
@@ -127,11 +128,33 @@ fun SettingsScreen(
                 ListingItem(
                     label = stringResource(Res.string.settings_household_management),
                     onClick = callbacks.onHouseholdManagementClick,
+                    trailingContent = {
+                        IconButton(
+                            resource = Res.drawable.ic_right_chevron,
+                            onClick = callbacks.onHouseholdManagementClick,
+                            appearance = IconButtonAppearance(
+                                variant = IconButtonVariant.IconBased,
+                                size = IconButtonSize.Medium,
+                                tintColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                        )
+                    },
                     showDivider = true,
                 )
                 ListingItem(
                     label = stringResource(Res.string.settings_shopping_items_caching),
                     onClick = callbacks.onShoppingItemsCachingClick,
+                    trailingContent = {
+                        IconButton(
+                            resource = Res.drawable.ic_right_chevron,
+                            onClick = callbacks.onShoppingItemsCachingClick,
+                            appearance = IconButtonAppearance(
+                                variant = IconButtonVariant.IconBased,
+                                size = IconButtonSize.Medium,
+                                tintColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                        )
+                    },
                 )
             }
             Button(
