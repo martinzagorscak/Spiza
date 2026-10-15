@@ -58,6 +58,11 @@ interface IosHouseholdBridge {
         itemId: String,
         onComplete: (errorMessage: String?) -> Unit,
     )
+
+    fun clearCheckedItems(
+        householdId: String,
+        onComplete: (errorMessage: String?) -> Unit,
+    )
 }
 
 interface IosListenerHandle {

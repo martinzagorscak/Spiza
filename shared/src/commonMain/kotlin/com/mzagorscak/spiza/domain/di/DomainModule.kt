@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.domain.di
 
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
+import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase
@@ -45,6 +46,7 @@ val domainModule =
         single { SetArticleItemCheckedUseCase(repository = get()) }
         single { MoveArticleItemUseCase(repository = get()) }
         single { DeleteArticleItemUseCase(repository = get()) }
+        single { ClearCheckedItemsUseCase(repository = get()) }
         single { ObserveSelectedHouseholdIdUseCase(repository = get()) }
         single { SetSelectedHouseholdIdUseCase(repository = get()) }
         single { ObserveSuggestionsUseCase(localDataSource = get()) }

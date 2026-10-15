@@ -104,6 +104,8 @@ fun AppNavigation(isSignedIn: Boolean) {
                                 onItemTextChange = viewModel::onItemTextChange,
                                 onItemCheckedChange = viewModel::onItemCheckedChange,
                                 onItemMoved = viewModel::onItemMoved,
+                                onCheckedItemsCollapse = viewModel::onCheckedItemsCollapse,
+                                clearCheckedItems = viewModel::clearCheckedItems,
                                 onWriteErrorShown = viewModel::onWriteErrorShown,
                             )
                         },

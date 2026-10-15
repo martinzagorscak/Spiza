@@ -6,6 +6,7 @@ import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
+import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
@@ -19,6 +20,7 @@ import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import com.mzagorscak.spiza.ui.model.toPresentable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,8 +36,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val LOG_TAG = "Spiza.Household"
+private const val CHECKED_ITEMS_COLLAPSE_DELAY_MS = 300L
 
 private sealed interface Snapshot {
     data object Loading : Snapshot
@@ -48,6 +52,7 @@ private sealed interface Snapshot {
         val households: List<Household>,
         val current: Household,
         val items: List<ArticleItem>,
+        val areCheckedItemsCollapsed: Boolean,
     ) : Snapshot
 }
 
@@ -61,6 +66,7 @@ internal class ShoppingListViewModelImpl(
     private val updateItemText: UpdateArticleItemTextUseCase,
     private val setItemChecked: SetArticleItemCheckedUseCase,
     private val moveItem: MoveArticleItemUseCase,
+    private val clearCheckedItems: ClearCheckedItemsUseCase,
     private val addOrUpdateSuggestion: AddOrUpdateSuggestionUseCase,
     observeSuggestionsSavingEnabled: ObserveSuggestionsSavingEnabledUseCase,
 ) : ShoppingListViewModel() {
@@ -68,6 +74,7 @@ internal class ShoppingListViewModelImpl(
     private val body = MutableStateFlow<ShoppingListState.Body>(ShoppingListState.Body.Loading)
     private val retryTrigger = MutableStateFlow(0)
     private val selectedHouseholdId = observeSelectedHouseholdId()
+    private val areCheckedItemsCollapsedState = MutableStateFlow(false)
     private val isSuggestionsSavingEnabled = observeSuggestionsSavingEnabled()
 
     private var knownHouseholdIds: Set<String>? = null
@@ -131,6 +138,17 @@ internal class ShoppingListViewModelImpl(
         write { moveItem(loaded.current.id, itemId, toIndex, loaded.items) }
     }
 
+    override fun onCheckedItemsCollapse() = areCheckedItemsCollapsedState.update { it.not() }
+
+    override fun clearCheckedItems() {
+        viewModelScope.launch {
+            val loaded = latest ?: return@launch
+            areCheckedItemsCollapsedState.update { true }
+            delay(CHECKED_ITEMS_COLLAPSE_DELAY_MS.milliseconds)
+            clearCheckedItems(householdId = loaded.current.id)
+        }
+    }
+
     override fun onWriteErrorShown() {
         body.update { if (it is ShoppingListState.Body.Content) it.copy(hasWriteError = false) else it }
     }
@@ -155,13 +173,21 @@ internal class ShoppingListViewModelImpl(
             combine(
                 observeHouseholds(),
                 selectedHouseholdId,
-            ) { households, selectedId ->
-                households to (households.firstOrNull { it.id == selectedId } ?: households.firstOrNull())
-            }.flatMapLatest { (households, current) ->
+                areCheckedItemsCollapsedState,
+            ) { households, selectedId, areCheckedItemsCollapsed ->
+                Triple(households, (households.firstOrNull { it.id == selectedId } ?: households.firstOrNull()), areCheckedItemsCollapsed)
+            }.flatMapLatest { (households, current, areCheckedItemsCollapsed) ->
                 if (current == null) {
                     flowOf(Snapshot.NoHousehold)
                 } else {
-                    observeItems(current.id).map { Snapshot.Loaded(households, current, it) }
+                    observeItems(current.id).map {
+                        Snapshot.Loaded(
+                            households = households,
+                            current = current,
+                            items = it,
+                            areCheckedItemsCollapsed = areCheckedItemsCollapsed,
+                        )
+                    }
                 }
             }.onStart<Snapshot> { emit(Snapshot.Loading) }
                 .catch {
@@ -201,6 +227,7 @@ internal class ShoppingListViewModelImpl(
                     ShoppingListState.Body.Content(
                         pendingItems = pending.map { it.toPresentable() },
                         doneItems = done.map { it.toPresentable() },
+                        areCheckedItemsCollapsed = snapshot.areCheckedItemsCollapsed,
                         hasWriteError = previousWriteError,
                     )
             }

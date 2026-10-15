@@ -104,6 +104,26 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         items(householdId).document(itemId).delete(completion: completion(onComplete))
     }
 
+    func clearCheckedItems(householdId: String, onComplete: @escaping (String?) -> Void) {
+        items(householdId)
+            .whereField(HouseholdFields.shared.IS_CHECKED, isEqualTo: true)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    onComplete(error.localizedDescription)
+                    return
+                }
+
+                guard let documents = snapshot?.documents else {
+                    onComplete(nil)
+                    return
+                }
+
+                let batch = Firestore.firestore().batch()
+                documents.forEach { batch.deleteDocument($0.reference) }
+                batch.commit(completion: self.completion(onComplete))
+            }
+    }
+
     private func completion(_ onComplete: @escaping (String?) -> Void) -> (Error?) -> Void {
         { error in onComplete(error?.localizedDescription) }
     }

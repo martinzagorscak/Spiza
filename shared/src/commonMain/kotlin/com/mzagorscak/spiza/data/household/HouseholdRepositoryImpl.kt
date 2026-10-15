@@ -103,6 +103,8 @@ internal class HouseholdRepositoryImpl(
         householdId: String,
         itemId: String,
     ) = dataSource.deleteItem(householdId, itemId)
+
+    override suspend fun clearCheckedItems(householdId: String) = dataSource.clearCheckedItems(householdId)
 }
 
 private fun HouseholdDto.toDomain() =

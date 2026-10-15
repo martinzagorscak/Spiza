@@ -45,4 +45,6 @@ interface HouseholdRepository {
         householdId: String,
         itemId: String,
     )
+
+    suspend fun clearCheckedItems(householdId: String)
 }

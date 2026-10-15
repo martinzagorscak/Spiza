@@ -44,6 +44,8 @@ interface HouseholdDataSource {
         householdId: String,
         itemId: String,
     )
+
+    suspend fun clearCheckedItems(householdId: String)
 }
 
 object HouseholdFields {

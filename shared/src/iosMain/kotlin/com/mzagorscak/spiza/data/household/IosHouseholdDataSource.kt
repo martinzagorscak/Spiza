@@ -78,6 +78,8 @@ class IosHouseholdDataSource(
         itemId: String,
     ) = write { bridge.deleteItem(householdId, itemId, it) }
 
+    override suspend fun clearCheckedItems(householdId: String) = write { bridge.clearCheckedItems(householdId, it) }
+
     private suspend fun write(block: (onComplete: (String?) -> Unit) -> Unit) {
         suspendCancellableCoroutine { continuation ->
             block { error ->

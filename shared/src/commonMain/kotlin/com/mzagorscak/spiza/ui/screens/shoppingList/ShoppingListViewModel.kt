@@ -21,6 +21,7 @@ sealed class ShoppingListState {
         data class Content(
             val pendingItems: List<PresentableArticleItem> = emptyList(),
             val doneItems: List<PresentableArticleItem> = emptyList(),
+            val areCheckedItemsCollapsed: Boolean = false,
             val hasWriteError: Boolean = false,
         ) : Body()
     }
@@ -52,6 +53,10 @@ abstract class ShoppingListViewModel : ViewModel() {
         itemId: String,
         toIndex: Int,
     )
+
+    abstract fun onCheckedItemsCollapse()
+
+    abstract fun clearCheckedItems()
 
     abstract fun onWriteErrorShown()
 }

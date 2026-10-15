@@ -110,6 +110,15 @@ class FirestoreHouseholdDataSource(
     ) {
         items(householdId).document(itemId).delete().await()
     }
+
+    override suspend fun clearCheckedItems(householdId: String) {
+        items(householdId)
+            .whereEqualTo(HouseholdFields.IS_CHECKED, true)
+            .get()
+            .await()
+            .documents
+            .forEach { it.reference.delete() }
+    }
 }
 
 @Suppress("UNCHECKED_CAST")

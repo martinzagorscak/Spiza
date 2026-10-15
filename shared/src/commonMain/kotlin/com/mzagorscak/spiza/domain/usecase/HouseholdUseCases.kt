@@ -100,6 +100,12 @@ class DeleteArticleItemUseCase(
     ) = repository.deleteItem(householdId, itemId)
 }
 
+class ClearCheckedItemsUseCase(
+    private val repository: HouseholdRepository,
+) {
+    suspend operator fun invoke(householdId: String) = repository.clearCheckedItems(householdId)
+}
+
 class ObserveSelectedHouseholdIdUseCase(
     private val repository: SettingsRepository,
 ) {

@@ -33,7 +33,7 @@ import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
-import spiza.shared.generated.resources.ic_dropdown
+import spiza.shared.generated.resources.ic_filled_chevron_down
 import spiza.shared.generated.resources.ic_settings
 import spiza.shared.generated.resources.shopping_list_create_household
 import spiza.shared.generated.resources.shopping_list_default_title
@@ -72,7 +72,7 @@ fun ShoppingListScreen(
 
                     Box {
                         IconButton(
-                            resource = Res.drawable.ic_dropdown,
+                            resource = Res.drawable.ic_filled_chevron_down,
                             onClick = { isDropdownExpanded = true },
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
@@ -183,6 +183,8 @@ data class ShoppingListScreenCallbacks(
     val onItemTextChange: (itemId: String, text: String) -> Unit = { _, _ -> },
     val onItemCheckedChange: (itemId: String, isChecked: Boolean) -> Unit = { _, _ -> },
     val onItemMoved: (itemId: String, toIndex: Int) -> Unit = { _, _ -> },
+    val onCheckedItemsCollapse: () -> Unit = {},
+    val clearCheckedItems: () -> Unit = {},
     val onWriteErrorShown: () -> Unit = {},
 )
 
@@ -204,6 +206,7 @@ private fun ShoppingListScreenPreview() {
                     PresentableArticleItem(id = "2", text = "Eggs", isChecked = false),
                 ),
                 doneItems = listOf(PresentableArticleItem(id = "3", text = "Bread", isChecked = true)),
+                areCheckedItemsCollapsed = false,
             ),
             callbacks = ShoppingListScreenCallbacks(),
         )

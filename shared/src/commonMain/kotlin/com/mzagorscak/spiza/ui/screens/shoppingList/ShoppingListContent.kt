@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,17 +18,25 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import com.mzagorscak.spiza.ui.components.Draggable
 import com.mzagorscak.spiza.ui.components.EditableCheckListItem
 import com.mzagorscak.spiza.ui.components.FallbackState
+import com.mzagorscak.spiza.ui.components.IconButton
+import com.mzagorscak.spiza.ui.components.IconButtonAppearance
+import com.mzagorscak.spiza.ui.components.IconButtonSize
+import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.model.PresentableArticleItem
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.ic_filled_chevron_down
+import spiza.shared.generated.resources.ic_filled_chevron_up
+import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.shopping_list_add_item_placeholder
 import spiza.shared.generated.resources.shopping_list_done_section
 import spiza.shared.generated.resources.shopping_list_empty_description
@@ -65,6 +74,7 @@ fun ShoppingListContent(
             val byId = state.pendingItems.associateBy { it.id }
             optimisticOrder.map { byId.getValue(it) }
         }
+
         else -> state.pendingItems
     }
 
@@ -141,15 +151,47 @@ fun ShoppingListContent(
         }
         if (state.doneItems.isNotEmpty()) {
             item(key = DONE_HEADER_KEY) {
-                Text(
-                    text = stringResource(Res.string.shopping_list_done_section),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(horizontal = padding400, vertical = padding200),
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(padding200)
+                        .padding(top = padding400),
+                ) {
+                    val checkedIconRes =
+                        if (state.areCheckedItemsCollapsed) Res.drawable.ic_filled_chevron_down else Res.drawable.ic_filled_chevron_up
+                    IconButton(
+                        resource = checkedIconRes,
+                        onClick = callbacks.onCheckedItemsCollapse,
+                        appearance = IconButtonAppearance(
+                            variant = IconButtonVariant.IconBased,
+                            size = IconButtonSize.Medium,
+                            tintColor = MaterialTheme.colorScheme.onBackground,
+                        ),
+                    )
+
+                    Text(
+                        text = stringResource(Res.string.shopping_list_done_section),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.weight(1f).padding(horizontal = padding400, vertical = padding200),
+                    )
+
+                    IconButton(
+                        resource = Res.drawable.ic_trash,
+                        onClick = callbacks.clearCheckedItems,
+                        appearance = IconButtonAppearance(
+                            variant = IconButtonVariant.IconBased,
+                            size = IconButtonSize.Medium,
+                            tintColor = MaterialTheme.colorScheme.onBackground,
+                        ),
+                    )
+                }
             }
-            items(state.doneItems, key = { it.id }) { item ->
-                ArticleRow(item = item, callbacks = callbacks, modifier = Modifier.animateItem())
+            if (state.areCheckedItemsCollapsed.not()) {
+                items(state.doneItems, key = { it.id }) { item ->
+                    ArticleRow(item = item, callbacks = callbacks, modifier = Modifier.animateItem())
+                }
             }
         }
     }
