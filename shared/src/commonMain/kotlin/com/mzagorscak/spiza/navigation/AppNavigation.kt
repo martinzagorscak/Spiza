@@ -24,6 +24,9 @@ import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
 import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListScreen
 import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListScreenCallbacks
 import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListViewModel
+import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingViewModel
+import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingsScreen
+import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingsScreenCallbacks
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -68,6 +71,22 @@ fun AppNavigation(isSignedIn: Boolean) {
                         },
                     )
                 }
+                entry<Route.CreateHousehold> {
+                    val viewModel = koinViewModel<CreateHouseholdViewModel>()
+                    val state by viewModel.state().collectAsStateWithLifecycle()
+                    CreateHouseholdScreen(
+                        state = state,
+                        callbacks = remember {
+                            CreateHouseholdCallbacks(
+                                onBackClick = { backStack.popIfTop(Route.CreateHousehold) },
+                                onNameChange = viewModel::onNameChange,
+                                onDescriptionChange = viewModel::onDescriptionChange,
+                                onCreateClick = viewModel::onCreateClicked,
+                                onCreated = { backStack.popIfTop(Route.CreateHousehold) },
+                            )
+                        },
+                    )
+                }
                 entry<Route.ShoppingList> {
                     val viewModel = koinViewModel<ShoppingListViewModel>()
                     val headerState by viewModel.headerState().collectAsStateWithLifecycle()
@@ -90,22 +109,6 @@ fun AppNavigation(isSignedIn: Boolean) {
                         },
                     )
                 }
-                entry<Route.CreateHousehold> {
-                    val viewModel = koinViewModel<CreateHouseholdViewModel>()
-                    val state by viewModel.state().collectAsStateWithLifecycle()
-                    CreateHouseholdScreen(
-                        state = state,
-                        callbacks = remember {
-                            CreateHouseholdCallbacks(
-                                onBackClick = { backStack.popIfTop(Route.CreateHousehold) },
-                                onNameChange = viewModel::onNameChange,
-                                onDescriptionChange = viewModel::onDescriptionChange,
-                                onCreateClick = viewModel::onCreateClicked,
-                                onCreated = { backStack.popIfTop(Route.CreateHousehold) },
-                            )
-                        },
-                    )
-                }
                 entry<Route.Settings> {
                     val viewModel = koinViewModel<SettingsViewModel>()
                     val state by viewModel.state().collectAsStateWithLifecycle()
@@ -117,8 +120,23 @@ fun AppNavigation(isSignedIn: Boolean) {
                                 onThemeModeSelected = viewModel::onThemeModeSelected,
                                 onLanguageSelected = viewModel::onLanguageSelected,
                                 onHouseholdManagementClick = {},
-                                onShoppingItemsCachingClick = {},
+                                onShoppingItemsSavingClick = { backStack.add(Route.SuggestionsSavingSettings) },
                                 onSignOutClick = viewModel::onSignOutClicked,
+                            )
+                        },
+                    )
+                }
+                entry<Route.SuggestionsSavingSettings> {
+                    val viewModel = koinViewModel<SuggestionSavingSettingViewModel>()
+                    val state by viewModel.state().collectAsStateWithLifecycle()
+                    SuggestionSavingSettingsScreen(
+                        state = state,
+                        callbacks = remember {
+                            SuggestionSavingSettingsScreenCallbacks(
+                                onBackClick = { backStack.popIfTop(Route.SuggestionsSavingSettings) },
+                                onToggleSavingEnabled = viewModel::onToggleSavingEnabled,
+                                onSortingTypeChange = viewModel::setSortingType,
+                                onRemoveSuggestion = viewModel::onRemoveSuggestion,
                             )
                         },
                     )

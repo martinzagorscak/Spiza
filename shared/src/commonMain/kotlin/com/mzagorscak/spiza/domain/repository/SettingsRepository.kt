@@ -11,7 +11,7 @@ interface SettingsRepository {
     /** The household last opened on this device, or null if none was chosen yet. */
     val selectedHouseholdId: Flow<String?>
 
-    val suggestionsCachingEnabled: Flow<Boolean>
+    val suggestionsSavingEnabled: Flow<Boolean>
 
     suspend fun setThemeMode(mode: ThemeMode)
 
@@ -19,5 +19,5 @@ interface SettingsRepository {
 
     suspend fun setSelectedHouseholdId(householdId: String)
 
-    suspend fun setSuggestionsCachingEnabled(enabled: Boolean)
+    suspend fun setSuggestionsSavingEnabled(enabled: Boolean)
 }

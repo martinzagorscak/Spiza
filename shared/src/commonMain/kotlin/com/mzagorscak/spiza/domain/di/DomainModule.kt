@@ -11,14 +11,14 @@ import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCase
-import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsCachingEnabledUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
 import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCase
-import com.mzagorscak.spiza.domain.usecase.SetSuggestionsCachingEnabledUseCase
+import com.mzagorscak.spiza.domain.usecase.SetSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.SetThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.SignInUseCase
 import com.mzagorscak.spiza.domain.usecase.SignOutUseCase
@@ -33,8 +33,8 @@ val domainModule =
         single { SetThemeModeUseCase(repository = get()) }
         single { ObserveAppLanguageUseCase(repository = get()) }
         single { SetAppLanguageUseCase(repository = get()) }
-        single { ObserveSuggestionsCachingEnabledUseCase(repository = get()) }
-        single { SetSuggestionsCachingEnabledUseCase(repository = get()) }
+        single { ObserveSuggestionsSavingEnabledUseCase(repository = get()) }
+        single { SetSuggestionsSavingEnabledUseCase(repository = get()) }
         single { SignInUseCase(repository = get()) }
         single { SignOutUseCase(repository = get()) }
         single { ObserveHouseholdsUseCase(repository = get()) }

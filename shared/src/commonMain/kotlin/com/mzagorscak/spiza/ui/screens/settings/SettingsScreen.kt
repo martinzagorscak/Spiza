@@ -54,7 +54,7 @@ import spiza.shared.generated.resources.settings_section_appearance
 import spiza.shared.generated.resources.settings_section_general
 import spiza.shared.generated.resources.settings_section_language
 import spiza.shared.generated.resources.settings_section_profile
-import spiza.shared.generated.resources.settings_shopping_items_caching
+import spiza.shared.generated.resources.settings_shopping_items_saving
 import spiza.shared.generated.resources.settings_sign_out
 import spiza.shared.generated.resources.settings_theme_dark
 import spiza.shared.generated.resources.settings_theme_light
@@ -142,12 +142,12 @@ fun SettingsScreen(
                     showDivider = true,
                 )
                 ListingItem(
-                    label = stringResource(Res.string.settings_shopping_items_caching),
-                    onClick = callbacks.onShoppingItemsCachingClick,
+                    label = stringResource(Res.string.settings_shopping_items_saving),
+                    onClick = callbacks.onShoppingItemsSavingClick,
                     trailingContent = {
                         IconButton(
                             resource = Res.drawable.ic_right_chevron,
-                            onClick = callbacks.onShoppingItemsCachingClick,
+                            onClick = callbacks.onShoppingItemsSavingClick,
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
                                 size = IconButtonSize.Medium,
@@ -267,7 +267,7 @@ data class SettingsScreenCallbacks(
     val onThemeModeSelected: (ThemeMode) -> Unit = {},
     val onLanguageSelected: (AppLanguage) -> Unit = {},
     val onHouseholdManagementClick: () -> Unit = {},
-    val onShoppingItemsCachingClick: () -> Unit = {},
+    val onShoppingItemsSavingClick: () -> Unit = {},
     val onSignOutClick: () -> Unit = {},
 )
 

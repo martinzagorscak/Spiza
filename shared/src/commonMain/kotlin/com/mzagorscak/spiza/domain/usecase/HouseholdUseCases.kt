@@ -42,6 +42,7 @@ class AddArticleItemUseCase(
     ) {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return
+        if (currentItems.map { it.text }.contains(trimmed)) return
         val pending = currentItems.filterNot { it.isChecked }
         repository.addItem(householdId, trimmed, ArticleItemOrdering.appendPosition(pending))
     }

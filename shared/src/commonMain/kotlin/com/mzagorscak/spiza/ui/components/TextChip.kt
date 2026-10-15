@@ -27,7 +27,7 @@ private const val SINGLE_LINE_COUNT = 1
 @Composable
 fun TextChip(
     text: String,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -36,9 +36,11 @@ fun TextChip(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .clip(roundedShape400)
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable(onClick = onClick)
-            .padding(padding100),
+            .background(MaterialTheme.colorScheme.primary)
+            .clickable(
+                enabled = onClick != null,
+                onClick = onClick ?: {},
+            ).padding(padding100),
     ) {
         leadingContent?.let {
             it()
@@ -46,10 +48,10 @@ fun TextChip(
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = MaterialTheme.colorScheme.onPrimary,
             maxLines = SINGLE_LINE_COUNT,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(
+            modifier = Modifier.weight(1f).padding(
                 horizontal = padding100,
                 vertical = padding100,
             ),

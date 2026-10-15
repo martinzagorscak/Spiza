@@ -14,7 +14,16 @@
     <string name="settings_language_croatian">Croatian</string>
     <string name="settings_section_general">General</string>
     <string name="settings_household_management">Household management</string>
-    <string name="settings_shopping_items_caching">Shopping items caching</string>
+    <string name="settings_shopping_items_saving">Shopping items saving</string>
+    <string name="settings_shopping_items_saving_sorting_label">Sorted by:</string>
+    <string name="settings_shopping_items_saving_sorting_alphabetical_asc">Alphabetical ascending</string>
+    <string name="settings_shopping_items_saving_sorting_alphabetical_desc">Alphabetical descending</string>
+    <string name="settings_shopping_items_saving_sorting_last_used_asc">Least recently used</string>
+    <string name="settings_shopping_items_saving_sorting_last_used_desc">Most recently used</string>
+    <string name="settings_shopping_items_saving_sorting_most_used_asc">Least times used</string>
+    <string name="settings_shopping_items_saving_sorting_most_used_desc">Most times used</string>
+    <string name="settings_shopping_items_saving_empty_state_title">No suggestions saved</string>
+    <string name="settings_shopping_items_saving_empty_state_description">Suggestions will be saved when you add items to your shopping list while saving option enabled.</string>
     <string name="settings_sign_out">Sign out</string>
     <string name="login_sign_in_with_google">Sign in with Google</string>
     <string name="shopping_list_default_title">Household</string>

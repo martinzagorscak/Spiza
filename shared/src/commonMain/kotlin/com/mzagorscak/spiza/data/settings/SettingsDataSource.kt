@@ -8,7 +8,7 @@ interface SettingsDataSource {
     val themeMode: StateFlow<ThemeMode>
     val language: StateFlow<AppLanguage>
     val selectedHouseholdId: StateFlow<String?>
-    val suggestionsCachingEnabled: StateFlow<Boolean>
+    val suggestionsSavingEnabled: StateFlow<Boolean>
 
     fun setThemeMode(mode: ThemeMode)
 
@@ -16,5 +16,5 @@ interface SettingsDataSource {
 
     fun setSelectedHouseholdId(householdId: String)
 
-    fun setSuggestionsCachingEnabled(enabled: Boolean)
+    fun setSuggestionsSavingEnabled(enabled: Boolean)
 }

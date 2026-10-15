@@ -10,6 +10,8 @@ import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModelImpl
 import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListViewModel
 import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListViewModelImpl
+import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingViewModel
+import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingViewModelImpl
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -23,6 +25,7 @@ val viewModelModule = module {
         )
     }
     viewModel<LoginViewModel> { LoginViewModelImpl(signIn = get()) }
+    viewModel<CreateHouseholdViewModel> { CreateHouseholdViewModelImpl(createHousehold = get()) }
     viewModel<ShoppingListViewModel> {
         ShoppingListViewModelImpl(
             observeHouseholds = get(),
@@ -34,9 +37,10 @@ val viewModelModule = module {
             updateItemText = get(),
             setItemChecked = get(),
             moveItem = get(),
+            addOrUpdateSuggestion = get(),
+            observeSuggestionsSavingEnabled = get(),
         )
     }
-    viewModel<CreateHouseholdViewModel> { CreateHouseholdViewModelImpl(createHousehold = get()) }
     viewModel<SettingsViewModel> {
         SettingsViewModelImpl(
             observeUserProfile = get(),
@@ -45,6 +49,14 @@ val viewModelModule = module {
             setThemeMode = get(),
             setAppLanguage = get(),
             signOut = get(),
+        )
+    }
+    viewModel<SuggestionSavingSettingViewModel> {
+        SuggestionSavingSettingViewModelImpl(
+            observeSuggestionsSavingEnabled = get(),
+            observeSuggestions = get(),
+            setSuggestionsSavingEnabled = get(),
+            deleteSuggestionUseCase = get(),
         )
     }
 }

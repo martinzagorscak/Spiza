@@ -11,7 +11,7 @@ internal class SettingsRepositoryImpl(
     override val themeMode: Flow<ThemeMode> = dataSource.themeMode
     override val language: Flow<AppLanguage> = dataSource.language
     override val selectedHouseholdId: Flow<String?> = dataSource.selectedHouseholdId
-    override val suggestionsCachingEnabled: Flow<Boolean> = dataSource.suggestionsCachingEnabled
+    override val suggestionsSavingEnabled: Flow<Boolean> = dataSource.suggestionsSavingEnabled
 
     override suspend fun setThemeMode(mode: ThemeMode) = dataSource.setThemeMode(mode)
 
@@ -19,5 +19,5 @@ internal class SettingsRepositoryImpl(
 
     override suspend fun setSelectedHouseholdId(householdId: String) = dataSource.setSelectedHouseholdId(householdId)
 
-    override suspend fun setSuggestionsCachingEnabled(enabled: Boolean) = dataSource.setSuggestionsCachingEnabled(enabled)
+    override suspend fun setSuggestionsSavingEnabled(enabled: Boolean) = dataSource.setSuggestionsSavingEnabled(enabled)
 }

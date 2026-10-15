@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.Flow
 interface SuggestionDao {
     // read
 
-    @Query("SELECT * FROM item_suggestions ORDER BY last_used_at DESC")
+    @Query("SELECT * FROM item_suggestions ORDER BY lastUsedAt DESC")
     fun getAllLastUsedDesc(): Flow<List<SuggestionEntity>>
 
-    @Query("SELECT * FROM item_suggestions ORDER BY last_used_at ASC")
+    @Query("SELECT * FROM item_suggestions ORDER BY lastUsedAt ASC")
     fun getAllLastUsedAsc(): Flow<List<SuggestionEntity>>
 
     @Query("SELECT * FROM item_suggestions ORDER BY name COLLATE NOCASE ASC")
@@ -25,10 +25,10 @@ interface SuggestionDao {
     @Query("SELECT * FROM item_suggestions ORDER BY name COLLATE NOCASE DESC")
     fun getAllAlphabeticalDesc(): Flow<List<SuggestionEntity>>
 
-    @Query("SELECT * FROM item_suggestions ORDER BY use_count DESC, last_used_at DESC")
+    @Query("SELECT * FROM item_suggestions ORDER BY useCount DESC, lastUsedAt DESC")
     fun getAllMostUsedDesc(): Flow<List<SuggestionEntity>>
 
-    @Query("SELECT * FROM item_suggestions ORDER BY use_count ASC, last_used_at ASC")
+    @Query("SELECT * FROM item_suggestions ORDER BY useCount ASC, lastUsedAt ASC")
     fun getAllMostUsedAsc(): Flow<List<SuggestionEntity>>
 
     fun getAll(sortingType: SuggestionSortingType): Flow<List<SuggestionEntity>> =
@@ -41,7 +41,7 @@ interface SuggestionDao {
             SuggestionSortingType.MOST_USED_ASC -> getAllMostUsedAsc()
         }
 
-    @Query("SELECT * FROM item_suggestions WHERE normalized_name = :normalizedName LIMIT 1")
+    @Query("SELECT * FROM item_suggestions WHERE normalizedName = :normalizedName LIMIT 1")
     suspend fun getByNormalizedName(normalizedName: String): SuggestionEntity?
 
     // write

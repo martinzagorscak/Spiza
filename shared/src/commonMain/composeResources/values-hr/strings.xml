@@ -14,7 +14,16 @@
     <string name="settings_language_croatian">Hrvatski</string>
     <string name="settings_section_general">Općenito</string>
     <string name="settings_household_management">Upravljanje kućanstvom</string>
-    <string name="settings_shopping_items_caching">Spremanje artikala za kupnju</string>
+    <string name="settings_shopping_items_saving">Spremanje artikala za kupnju</string>
+    <string name="settings_shopping_items_saving_sorting_label">Sortirano po:</string>
+    <string name="settings_shopping_items_saving_sorting_alphabetical_asc">Abecedno uzlazno</string>
+    <string name="settings_shopping_items_saving_sorting_alphabetical_desc">Abecedno silazno</string>
+    <string name="settings_shopping_items_saving_sorting_last_used_asc">Najstarije korišteno</string>
+    <string name="settings_shopping_items_saving_sorting_last_used_desc">Najnovije korišteno</string>
+    <string name="settings_shopping_items_saving_sorting_most_used_asc">Najmanje korišteno</string>
+    <string name="settings_shopping_items_saving_sorting_most_used_desc">Najčešće korišteno</string>
+    <string name="settings_shopping_items_saving_empty_state_title">Nema spremljenih prijedloga</string>
+    <string name="settings_shopping_items_saving_empty_state_description">Prijedlozi će biti spremljeni kada dodaš artikle na svoj popis za kupnju dok je opcija spremanja omogućena.</string>
     <string name="settings_sign_out">Odjava</string>
     <string name="login_sign_in_with_google">Prijava putem Googlea</string>
     <string name="shopping_list_default_title">Kućanstvo</string>

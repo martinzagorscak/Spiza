@@ -5,11 +5,13 @@ import co.touchlab.kermit.Logger
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
+import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
 import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
@@ -58,11 +61,14 @@ internal class ShoppingListViewModelImpl(
     private val updateItemText: UpdateArticleItemTextUseCase,
     private val setItemChecked: SetArticleItemCheckedUseCase,
     private val moveItem: MoveArticleItemUseCase,
+    private val addOrUpdateSuggestion: AddOrUpdateSuggestionUseCase,
+    observeSuggestionsSavingEnabled: ObserveSuggestionsSavingEnabledUseCase,
 ) : ShoppingListViewModel() {
     private val header = MutableStateFlow(ShoppingListState.Header())
     private val body = MutableStateFlow<ShoppingListState.Body>(ShoppingListState.Body.Loading)
     private val retryTrigger = MutableStateFlow(0)
     private val selectedHouseholdId = observeSelectedHouseholdId()
+    private val isSuggestionsSavingEnabled = observeSuggestionsSavingEnabled()
 
     private var knownHouseholdIds: Set<String>? = null
     private var latest: Snapshot.Loaded? = null
@@ -93,7 +99,12 @@ internal class ShoppingListViewModelImpl(
 
     override fun onAddItem(text: String) {
         val loaded = latest ?: return
-        write { addItem(loaded.current.id, text, loaded.items) }
+        write {
+            addItem(loaded.current.id, text, loaded.items)
+            if (isSuggestionsSavingEnabled.first()) {
+                addOrUpdateSuggestion(name = text)
+            }
+        }
     }
 
     override fun onItemTextChange(
