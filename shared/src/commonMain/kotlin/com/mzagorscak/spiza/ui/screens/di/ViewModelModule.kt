@@ -40,6 +40,7 @@ val viewModelModule = module {
             addOrUpdateSuggestion = get(),
             clearCheckedItems = get(),
             observeSuggestionsSavingEnabled = get(),
+            observeSuggestions = get(),
         )
     }
     viewModel<SettingsViewModel> {

@@ -3,6 +3,7 @@ package com.mzagorscak.spiza.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -11,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,11 +25,14 @@ import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_plus
 
 private const val SINGLE_LINE_COUNT = 1
+private const val ENABLED_ALPHA = 1f
+private const val DISABLED_ALPHA = 0.5f
 
 @Composable
 fun TextChip(
     text: String,
     onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -38,9 +43,10 @@ fun TextChip(
             .clip(roundedShape400)
             .background(MaterialTheme.colorScheme.primary)
             .clickable(
-                enabled = onClick != null,
+                enabled = onClick != null && enabled,
                 onClick = onClick ?: {},
-            ).padding(padding100),
+            ).padding(padding100)
+            .alpha(if (enabled.not()) DISABLED_ALPHA else ENABLED_ALPHA),
     ) {
         leadingContent?.let {
             it()
@@ -64,9 +70,9 @@ fun TextChip(
 
 @Composable
 private fun TextChipLayoutPreview() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(padding200),
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(padding200),
         modifier = Modifier.padding(padding200),
     ) {
         TextChip(

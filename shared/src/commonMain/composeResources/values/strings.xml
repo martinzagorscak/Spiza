@@ -39,6 +39,7 @@
     <string name="shopping_list_add_item_placeholder">Add item</string>
     <string name="shopping_list_done_section">Done</string>
     <string name="shopping_list_write_error">Couldn't save your change</string>
+    <string name="shopping_list_suggestions_title">Suggestions</string>
     <string name="create_household_title">New household</string>
     <string name="create_household_name_label">Name</string>
     <string name="create_household_description_label">Description</string>

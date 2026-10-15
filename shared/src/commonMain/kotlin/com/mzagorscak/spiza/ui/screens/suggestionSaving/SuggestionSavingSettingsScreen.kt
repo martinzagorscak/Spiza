@@ -40,6 +40,7 @@ import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
+import com.mzagorscak.spiza.ui.theme.padding600
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_back
@@ -116,8 +117,8 @@ fun SuggestionSavingSettingsScreen(
                     sortingType = state.sortingType,
                     onItemClick = callbacks.onSortingTypeChange,
                     modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(bottom = padding200),
+                        .align(Alignment.Start)
+                        .padding(bottom = padding600),
                 )
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(count = GRID_COLUMNS),

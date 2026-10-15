@@ -1,23 +1,37 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
@@ -26,14 +40,22 @@ import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.LoadingIndicator
 import com.mzagorscak.spiza.ui.components.LoadingIndicatorSize
+import com.mzagorscak.spiza.ui.components.TextChip
 import com.mzagorscak.spiza.ui.components.TopBar
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.model.PresentableArticleItem
+import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
 import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
+import com.mzagorscak.spiza.ui.theme.padding100
+import com.mzagorscak.spiza.ui.theme.padding200
+import com.mzagorscak.spiza.ui.theme.padding600
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.ic_close
 import spiza.shared.generated.resources.ic_filled_chevron_down
+import spiza.shared.generated.resources.ic_plus
 import spiza.shared.generated.resources.ic_settings
 import spiza.shared.generated.resources.shopping_list_create_household
 import spiza.shared.generated.resources.shopping_list_default_title
@@ -42,9 +64,11 @@ import spiza.shared.generated.resources.shopping_list_loading_error_title
 import spiza.shared.generated.resources.shopping_list_no_household_description
 import spiza.shared.generated.resources.shopping_list_no_household_title
 import spiza.shared.generated.resources.shopping_list_retry
+import spiza.shared.generated.resources.shopping_list_suggestions_title
 import spiza.shared.generated.resources.shopping_list_write_error
 
 private const val ERROR_LOTTIE_PATH = "files/lottie_error.json"
+private const val OPEN_DRAWER_FRACTION = 0.75f
 
 @Composable
 fun ShoppingListScreen(
@@ -53,6 +77,8 @@ fun ShoppingListScreen(
     callbacks: ShoppingListScreenCallbacks,
     modifier: Modifier = Modifier,
 ) {
+    val scope = rememberCoroutineScope()
+    val suggestionsDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val snackbarHostState = remember { SnackbarHostState() }
     val writeErrorMessage = stringResource(Res.string.shopping_list_write_error)
     val hasWriteError = (bodyState as? ShoppingListState.Body.Content)?.hasWriteError == true
@@ -63,110 +89,216 @@ fun ShoppingListScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopBar(
-                title = headerState.currentHouseholdName ?: stringResource(Res.string.shopping_list_default_title),
-                leadingContent = {
-                    var isDropdownExpanded by remember { mutableStateOf(false) }
-
-                    Box {
-                        IconButton(
-                            resource = Res.drawable.ic_filled_chevron_down,
-                            onClick = { isDropdownExpanded = true },
-                            appearance = IconButtonAppearance(
-                                variant = IconButtonVariant.IconBased,
-                                size = IconButtonSize.Medium,
-                                tintColor = MaterialTheme.colorScheme.onPrimary,
-                            ),
-                        )
-                        DropdownMenu(
-                            expanded = isDropdownExpanded,
-                            onDismissRequest = { isDropdownExpanded = false },
-                        ) {
-                            headerState.otherHouseholds.forEach { household ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = household.name,
-                                            style = MaterialTheme.typography.labelMedium,
-                                        )
-                                    },
-                                    onClick = {
-                                        isDropdownExpanded = false
-                                        callbacks.onOtherHouseholdClick(household.id)
-                                    },
-                                )
-                            }
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = stringResource(Res.string.shopping_list_create_household),
-                                        style = MaterialTheme.typography.labelMedium,
-                                    )
-                                },
-                                onClick = {
-                                    isDropdownExpanded = false
-                                    callbacks.onCreateHouseholdClick()
-                                },
-                            )
-                        }
-                    }
-                },
-                trailingContent = {
-                    IconButton(
-                        resource = Res.drawable.ic_settings,
-                        onClick = callbacks.onSettingsClick,
-                        appearance = IconButtonAppearance(
-                            variant = IconButtonVariant.IconBased,
-                            size = IconButtonSize.Medium,
-                            tintColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                    )
-                },
+    ModalNavigationDrawer(
+        drawerState = suggestionsDrawerState,
+        drawerContent = {
+            ShoppingListSuggestionsDrawer(
+                suggestions = (bodyState as? ShoppingListState.Body.Content)?.suggestions ?: emptyList(),
+                onAddItem = { text -> callbacks.onAddItem(text) },
+                onClose = { scope.launch { suggestionsDrawerState.close() } },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier.fillMaxSize(),
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            when (bodyState) {
-                ShoppingListState.Body.Loading -> {
-                    LoadingIndicator(
-                        size = LoadingIndicatorSize.Large,
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
-
-                ShoppingListState.Body.Error -> {
-                    FallbackState(
-                        title = stringResource(Res.string.shopping_list_loading_error_title),
-                        description = stringResource(Res.string.shopping_list_loading_error_description),
-                        lottiePath = ERROR_LOTTIE_PATH,
-                        cta = CTA(
-                            label = stringResource(Res.string.shopping_list_retry),
-                            onClick = callbacks.onRetryClick,
+    ) {
+        Scaffold(
+            topBar = {
+                ShoppingListScreenTopBar(
+                    headerState = headerState,
+                    callbacks = callbacks,
+                )
+            },
+            floatingActionButton = {
+                if (bodyState as? ShoppingListState.Body.Content != null && bodyState.suggestions.isNotEmpty()) {
+                    IconButton(
+                        resource = Res.drawable.ic_plus,
+                        onClick = {
+                            scope.launch {
+                                suggestionsDrawerState.open()
+                            }
+                        },
+                        appearance = IconButtonAppearance(
+                            variant = IconButtonVariant.IconBased,
+                            size = IconButtonSize.Large,
+                            tintColor = MaterialTheme.colorScheme.primary,
                         ),
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface),
                     )
                 }
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            modifier = modifier.fillMaxSize(),
+        ) { paddingValues ->
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                when (bodyState) {
+                    ShoppingListState.Body.Loading -> {
+                        LoadingIndicator(
+                            size = LoadingIndicatorSize.Large,
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
 
-                ShoppingListState.Body.NoHousehold -> {
-                    FallbackState(
-                        title = stringResource(Res.string.shopping_list_no_household_title),
-                        description = stringResource(Res.string.shopping_list_no_household_description),
-                        cta = CTA(
-                            label = stringResource(Res.string.shopping_list_create_household),
-                            onClick = callbacks.onCreateHouseholdClick,
-                        ),
-                        modifier = Modifier.align(Alignment.Center),
+                    ShoppingListState.Body.Error -> {
+                        FallbackState(
+                            title = stringResource(Res.string.shopping_list_loading_error_title),
+                            description = stringResource(Res.string.shopping_list_loading_error_description),
+                            lottiePath = ERROR_LOTTIE_PATH,
+                            cta = CTA(
+                                label = stringResource(Res.string.shopping_list_retry),
+                                onClick = callbacks.onRetryClick,
+                            ),
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
+
+                    ShoppingListState.Body.NoHousehold -> {
+                        FallbackState(
+                            title = stringResource(Res.string.shopping_list_no_household_title),
+                            description = stringResource(Res.string.shopping_list_no_household_description),
+                            cta = CTA(
+                                label = stringResource(Res.string.shopping_list_create_household),
+                                onClick = callbacks.onCreateHouseholdClick,
+                            ),
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
+
+                    is ShoppingListState.Body.Content -> {
+                        ShoppingListContent(
+                            state = bodyState,
+                            callbacks = callbacks,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShoppingListScreenTopBar(
+    headerState: ShoppingListState.Header,
+    callbacks: ShoppingListScreenCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    TopBar(
+        title = headerState.currentHouseholdName ?: stringResource(Res.string.shopping_list_default_title),
+        leadingContent = {
+            var isDropdownExpanded by remember { mutableStateOf(false) }
+
+            Box {
+                IconButton(
+                    resource = Res.drawable.ic_filled_chevron_down,
+                    onClick = { isDropdownExpanded = true },
+                    appearance = IconButtonAppearance(
+                        variant = IconButtonVariant.IconBased,
+                        size = IconButtonSize.Medium,
+                        tintColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                )
+                DropdownMenu(
+                    expanded = isDropdownExpanded,
+                    onDismissRequest = { isDropdownExpanded = false },
+                ) {
+                    headerState.otherHouseholds.forEach { household ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = household.name,
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            },
+                            onClick = {
+                                isDropdownExpanded = false
+                                callbacks.onOtherHouseholdClick(household.id)
+                            },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(Res.string.shopping_list_create_household),
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        },
+                        onClick = {
+                            isDropdownExpanded = false
+                            callbacks.onCreateHouseholdClick()
+                        },
                     )
                 }
+            }
+        },
+        trailingContent = {
+            IconButton(
+                resource = Res.drawable.ic_settings,
+                onClick = callbacks.onSettingsClick,
+                appearance = IconButtonAppearance(
+                    variant = IconButtonVariant.IconBased,
+                    size = IconButtonSize.Medium,
+                    tintColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            )
+        },
+        modifier = modifier,
+    )
+}
 
-                is ShoppingListState.Body.Content -> {
-                    ShoppingListContent(
-                        state = bodyState,
-                        callbacks = callbacks,
+@Composable
+private fun ShoppingListSuggestionsDrawer(
+    suggestions: List<PresentableShoppingItemSuggestion>,
+    onAddItem: (String) -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ModalDrawerSheet(
+        drawerContainerColor = MaterialTheme.colorScheme.background,
+        modifier = modifier.fillMaxWidth(fraction = OPEN_DRAWER_FRACTION),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(padding600),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(padding200),
+            ) {
+                IconButton(
+                    resource = Res.drawable.ic_close,
+                    onClick = onClose,
+                    appearance = IconButtonAppearance(
+                        variant = IconButtonVariant.IconBased,
+                        size = IconButtonSize.Medium,
+                        tintColor = MaterialTheme.colorScheme.onBackground,
+                    ),
+                )
+                Text(
+                    text = stringResource(Res.string.shopping_list_suggestions_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f).padding(padding200),
+                )
+            }
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(padding100),
+                horizontalAlignment = Alignment.Start,
+                modifier = modifier.fillMaxWidth(),
+            ) {
+                items(suggestions) { suggestion ->
+                    TextChip(
+                        text = suggestion.name,
+                        onClick = { onAddItem(suggestion.name) },
+                        enabled = suggestion.isEnabled,
+                        trailingContent = {
+                            IconButton(
+                                resource = Res.drawable.ic_plus,
+                                onClick = { onAddItem(suggestion.name) },
+                                isEnabled = suggestion.isEnabled,
+                                appearance = IconButtonAppearance(
+                                    variant = IconButtonVariant.IconBased,
+                                    size = IconButtonSize.Small,
+                                    tintColor = MaterialTheme.colorScheme.onPrimary,
+                                ),
+                            )
+                        },
                     )
                 }
             }

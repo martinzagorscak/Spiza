@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.ui.screens.shoppingList
 
 import androidx.lifecycle.ViewModel
 import com.mzagorscak.spiza.ui.model.PresentableArticleItem
+import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
 import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import kotlinx.coroutines.flow.StateFlow
 
@@ -21,6 +22,7 @@ sealed class ShoppingListState {
         data class Content(
             val pendingItems: List<PresentableArticleItem> = emptyList(),
             val doneItems: List<PresentableArticleItem> = emptyList(),
+            val suggestions: List<PresentableShoppingItemSuggestion> = emptyList(),
             val areCheckedItemsCollapsed: Boolean = false,
             val hasWriteError: Boolean = false,
         ) : Body()

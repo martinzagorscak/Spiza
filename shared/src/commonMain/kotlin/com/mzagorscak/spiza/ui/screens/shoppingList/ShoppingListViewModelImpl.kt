@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
+import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
@@ -13,6 +14,7 @@ import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
 import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
@@ -23,6 +25,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -34,6 +37,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -69,6 +73,7 @@ internal class ShoppingListViewModelImpl(
     private val clearCheckedItems: ClearCheckedItemsUseCase,
     private val addOrUpdateSuggestion: AddOrUpdateSuggestionUseCase,
     observeSuggestionsSavingEnabled: ObserveSuggestionsSavingEnabledUseCase,
+    observeSuggestions: ObserveSuggestionsUseCase,
 ) : ShoppingListViewModel() {
     private val header = MutableStateFlow(ShoppingListState.Header())
     private val body = MutableStateFlow<ShoppingListState.Body>(ShoppingListState.Body.Loading)
@@ -76,13 +81,22 @@ internal class ShoppingListViewModelImpl(
     private val selectedHouseholdId = observeSelectedHouseholdId()
     private val areCheckedItemsCollapsedState = MutableStateFlow(false)
     private val isSuggestionsSavingEnabled = observeSuggestionsSavingEnabled()
+    private val suggestions = observeSuggestions()
+        .stateIn(
+            scope = viewModelScope,
+            started = WhileSubscribed(5000),
+            initialValue = emptyList(),
+        )
 
     private var knownHouseholdIds: Set<String>? = null
     private var latest: Snapshot.Loaded? = null
 
     init {
-        observeSnapshots()
-            .onEach(::render)
+        combine(
+            observeSnapshots(),
+            suggestions,
+        ) { snapshot, suggestions -> snapshot to suggestions }
+            .onEach { (snapshot, suggestions) -> render(snapshot, suggestions) }
             .launchIn(viewModelScope)
     }
 
@@ -196,7 +210,10 @@ internal class ShoppingListViewModelImpl(
                 }
         }
 
-    private fun render(snapshot: Snapshot) {
+    private fun render(
+        snapshot: Snapshot,
+        suggestions: List<ShoppingItemSuggestion>,
+    ) {
         latest = snapshot as? Snapshot.Loaded
         when (snapshot) {
             Snapshot.Loading -> body.value = ShoppingListState.Body.Loading
@@ -223,10 +240,17 @@ internal class ShoppingListViewModelImpl(
                     )
                 val (done, pending) = snapshot.items.partition { it.isChecked }
                 val previousWriteError = (body.value as? ShoppingListState.Body.Content)?.hasWriteError ?: false
+                val pendingItems = pending.map { it.toPresentable() }
+                val doneItems = done.map { it.toPresentable() }
                 body.value =
                     ShoppingListState.Body.Content(
-                        pendingItems = pending.map { it.toPresentable() },
-                        doneItems = done.map { it.toPresentable() },
+                        pendingItems = pendingItems,
+                        doneItems = doneItems,
+                        suggestions = suggestions.map {
+                            val pendingItemsContain = pendingItems.map { it.text }.contains(it.name)
+                            val doneItemsContain = doneItems.map { it.text }.contains(it.name)
+                            it.toPresentable(isEnabled = pendingItemsContain.not() && doneItemsContain.not())
+                        },
                         areCheckedItemsCollapsed = snapshot.areCheckedItemsCollapsed,
                         hasWriteError = previousWriteError,
                     )

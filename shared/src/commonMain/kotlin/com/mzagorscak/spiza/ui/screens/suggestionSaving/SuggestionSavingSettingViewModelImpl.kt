@@ -2,12 +2,11 @@ package com.mzagorscak.spiza.ui.screens.suggestionSaving
 
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
-import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.SetSuggestionsSavingEnabledUseCase
-import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
+import com.mzagorscak.spiza.ui.model.toPresentable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,11 +64,3 @@ internal class SuggestionSavingSettingViewModelImpl(
         }
     }
 }
-
-private fun List<ShoppingItemSuggestion>.toPresentable(): List<PresentableShoppingItemSuggestion> = map { it.toPresentable() }
-
-private fun ShoppingItemSuggestion.toPresentable(): PresentableShoppingItemSuggestion =
-    PresentableShoppingItemSuggestion(
-        id = id,
-        name = name,
-    )
