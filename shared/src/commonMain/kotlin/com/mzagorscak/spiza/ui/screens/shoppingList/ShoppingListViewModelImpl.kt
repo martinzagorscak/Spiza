@@ -26,7 +26,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -37,12 +36,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val LOG_TAG = "Spiza.Household"
+private const val INITIAL_COUNT = 0
 private const val CHECKED_ITEMS_COLLAPSE_DELAY_MS = 300L
 
 private sealed interface Snapshot {
@@ -77,17 +76,11 @@ internal class ShoppingListViewModelImpl(
 ) : ShoppingListViewModel() {
     private val header = MutableStateFlow(ShoppingListState.Header())
     private val body = MutableStateFlow<ShoppingListState.Body>(ShoppingListState.Body.Loading)
-    private val retryTrigger = MutableStateFlow(0)
+    private val retryTrigger = MutableStateFlow(INITIAL_COUNT)
     private val selectedHouseholdId = observeSelectedHouseholdId()
     private val areCheckedItemsCollapsedState = MutableStateFlow(false)
     private val dialogStatePublisher = MutableStateFlow(ShoppingListState.DialogState.Hidden)
     private val isSuggestionsSavingEnabled = observeSuggestionsSavingEnabled()
-    private val suggestions = observeSuggestions()
-        .stateIn(
-            scope = viewModelScope,
-            started = WhileSubscribed(5000),
-            initialValue = emptyList(),
-        )
 
     private var knownHouseholdIds: Set<String>? = null
     private var latest: Snapshot.Loaded? = null
@@ -97,7 +90,7 @@ internal class ShoppingListViewModelImpl(
             observeSnapshots(),
             areCheckedItemsCollapsedState,
             dialogStatePublisher,
-            suggestions,
+            observeSuggestions(),
         ) { snapshot, areCheckedItemsCollapsed, dialogState, suggestions ->
             render(
                 snapshot,
