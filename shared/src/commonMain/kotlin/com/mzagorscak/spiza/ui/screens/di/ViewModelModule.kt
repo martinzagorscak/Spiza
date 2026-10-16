@@ -37,6 +37,7 @@ val viewModelModule = module {
             updateItemText = get(),
             setItemChecked = get(),
             moveItem = get(),
+            deleteItem = get(),
             addOrUpdateSuggestion = get(),
             clearCheckedItems = get(),
             observeSuggestionsSavingEnabled = get(),

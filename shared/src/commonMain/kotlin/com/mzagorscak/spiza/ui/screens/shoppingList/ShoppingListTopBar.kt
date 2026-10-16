@@ -101,11 +101,7 @@ private fun ShoppingListTopBarLayoutPreview() {
             currentHouseholdName = "My Household",
             otherHouseholds = emptyList(),
         ),
-        callbacks = ShoppingListScreenCallbacks(
-            onOtherHouseholdClick = {},
-            onCreateHouseholdClick = {},
-            onSettingsClick = {},
-        ),
+        callbacks = ShoppingListScreenCallbacks {},
     )
 }
 

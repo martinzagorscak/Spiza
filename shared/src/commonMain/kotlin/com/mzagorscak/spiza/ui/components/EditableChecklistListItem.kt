@@ -33,6 +33,7 @@ fun EditableCheckListItem(
     checked: Boolean,
     onTextChange: (String) -> Unit,
     onCheckedChange: (Boolean) -> Unit,
+    onDelete: () -> Unit,
     placeholder: String = stringResource(Res.string.checklist_item_placeholder),
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     onKeyboardAction: KeyboardActions = KeyboardActions.Default,
@@ -59,10 +60,7 @@ fun EditableCheckListItem(
                             variant = IconButtonVariant.IconBased,
                             size = IconButtonSize.Small,
                         ),
-                        onClick = {
-                            onTextChange(EMPTY)
-                            onCheckedChange(false)
-                        },
+                        onClick = onDelete,
                     )
                 }
             },
@@ -90,6 +88,7 @@ private fun EditableCheckListItemLayoutPreview() {
             checked = checked,
             onTextChange = { text = it },
             onCheckedChange = { checked = it },
+            onDelete = {},
         )
     }
 }

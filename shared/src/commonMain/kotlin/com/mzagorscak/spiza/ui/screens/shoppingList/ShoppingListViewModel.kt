@@ -62,6 +62,8 @@ abstract class ShoppingListViewModel : ViewModel() {
         toIndex: Int,
     )
 
+    abstract fun onItemDelete(itemId: String)
+
     abstract fun onCheckedItemsCollapse()
 
     abstract fun showClearCheckedItemsConfirmationDialog()

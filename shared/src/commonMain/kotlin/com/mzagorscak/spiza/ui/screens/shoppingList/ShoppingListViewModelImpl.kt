@@ -8,6 +8,7 @@ import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
+import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
@@ -68,6 +69,7 @@ internal class ShoppingListViewModelImpl(
     private val updateItemText: UpdateArticleItemTextUseCase,
     private val setItemChecked: SetArticleItemCheckedUseCase,
     private val moveItem: MoveArticleItemUseCase,
+    private val deleteItem: DeleteArticleItemUseCase,
     private val clearCheckedItems: ClearCheckedItemsUseCase,
     private val addOrUpdateSuggestion: AddOrUpdateSuggestionUseCase,
     observeSuggestionsSavingEnabled: ObserveSuggestionsSavingEnabledUseCase,
@@ -156,6 +158,11 @@ internal class ShoppingListViewModelImpl(
     ) {
         val loaded = latest ?: return
         write { moveItem(loaded.current.id, itemId, toIndex, loaded.items) }
+    }
+
+    override fun onItemDelete(itemId: String) {
+        val loaded = latest ?: return
+        write { deleteItem(loaded.current.id, itemId) }
     }
 
     override fun onCheckedItemsCollapse() = areCheckedItemsCollapsedState.update { it.not() }

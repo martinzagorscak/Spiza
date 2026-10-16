@@ -187,6 +187,7 @@ data class ShoppingListScreenCallbacks(
     val onItemTextChange: (itemId: String, text: String) -> Unit = { _, _ -> },
     val onItemCheckedChange: (itemId: String, isChecked: Boolean) -> Unit = { _, _ -> },
     val onItemMoved: (itemId: String, toIndex: Int) -> Unit = { _, _ -> },
+    val onItemDelete: (String) -> Unit = { _ -> },
     val onCheckedItemsCollapse: () -> Unit = {},
     // shows a confirmation dialog, which when confirmed calls clearCheckedItems
     val showClearCheckedItemsConfirmationDialog: () -> Unit = {},

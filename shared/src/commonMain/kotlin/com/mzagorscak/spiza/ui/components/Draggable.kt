@@ -112,6 +112,7 @@ private fun DraggableItemsLayoutPreview() {
                     checked = false,
                     onTextChange = {},
                     onCheckedChange = {},
+                    onDelete = {},
                 )
             }
         }

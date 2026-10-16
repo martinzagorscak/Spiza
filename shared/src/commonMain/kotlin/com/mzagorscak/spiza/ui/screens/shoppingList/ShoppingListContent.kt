@@ -223,6 +223,7 @@ private fun ArticleRow(
         checked = item.isChecked,
         onTextChange = { text = it },
         onCheckedChange = { callbacks.onItemCheckedChange(item.id, it) },
+        onDelete = { callbacks.onItemDelete(item.id) },
         modifier = modifier,
     )
 }
@@ -238,6 +239,7 @@ private fun AddItemRow(
         checked = false,
         onTextChange = { text = it },
         onCheckedChange = {},
+        onDelete = { text = "" },
         placeholder = stringResource(Res.string.shopping_list_add_item_placeholder),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         onKeyboardAction = KeyboardActions(

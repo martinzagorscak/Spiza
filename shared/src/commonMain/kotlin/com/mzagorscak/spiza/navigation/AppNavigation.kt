@@ -104,6 +104,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                                 onItemTextChange = viewModel::onItemTextChange,
                                 onItemCheckedChange = viewModel::onItemCheckedChange,
                                 onItemMoved = viewModel::onItemMoved,
+                                onItemDelete = viewModel::onItemDelete,
                                 onCheckedItemsCollapse = viewModel::onCheckedItemsCollapse,
                                 showClearCheckedItemsConfirmationDialog = viewModel::showClearCheckedItemsConfirmationDialog,
                                 onDismissDialog = viewModel::dismissDialog,
