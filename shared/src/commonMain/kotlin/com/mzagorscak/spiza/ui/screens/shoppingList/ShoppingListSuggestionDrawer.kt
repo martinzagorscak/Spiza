@@ -23,7 +23,6 @@ import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.TextChip
 import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
-import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding600
 import org.jetbrains.compose.resources.stringResource
@@ -69,9 +68,9 @@ fun ShoppingListSuggestionsDrawer(
             }
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(padding100),
+                verticalArrangement = Arrangement.spacedBy(padding200),
                 horizontalAlignment = Alignment.Start,
-                modifier = modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 items(suggestions) { suggestion ->
                     TextChip(
