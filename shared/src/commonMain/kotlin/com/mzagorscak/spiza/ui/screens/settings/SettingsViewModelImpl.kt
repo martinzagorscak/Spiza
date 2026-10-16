@@ -13,8 +13,8 @@ import com.mzagorscak.spiza.ui.model.toPresentable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -29,15 +29,19 @@ internal class SettingsViewModelImpl(
     private val state = MutableStateFlow(SettingsState())
 
     init {
-        observeUserProfile()
-            .onEach { profile -> state.update { it.copy(profile = profile?.toPresentable()) } }
-            .launchIn(viewModelScope)
-        observeThemeMode()
-            .onEach { mode -> state.update { it.copy(themeMode = mode) } }
-            .launchIn(viewModelScope)
-        observeAppLanguage()
-            .onEach { language -> state.update { it.copy(language = language) } }
-            .launchIn(viewModelScope)
+        combine(
+            observeUserProfile(),
+            observeThemeMode(),
+            observeAppLanguage(),
+        ) { userProfile, themeMode, appLanguage ->
+            state.update {
+                it.copy(
+                    profile = userProfile?.toPresentable(),
+                    themeMode = themeMode,
+                    language = appLanguage,
+                )
+            }
+        }.launchIn(viewModelScope)
     }
 
     override fun state(): StateFlow<SettingsState> = state.asStateFlow()
