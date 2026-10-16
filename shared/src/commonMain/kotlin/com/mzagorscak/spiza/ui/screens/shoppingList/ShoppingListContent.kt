@@ -242,7 +242,11 @@ private fun AddItemRow(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         onKeyboardAction = KeyboardActions(
             onDone = {
-                if (text.isNotBlank()) onAddItem(text)
+                if (text.isNotBlank()) {
+                    onAddItem(text)
+                } else {
+                    this.defaultKeyboardAction(ImeAction.Done)
+                }
                 text = ""
             },
         ),
