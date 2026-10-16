@@ -31,3 +31,11 @@ class DeleteSuggestionUseCase(
         localDataSource.delete(id)
     }
 }
+
+class DeleteAllSuggestionsUseCase(
+    private val localDataSource: SuggestionLocalDataSource,
+) {
+    suspend operator fun invoke() {
+        localDataSource.deleteAll()
+    }
+}

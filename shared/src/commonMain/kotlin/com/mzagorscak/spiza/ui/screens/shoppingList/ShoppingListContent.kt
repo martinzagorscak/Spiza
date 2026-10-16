@@ -179,7 +179,7 @@ fun ShoppingListContent(
 
                     IconButton(
                         resource = Res.drawable.ic_trash,
-                        onClick = callbacks.clearCheckedItems,
+                        onClick = callbacks.showClearCheckedItemsConfirmationDialog,
                         appearance = IconButtonAppearance(
                             variant = IconButtonVariant.IconBased,
                             size = IconButtonSize.Medium,

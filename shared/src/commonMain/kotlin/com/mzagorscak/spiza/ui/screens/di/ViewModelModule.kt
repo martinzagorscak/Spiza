@@ -59,6 +59,7 @@ val viewModelModule = module {
             observeSuggestions = get(),
             setSuggestionsSavingEnabled = get(),
             deleteSuggestionUseCase = get(),
+            deleteAllSuggestionsUseCase = get(),
         )
     }
 }

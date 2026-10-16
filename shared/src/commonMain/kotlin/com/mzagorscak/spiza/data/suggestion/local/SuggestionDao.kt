@@ -80,4 +80,7 @@ interface SuggestionDao {
 
     @Query("DELETE FROM item_suggestions WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM item_suggestions")
+    suspend fun deleteAll()
 }

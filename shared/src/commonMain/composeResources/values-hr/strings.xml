@@ -1,4 +1,5 @@
 <resources>
+    <string name="cancel">Odustani</string>
     <string name="settings_title">Postavke</string>
     <string name="settings_section_profile">Profil</string>
     <string name="settings_user_key_label">Vaš ključ</string>
@@ -24,6 +25,9 @@
     <string name="settings_shopping_items_saving_sorting_most_used_desc">Najčešće korišteno</string>
     <string name="settings_shopping_items_saving_empty_state_title">Nema spremljenih prijedloga</string>
     <string name="settings_shopping_items_saving_empty_state_description">Prijedlozi će biti spremljeni kada dodaš artikle na svoj popis za kupnju dok je opcija spremanja omogućena.</string>
+    <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_title">Brisanje svih spremljenih prijedloga</string>
+    <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_description">Jeste li sigurni da želite izbrisati sve spremljene prijedloge? Ova se radnja ne može poništiti.</string>
+    <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_confirm">Obriši sve</string>
     <string name="settings_sign_out">Odjava</string>
     <string name="login_sign_in_with_google">Prijava putem Googlea</string>
     <string name="shopping_list_default_title">Kućanstvo</string>
@@ -37,8 +41,12 @@
     <string name="shopping_list_empty_title">Tvoj popis je prazan</string>
     <string name="shopping_list_empty_description">Dodaj prvi artikl u nastavku.</string>
     <string name="shopping_list_add_item_placeholder">Dodaj artikl</string>
-    <string name="shopping_list_done_section">Gotovo</string>
+    <string name="shopping_list_done_section">Kupljeno</string>
     <string name="shopping_list_write_error">Promjena nije spremljena</string>
+    <string name="shopping_list_suggestions_title">Prijedlozi</string>
+    <string name="shopping_list_clear_checked_items_dialog_title">Brisanje kupljenih artikala</string>
+    <string name="shopping_list_clear_checked_items_dialog_description">Jeste li sigurni da želite ukloniti sve označene stavke? Ova se radnja ne može poništiti.</string>
+    <string name="shopping_list_clear_checked_items_dialog_confirm">Očisti</string>
     <string name="create_household_title">Novo kućanstvo</string>
     <string name="create_household_name_label">Naziv</string>
     <string name="create_household_description_label">Opis</string>

@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
 import com.mzagorscak.spiza.ui.components.Button
+import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
@@ -35,6 +36,7 @@ import com.mzagorscak.spiza.ui.components.TextChip
 import com.mzagorscak.spiza.ui.components.ToggleButton
 import com.mzagorscak.spiza.ui.components.ToggleButtonVariant
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import com.mzagorscak.spiza.ui.theme.padding100
@@ -43,11 +45,16 @@ import com.mzagorscak.spiza.ui.theme.padding400
 import com.mzagorscak.spiza.ui.theme.padding600
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_close
+import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.settings_shopping_items_saving
 import spiza.shared.generated.resources.settings_shopping_items_saving_empty_state_description
 import spiza.shared.generated.resources.settings_shopping_items_saving_empty_state_title
+import spiza.shared.generated.resources.settings_shopping_items_saving_remove_all_suggestions_dialog_confirm
+import spiza.shared.generated.resources.settings_shopping_items_saving_remove_all_suggestions_dialog_description
+import spiza.shared.generated.resources.settings_shopping_items_saving_remove_all_suggestions_dialog_title
 import spiza.shared.generated.resources.settings_shopping_items_saving_sorting_alphabetical_asc
 import spiza.shared.generated.resources.settings_shopping_items_saving_sorting_alphabetical_desc
 import spiza.shared.generated.resources.settings_shopping_items_saving_sorting_label
@@ -113,13 +120,30 @@ fun SuggestionSavingSettingsScreen(
                     .padding(paddingValues)
                     .padding(vertical = padding400, horizontal = padding200),
             ) {
-                SortingTypeSelector(
-                    sortingType = state.sortingType,
-                    onItemClick = callbacks.onSortingTypeChange,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .align(Alignment.Start)
                         .padding(bottom = padding600),
-                )
+                ) {
+                    SortingTypeSelector(
+                        sortingType = state.sortingType,
+                        onItemClick = callbacks.onSortingTypeChange,
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    IconButton(
+                        resource = Res.drawable.ic_trash,
+                        onClick = callbacks.showRemoveAllSuggestionsConfirmationDialog,
+                        appearance = IconButtonAppearance(
+                            variant = IconButtonVariant.IconBased,
+                            size = IconButtonSize.Medium,
+                            tintColor = MaterialTheme.colorScheme.error,
+                        ),
+                    )
+                }
+
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(count = GRID_COLUMNS),
                     verticalArrangement = Arrangement.spacedBy(padding100),
@@ -143,6 +167,25 @@ fun SuggestionSavingSettingsScreen(
                         )
                     }
                 }
+            }
+
+            when (state.dialogState) {
+                SuggestionSavingSettingState.DialogState.RemoveAllSuggestionsConfirmation -> {
+                    Dialog(
+                        title = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_title),
+                        description = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_description),
+                        dismissCTA = CTA(
+                            label = stringResource(Res.string.cancel),
+                            onClick = callbacks.onDismissDialog,
+                        ),
+                        confirmCTA = CTA(
+                            label = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_confirm),
+                            onClick = callbacks.removeAllSuggestions,
+                        ),
+                    )
+                }
+
+                SuggestionSavingSettingState.DialogState.Hidden -> Unit
             }
         }
     }
@@ -209,6 +252,10 @@ data class SuggestionSavingSettingsScreenCallbacks(
     val onToggleSavingEnabled: (Boolean) -> Unit,
     val onSortingTypeChange: (SuggestionSortingType) -> Unit,
     val onRemoveSuggestion: (Long) -> Unit,
+    val showRemoveAllSuggestionsConfirmationDialog: () -> Unit = {
+    }, // shows a confirmation dialog, which when confirmed calls removeAllSuggestions
+    val onDismissDialog: () -> Unit = {},
+    val removeAllSuggestions: () -> Unit,
 )
 
 @Composable
@@ -227,6 +274,9 @@ private fun SuggestionSavingSettingsScreenLayoutPreview() {
             onToggleSavingEnabled = {},
             onSortingTypeChange = {},
             onRemoveSuggestion = {},
+            showRemoveAllSuggestionsConfirmationDialog = {},
+            onDismissDialog = {},
+            removeAllSuggestions = {},
         ),
     )
 }

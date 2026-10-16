@@ -15,6 +15,8 @@ interface SuggestionLocalDataSource {
     )
 
     suspend fun delete(id: Long)
+
+    suspend fun deleteAll()
 }
 
 internal class SuggestionLocalDataSourceImpl(
@@ -41,6 +43,10 @@ internal class SuggestionLocalDataSourceImpl(
 
     override suspend fun delete(id: Long) {
         suggestionDao.deleteById(id)
+    }
+
+    override suspend fun deleteAll() {
+        suggestionDao.deleteAll()
     }
 }
 

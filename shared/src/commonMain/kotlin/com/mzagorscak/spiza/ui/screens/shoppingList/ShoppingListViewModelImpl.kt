@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -56,7 +55,6 @@ private sealed interface Snapshot {
         val households: List<Household>,
         val current: Household,
         val items: List<ArticleItem>,
-        val areCheckedItemsCollapsed: Boolean,
     ) : Snapshot
 }
 
@@ -80,6 +78,7 @@ internal class ShoppingListViewModelImpl(
     private val retryTrigger = MutableStateFlow(0)
     private val selectedHouseholdId = observeSelectedHouseholdId()
     private val areCheckedItemsCollapsedState = MutableStateFlow(false)
+    private val dialogStatePublisher = MutableStateFlow(ShoppingListState.DialogState.Hidden)
     private val isSuggestionsSavingEnabled = observeSuggestionsSavingEnabled()
     private val suggestions = observeSuggestions()
         .stateIn(
@@ -94,10 +93,17 @@ internal class ShoppingListViewModelImpl(
     init {
         combine(
             observeSnapshots(),
+            areCheckedItemsCollapsedState,
+            dialogStatePublisher,
             suggestions,
-        ) { snapshot, suggestions -> snapshot to suggestions }
-            .onEach { (snapshot, suggestions) -> render(snapshot, suggestions) }
-            .launchIn(viewModelScope)
+        ) { snapshot, areCheckedItemsCollapsed, dialogState, suggestions ->
+            render(
+                snapshot,
+                areCheckedItemsCollapsed,
+                dialogState,
+                suggestions,
+            )
+        }.launchIn(viewModelScope)
     }
 
     override fun headerState(): StateFlow<ShoppingListState.Header> = header.asStateFlow()
@@ -154,6 +160,11 @@ internal class ShoppingListViewModelImpl(
 
     override fun onCheckedItemsCollapse() = areCheckedItemsCollapsedState.update { it.not() }
 
+    override fun showClearCheckedItemsConfirmationDialog() =
+        dialogStatePublisher.update { ShoppingListState.DialogState.ClearCheckedItemsConfirmation }
+
+    override fun dismissDialog() = dialogStatePublisher.update { ShoppingListState.DialogState.Hidden }
+
     override fun clearCheckedItems() {
         viewModelScope.launch {
             val loaded = latest ?: return@launch
@@ -187,10 +198,9 @@ internal class ShoppingListViewModelImpl(
             combine(
                 observeHouseholds(),
                 selectedHouseholdId,
-                areCheckedItemsCollapsedState,
-            ) { households, selectedId, areCheckedItemsCollapsed ->
-                Triple(households, (households.firstOrNull { it.id == selectedId } ?: households.firstOrNull()), areCheckedItemsCollapsed)
-            }.flatMapLatest { (households, current, areCheckedItemsCollapsed) ->
+            ) { households, selectedId ->
+                households to (households.firstOrNull { it.id == selectedId } ?: households.firstOrNull())
+            }.flatMapLatest { (households, current) ->
                 if (current == null) {
                     flowOf(Snapshot.NoHousehold)
                 } else {
@@ -199,7 +209,6 @@ internal class ShoppingListViewModelImpl(
                             households = households,
                             current = current,
                             items = it,
-                            areCheckedItemsCollapsed = areCheckedItemsCollapsed,
                         )
                     }
                 }
@@ -212,6 +221,8 @@ internal class ShoppingListViewModelImpl(
 
     private fun render(
         snapshot: Snapshot,
+        areCheckedItemsCollapsed: Boolean,
+        dialogState: ShoppingListState.DialogState,
         suggestions: List<ShoppingItemSuggestion>,
     ) {
         latest = snapshot as? Snapshot.Loaded
@@ -251,7 +262,8 @@ internal class ShoppingListViewModelImpl(
                             val doneItemsContain = doneItems.map { it.text }.contains(it.name)
                             it.toPresentable(isEnabled = pendingItemsContain.not() && doneItemsContain.not())
                         },
-                        areCheckedItemsCollapsed = snapshot.areCheckedItemsCollapsed,
+                        areCheckedItemsCollapsed = areCheckedItemsCollapsed,
+                        dialogState = dialogState,
                         hasWriteError = previousWriteError,
                     )
             }

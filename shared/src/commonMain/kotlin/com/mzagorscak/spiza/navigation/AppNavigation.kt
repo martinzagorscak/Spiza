@@ -105,6 +105,8 @@ fun AppNavigation(isSignedIn: Boolean) {
                                 onItemCheckedChange = viewModel::onItemCheckedChange,
                                 onItemMoved = viewModel::onItemMoved,
                                 onCheckedItemsCollapse = viewModel::onCheckedItemsCollapse,
+                                showClearCheckedItemsConfirmationDialog = viewModel::showClearCheckedItemsConfirmationDialog,
+                                onDismissDialog = viewModel::dismissDialog,
                                 clearCheckedItems = viewModel::clearCheckedItems,
                                 onWriteErrorShown = viewModel::onWriteErrorShown,
                             )
@@ -139,6 +141,9 @@ fun AppNavigation(isSignedIn: Boolean) {
                                 onToggleSavingEnabled = viewModel::onToggleSavingEnabled,
                                 onSortingTypeChange = viewModel::setSortingType,
                                 onRemoveSuggestion = viewModel::onRemoveSuggestion,
+                                showRemoveAllSuggestionsConfirmationDialog = viewModel::showRemoveAllSuggestionsConfirmationDialog,
+                                onDismissDialog = viewModel::dismissDialog,
+                                removeAllSuggestions = viewModel::removeAllSuggestions,
                             )
                         },
                     )

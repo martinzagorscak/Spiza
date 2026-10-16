@@ -9,7 +9,13 @@ data class SuggestionSavingSettingState(
     val isEnabled: Boolean = false,
     val sortingType: SuggestionSortingType = SuggestionSortingType.ALPHABETICAL_ASC,
     val suggestions: List<PresentableShoppingItemSuggestion> = emptyList(),
-)
+    val dialogState: DialogState = DialogState.Hidden,
+) {
+    enum class DialogState {
+        Hidden,
+        RemoveAllSuggestionsConfirmation,
+    }
+}
 
 abstract class SuggestionSavingSettingViewModel : ViewModel() {
     abstract fun state(): StateFlow<SuggestionSavingSettingState>
@@ -19,4 +25,10 @@ abstract class SuggestionSavingSettingViewModel : ViewModel() {
     abstract fun setSortingType(sortingType: SuggestionSortingType)
 
     abstract fun onRemoveSuggestion(suggestionId: Long)
+
+    abstract fun showRemoveAllSuggestionsConfirmationDialog()
+
+    abstract fun dismissDialog()
+
+    abstract fun removeAllSuggestions()
 }

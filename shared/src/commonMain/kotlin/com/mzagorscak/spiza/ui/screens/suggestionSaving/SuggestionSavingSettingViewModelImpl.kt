@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.ui.screens.suggestionSaving
 
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
+import com.mzagorscak.spiza.domain.usecase.DeleteAllSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
@@ -11,9 +12,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -23,27 +24,31 @@ internal class SuggestionSavingSettingViewModelImpl(
     observeSuggestions: ObserveSuggestionsUseCase,
     private val setSuggestionsSavingEnabled: SetSuggestionsSavingEnabledUseCase,
     private val deleteSuggestionUseCase: DeleteSuggestionUseCase,
+    private val deleteAllSuggestionsUseCase: DeleteAllSuggestionsUseCase,
 ) : SuggestionSavingSettingViewModel() {
     private val state = MutableStateFlow(SuggestionSavingSettingState())
     private val sortingType = MutableStateFlow(SuggestionSortingType.ALPHABETICAL_ASC)
+    private val suggestions = sortingType.flatMapLatest { sortingType ->
+        observeSuggestions(sortingType = sortingType)
+    }
+    private val dialogStatePublisher = MutableStateFlow(SuggestionSavingSettingState.DialogState.Hidden)
 
     init {
-        observeSuggestionsSavingEnabled()
-            .onEach { isEnabled -> state.update { it.copy(isEnabled = isEnabled) } }
-            .launchIn(viewModelScope)
-
-        sortingType
-            .flatMapLatest { sortingType ->
-                observeSuggestions(sortingType = sortingType)
-                    .onEach { suggestions ->
-                        state.update {
-                            it.copy(
-                                sortingType = sortingType,
-                                suggestions = suggestions.toPresentable(),
-                            )
-                        }
-                    }
-            }.launchIn(viewModelScope)
+        combine(
+            observeSuggestionsSavingEnabled(),
+            sortingType,
+            suggestions,
+            dialogStatePublisher,
+        ) { isEnabled, sortingType, suggestions, dialogState ->
+            state.update {
+                SuggestionSavingSettingState(
+                    isEnabled = isEnabled,
+                    sortingType = sortingType,
+                    suggestions = suggestions.toPresentable(),
+                    dialogState = dialogState,
+                )
+            }
+        }.launchIn(viewModelScope)
     }
 
     override fun state(): StateFlow<SuggestionSavingSettingState> = state.asStateFlow()
@@ -59,8 +64,18 @@ internal class SuggestionSavingSettingViewModelImpl(
     }
 
     override fun onRemoveSuggestion(suggestionId: Long) {
-        viewModelScope.launch {
-            deleteSuggestionUseCase(id = suggestionId)
-        }
+        viewModelScope.launch { deleteSuggestionUseCase(id = suggestionId) }
+    }
+
+    override fun showRemoveAllSuggestionsConfirmationDialog() {
+        dialogStatePublisher.update { SuggestionSavingSettingState.DialogState.RemoveAllSuggestionsConfirmation }
+    }
+
+    override fun dismissDialog() {
+        dialogStatePublisher.update { SuggestionSavingSettingState.DialogState.Hidden }
+    }
+
+    override fun removeAllSuggestions() {
+        viewModelScope.launch { deleteAllSuggestionsUseCase() }
     }
 }

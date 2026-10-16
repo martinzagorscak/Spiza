@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
+import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
@@ -35,7 +36,11 @@ import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.ic_plus
+import spiza.shared.generated.resources.shopping_list_clear_checked_items_dialog_confirm
+import spiza.shared.generated.resources.shopping_list_clear_checked_items_dialog_description
+import spiza.shared.generated.resources.shopping_list_clear_checked_items_dialog_title
 import spiza.shared.generated.resources.shopping_list_create_household
 import spiza.shared.generated.resources.shopping_list_loading_error_description
 import spiza.shared.generated.resources.shopping_list_loading_error_title
@@ -144,6 +149,28 @@ fun ShoppingListScreen(
                             state = bodyState,
                             callbacks = callbacks,
                         )
+
+                        when (bodyState.dialogState) {
+                            ShoppingListState.DialogState.ClearCheckedItemsConfirmation -> {
+                                Dialog(
+                                    title = stringResource(Res.string.shopping_list_clear_checked_items_dialog_title),
+                                    description = stringResource(Res.string.shopping_list_clear_checked_items_dialog_description),
+                                    dismissCTA = CTA(
+                                        label = stringResource(Res.string.cancel),
+                                        onClick = callbacks.onDismissDialog,
+                                    ),
+                                    confirmCTA = CTA(
+                                        label = stringResource(Res.string.shopping_list_clear_checked_items_dialog_confirm),
+                                        onClick = {
+                                            callbacks.clearCheckedItems()
+                                            callbacks.onDismissDialog()
+                                        },
+                                    ),
+                                )
+                            }
+
+                            ShoppingListState.DialogState.Hidden -> Unit
+                        }
                     }
                 }
             }
@@ -161,6 +188,9 @@ data class ShoppingListScreenCallbacks(
     val onItemCheckedChange: (itemId: String, isChecked: Boolean) -> Unit = { _, _ -> },
     val onItemMoved: (itemId: String, toIndex: Int) -> Unit = { _, _ -> },
     val onCheckedItemsCollapse: () -> Unit = {},
+    // shows a confirmation dialog, which when confirmed calls clearCheckedItems
+    val showClearCheckedItemsConfirmationDialog: () -> Unit = {},
+    val onDismissDialog: () -> Unit = {},
     val clearCheckedItems: () -> Unit = {},
     val onWriteErrorShown: () -> Unit = {},
 )
