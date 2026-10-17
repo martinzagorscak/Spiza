@@ -26,6 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
 import com.mzagorscak.spiza.ui.components.Button
+import com.mzagorscak.spiza.ui.components.ButtonAppearance
+import com.mzagorscak.spiza.ui.components.ButtonSize
+import com.mzagorscak.spiza.ui.components.ButtonVariant
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
@@ -212,6 +215,10 @@ private fun SortingTypeSelector(
             Button(
                 label = sortingType.displayName(),
                 onClick = { isDropdownExpanded = true },
+                appearance = ButtonAppearance(
+                    variant = ButtonVariant.Secondary,
+                    size = ButtonSize.Medium,
+                ),
             )
             DropdownMenu(
                 expanded = isDropdownExpanded,
