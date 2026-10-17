@@ -92,8 +92,8 @@ fun LoginScreen(
 }
 
 data class LoginCallbacks(
-    val onSignInWithGoogle: () -> Unit = {},
-    val onLoginErrorShown: () -> Unit = {},
+    val onSignInWithGoogle: () -> Unit,
+    val onLoginErrorShown: () -> Unit,
 )
 
 @Preview
@@ -102,7 +102,10 @@ private fun LoginScreenPreview() {
     TheAppTheme {
         LoginScreen(
             state = LoginState(),
-            callbacks = LoginCallbacks(),
+            callbacks = LoginCallbacks(
+                onSignInWithGoogle = {},
+                onLoginErrorShown = {},
+            ),
         )
     }
 }

@@ -5,6 +5,7 @@ import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -12,6 +13,52 @@ import kotlin.coroutines.resumeWithException
 class IosHouseholdDataSource(
     private val bridge: IosHouseholdBridge,
 ) : HouseholdDataSource {
+    override suspend fun createHouseholdJoinKey(userId: String): String =
+        suspendCancellableCoroutine { continuation ->
+            bridge.createHouseholdJoinKey(userId) { key, error ->
+                if (key != null) {
+                    continuation.resume(key)
+                } else {
+                    continuation.resumeWithException(IllegalStateException(error ?: "Creating join key failed"))
+                }
+            }
+        }
+
+    override fun getHouseholdJoinKey(userId: String): Flow<String?> =
+        flow {
+            val key =
+                suspendCancellableCoroutine<String?> { continuation ->
+                    bridge.getHouseholdJoinKey(userId) { key, error ->
+                        if (error == null) {
+                            continuation.resume(key)
+                        } else {
+                            continuation.resumeWithException(IllegalStateException(error))
+                        }
+                    }
+                }
+            emit(key)
+        }
+
+    override suspend fun addMemberToHousehold(
+        householdId: String,
+        userJoinKey: String,
+    ) = suspendCancellableCoroutine { continuation ->
+        bridge.addMemberToHousehold(householdId, userJoinKey) { error ->
+            if (error == null) {
+                continuation.resume(Unit)
+            } else {
+                continuation.resumeWithException(IllegalStateException(error))
+            }
+        }
+    }
+
+    override suspend fun removeMemberFromHousehold(
+        householdId: String,
+        memberId: String,
+    ) = write { bridge.removeMemberFromHousehold(householdId, memberId, it) }
+
+    override suspend fun deleteHousehold(householdId: String) = write { bridge.deleteHousehold(householdId, it) }
+
     override fun observeHouseholds(userId: String): Flow<List<HouseholdDto>> =
         callbackFlow {
             val handle =

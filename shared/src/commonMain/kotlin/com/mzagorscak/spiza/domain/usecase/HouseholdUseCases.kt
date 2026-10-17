@@ -7,6 +7,55 @@ import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import com.mzagorscak.spiza.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 
+class CreateHouseholdJoinKeyUseCase(
+    private val repository: HouseholdRepository,
+) {
+    suspend operator fun invoke(): String = repository.createHouseholdJoinKey()
+}
+
+class GetHouseholdJoinKeyUseCase(
+    private val repository: HouseholdRepository,
+) {
+    operator fun invoke(): Flow<String?> = repository.getHouseholdJoinKey()
+}
+
+class AddMemberToHouseholdUseCase(
+    private val repository: HouseholdRepository,
+) {
+    suspend operator fun invoke(
+        householdId: String,
+        userJoinKey: String,
+    ) = repository.addMemberToHousehold(householdId, userJoinKey)
+}
+
+class RemoveMemberFromHouseholdUseCase(
+    private val repository: HouseholdRepository,
+) {
+    suspend operator fun invoke(
+        householdId: String,
+        memberId: String,
+        isCurrentUserOwner: Boolean,
+        isCurrentUserRemovingHimself: Boolean,
+    ) {
+        require(isCurrentUserOwner || isCurrentUserRemovingHimself) {
+            "Only the owner can remove other members and not himself."
+        }
+        repository.removeMemberFromHousehold(householdId, memberId)
+    }
+}
+
+class DeleteHouseholdUseCase(
+    private val repository: HouseholdRepository,
+) {
+    suspend operator fun invoke(
+        householdId: String,
+        isCurrentUserOwner: Boolean,
+    ) {
+        require(isCurrentUserOwner) { "Only the owner can delete the household" }
+        repository.deleteHousehold(householdId)
+    }
+}
+
 class ObserveHouseholdsUseCase(
     private val repository: HouseholdRepository,
 ) {

@@ -9,6 +9,8 @@ import com.mzagorscak.spiza.data.household.HouseholdDataSource
 import com.mzagorscak.spiza.data.suggestion.local.SpizaDatabase
 import com.mzagorscak.spiza.data.suggestion.local.getAndroidSpizaDatabaseBuilder
 import com.mzagorscak.spiza.data.suggestion.local.getSpizaDatabase
+import com.mzagorscak.spiza.data.user.FirestoreUserDataSource
+import com.mzagorscak.spiza.data.user.UserDataSource
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
@@ -19,6 +21,7 @@ const val WEB_CLIENT_ID = "webClientId"
 actual fun platformModule(): Module =
     module {
         single<CrashLogger> { AndroidCrashLogger() }
+        single<UserDataSource> { FirestoreUserDataSource() }
         single<HouseholdDataSource> { FirestoreHouseholdDataSource() }
         single<AuthService> {
             AndroidAuthService(

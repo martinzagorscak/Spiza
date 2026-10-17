@@ -2,20 +2,84 @@ package com.mzagorscak.spiza.data.household
 
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue.arrayUnion
 import com.google.firebase.firestore.FirebaseFirestore
+import com.mzagorscak.spiza.data.household.HouseholdFields.JOIN_KEY
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 class FirestoreHouseholdDataSource(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) : HouseholdDataSource {
-    private val households: CollectionReference get() = firestore.collection(HouseholdFields.COLLECTION)
+    private val households: CollectionReference get() = firestore.collection(HouseholdFields.COLLECTION_HOUSEHOLDS)
+    private val householdJoinKeys: CollectionReference get() = firestore.collection(HouseholdFields.COLLECTION_JOIN_KEYS)
 
     private fun items(householdId: String) = households.document(householdId).collection(HouseholdFields.ITEMS)
+
+    override suspend fun createHouseholdJoinKey(userId: String): String {
+        val generatedKey = generateJoinKey()
+        householdJoinKeys
+            .document(userId)
+            .set(
+                mapOf(JOIN_KEY to generatedKey),
+            ).await()
+        return generatedKey
+    }
+
+    private fun generateJoinKey(): String = UUID.randomUUID().toString()
+
+    private suspend fun deleteHouseholdJoinKey(userId: String) {
+        householdJoinKeys.document(userId).delete().await()
+    }
+
+    override fun getHouseholdJoinKey(userId: String): Flow<String?> =
+        flow {
+            val joinKey = householdJoinKeys
+                .document(userId)
+                .get()
+                .await()
+                .getString(JOIN_KEY)
+            emit(joinKey)
+        }
+
+    override suspend fun addMemberToHousehold(
+        householdId: String,
+        userJoinKey: String,
+    ) {
+        val joinKeySnapshot = householdJoinKeys.whereEqualTo(JOIN_KEY, userJoinKey).get().await()
+        if (joinKeySnapshot.isEmpty) {
+            return // todo return error state
+        }
+
+        val userId = joinKeySnapshot.documents.first().id
+        val householdRef = households.document(householdId)
+
+        householdRef.update(HouseholdFields.JOINED_MEMBERS, arrayUnion(userId)).await()
+        deleteHouseholdJoinKey(userId) // Delete the join key after it's used
+    }
+
+    override suspend fun removeMemberFromHousehold(
+        householdId: String,
+        memberId: String,
+    ) {
+        households
+            .document(householdId)
+            .update(
+                HouseholdFields.JOINED_MEMBERS,
+                com.google.firebase.firestore.FieldValue
+                    .arrayRemove(memberId),
+            ).await()
+    }
+
+    override suspend fun deleteHousehold(householdId: String) {
+        households.document(householdId).delete().await()
+    }
 
     override fun observeHouseholds(userId: String): Flow<List<HouseholdDto>> =
         callbackFlow {
@@ -58,7 +122,6 @@ class FirestoreHouseholdDataSource(
                     HouseholdFields.DESCRIPTION to description,
                     HouseholdFields.OWNER_ID to ownerId,
                     HouseholdFields.JOINED_MEMBERS to listOf(ownerId),
-                    HouseholdFields.PENDING_MEMBERS to emptyList<String>(),
                 ),
             ).await()
         return document.id
@@ -132,7 +195,6 @@ private fun DocumentSnapshot.toHouseholdDto(): HouseholdDto? {
         description = getString(HouseholdFields.DESCRIPTION).orEmpty(),
         ownerId = getString(HouseholdFields.OWNER_ID).orEmpty(),
         joinedMembers = stringList(HouseholdFields.JOINED_MEMBERS),
-        pendingMembers = stringList(HouseholdFields.PENDING_MEMBERS),
     )
 }
 

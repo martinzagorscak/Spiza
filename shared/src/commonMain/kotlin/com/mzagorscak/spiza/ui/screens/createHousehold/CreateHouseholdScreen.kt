@@ -126,11 +126,11 @@ fun CreateHouseholdScreen(
 }
 
 data class CreateHouseholdCallbacks(
-    val onBackClick: () -> Unit = {},
-    val onNameChange: (String) -> Unit = { _ -> },
-    val onDescriptionChange: (String) -> Unit = { _ -> },
-    val onCreateClick: () -> Unit = {},
-    val onCreated: () -> Unit = {},
+    val onBackClick: () -> Unit,
+    val onNameChange: (String) -> Unit,
+    val onDescriptionChange: (String) -> Unit,
+    val onCreateClick: () -> Unit,
+    val onCreated: () -> Unit,
 )
 
 @Preview
@@ -139,7 +139,13 @@ private fun CreateHouseholdScreenPreview() {
     TheAppTheme(darkTheme = true) {
         CreateHouseholdScreen(
             state = CreateHouseholdState(name = "Home", description = "Weekly groceries"),
-            callbacks = CreateHouseholdCallbacks(),
+            callbacks = CreateHouseholdCallbacks(
+                onBackClick = {},
+                onNameChange = {},
+                onDescriptionChange = {},
+                onCreateClick = {},
+                onCreated = {},
+            ),
         )
     }
 }

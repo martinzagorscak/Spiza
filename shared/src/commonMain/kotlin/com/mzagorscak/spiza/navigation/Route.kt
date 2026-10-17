@@ -21,6 +21,9 @@ sealed interface Route : NavKey {
     data object Settings : Route
 
     @Serializable
+    data object HouseholdManagement : Route
+
+    @Serializable
     data object SuggestionsSavingSettings : Route
 }
 
@@ -32,6 +35,7 @@ val routeSerializersModule =
             subclass(Route.CreateHousehold::class)
             subclass(Route.ShoppingList::class)
             subclass(Route.Settings::class)
+            subclass(Route.HouseholdManagement::class)
             subclass(Route.SuggestionsSavingSettings::class)
         }
     }

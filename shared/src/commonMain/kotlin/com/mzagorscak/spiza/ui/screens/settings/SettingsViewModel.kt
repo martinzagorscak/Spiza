@@ -7,14 +7,27 @@ import com.mzagorscak.spiza.ui.model.PresentableUserProfile
 import kotlinx.coroutines.flow.StateFlow
 
 data class SettingsState(
-    val profile: PresentableUserProfile? = null,
+    val profile: PresentableUserProfile = PlaceholderProfile,
     val themeMode: ThemeMode = ThemeMode.System,
     val language: AppLanguage = AppLanguage.Default,
     val isSigningOut: Boolean = false,
-)
+) {
+    companion object {
+        val PlaceholderProfile = PresentableUserProfile(
+            name = "",
+            email = "",
+            photoUrl = null,
+            joinKey = "",
+        )
+    }
+}
 
 abstract class SettingsViewModel : ViewModel() {
     abstract fun state(): StateFlow<SettingsState>
+
+    abstract fun createJoinKey()
+
+    abstract fun refreshJoinKey()
 
     abstract fun onThemeModeSelected(mode: ThemeMode)
 

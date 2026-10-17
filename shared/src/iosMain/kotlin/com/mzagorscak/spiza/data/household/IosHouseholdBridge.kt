@@ -17,6 +17,33 @@ interface IosHouseholdBridge {
         onError: (errorMessage: String) -> Unit,
     ): IosListenerHandle
 
+    fun createHouseholdJoinKey(
+        userId: String,
+        onComplete: (key: String?, errorMessage: String?) -> Unit,
+    )
+
+    fun getHouseholdJoinKey(
+        userId: String,
+        onComplete: (key: String?, errorMessage: String?) -> Unit,
+    )
+
+    fun addMemberToHousehold(
+        householdId: String,
+        userJoinKey: String,
+        onComplete: (errorMessage: String?) -> Unit,
+    )
+
+    fun removeMemberFromHousehold(
+        householdId: String,
+        memberId: String,
+        onComplete: (errorMessage: String?) -> Unit,
+    )
+
+    fun deleteHousehold(
+        householdId: String,
+        onComplete: (errorMessage: String?) -> Unit,
+    )
+
     /** [onComplete] gets the new household id, or an error message. */
     fun createHousehold(
         ownerId: String,

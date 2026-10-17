@@ -10,6 +10,8 @@ import com.mzagorscak.spiza.data.household.IosHouseholdDataSource
 import com.mzagorscak.spiza.data.suggestion.local.SpizaDatabase
 import com.mzagorscak.spiza.data.suggestion.local.getIosSpizaDatabaseBuilder
 import com.mzagorscak.spiza.data.suggestion.local.getSpizaDatabase
+import com.mzagorscak.spiza.data.user.IosUserDataSource
+import com.mzagorscak.spiza.data.user.UserDataSource
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -17,6 +19,7 @@ actual fun platformModule(): Module =
     module {
         single<CrashLogger> { IosCrashLogger(bridge = getOrNull<IosCrashLoggerBridge>()) }
         single<AuthService> { IosAuthService(bridge = get()) }
+        single<UserDataSource> { IosUserDataSource(bridge = get()) }
         single<HouseholdDataSource> { IosHouseholdDataSource(bridge = get()) }
         single<SpizaDatabase> {
             val builder = getIosSpizaDatabaseBuilder()

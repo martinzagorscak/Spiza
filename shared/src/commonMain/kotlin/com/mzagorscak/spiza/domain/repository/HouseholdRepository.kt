@@ -5,6 +5,22 @@ import com.mzagorscak.spiza.domain.model.Household
 import kotlinx.coroutines.flow.Flow
 
 interface HouseholdRepository {
+    suspend fun createHouseholdJoinKey(): String
+
+    fun getHouseholdJoinKey(): Flow<String?>
+
+    suspend fun addMemberToHousehold(
+        householdId: String,
+        userJoinKey: String,
+    )
+
+    suspend fun removeMemberFromHousehold(
+        householdId: String,
+        memberId: String,
+    )
+
+    suspend fun deleteHousehold(householdId: String)
+
     /** Realtime households the signed-in user has joined. Fails the flow when the data source errors. */
     fun observeHouseholds(): Flow<List<Household>>
 

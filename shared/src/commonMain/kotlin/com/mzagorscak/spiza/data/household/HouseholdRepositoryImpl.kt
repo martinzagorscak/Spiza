@@ -6,16 +6,21 @@ import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
+import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
+import com.mzagorscak.spiza.domain.repository.UserRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -30,7 +35,56 @@ class HouseholdCreationTimeoutException : Exception("Creating the household time
 internal class HouseholdRepositoryImpl(
     private val dataSource: HouseholdDataSource,
     private val authService: AuthService,
+    private val userRepository: UserRepository,
 ) : HouseholdRepository {
+    private val newlyCreatedHouseholdJoinKeyPublisher = MutableSharedFlow<String>()
+    private val cachedUserProfiles = MutableStateFlow(emptyMap<String, UserProfile>()) // <userId, UserProfile>
+
+    override suspend fun createHouseholdJoinKey(): String {
+        val userId = authService.currentUser?.uid ?: error("No signed-in user")
+        Logger.i(tag = LOG_TAG) { "Creating household join key for user $userId" }
+        val joinKey = dataSource.createHouseholdJoinKey(userId)
+        newlyCreatedHouseholdJoinKeyPublisher.emit(joinKey)
+        return joinKey
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getHouseholdJoinKey(): Flow<String?> =
+        authService.authState.flatMapLatest { user ->
+            if (user == null) {
+                flowOf(null)
+            } else {
+                merge(
+                    dataSource.getHouseholdJoinKey(user.uid),
+                    newlyCreatedHouseholdJoinKeyPublisher,
+                )
+            }
+        }
+
+    override suspend fun addMemberToHousehold(
+        householdId: String,
+        userJoinKey: String,
+    ) {
+        val userId = authService.currentUser?.uid ?: error("No signed-in user")
+        Logger.i(tag = LOG_TAG) { "Adding member $userId to household $householdId with join key $userJoinKey" }
+        dataSource.addMemberToHousehold(householdId, userJoinKey)
+    }
+
+    override suspend fun removeMemberFromHousehold(
+        householdId: String,
+        memberId: String,
+    ) {
+        val userId = authService.currentUser?.uid ?: error("No signed-in user")
+        Logger.i(tag = LOG_TAG) { "User $userId removing member $memberId from household $householdId" }
+        dataSource.removeMemberFromHousehold(householdId, memberId)
+    }
+
+    override suspend fun deleteHousehold(householdId: String) {
+        val userId = authService.currentUser?.uid ?: error("No signed-in user")
+        Logger.i(tag = LOG_TAG) { "User $userId deleting household $householdId" }
+        dataSource.deleteHousehold(householdId)
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeHouseholds(): Flow<List<Household>> =
         authService.authState.flatMapLatest { user ->
@@ -39,10 +93,13 @@ internal class HouseholdRepositoryImpl(
             } else {
                 dataSource
                     .observeHouseholds(user.uid)
-                    .map { households -> households.map { it.toDomain() }.sortedBy { it.name.lowercase() } }
-                    .onEach { Logger.d(tag = LOG_TAG) { "Households update: ${it.size} for user ${user.uid}" } }
-                    .onCompletion { cause ->
-                        if (cause != null) Logger.e(throwable = cause, tag = LOG_TAG) { "Households stream failed for user ${user.uid}" }
+                    .map { households ->
+                        val memberIdsToFetch = households.flatMap { it.joinedMembers }.distinct().toSet() - cachedUserProfiles.value.keys
+                        val freshUsers = userRepository.getUsers(memberIdsToFetch.toList())
+                        val allProfiles = cachedUserProfiles.value + freshUsers.associateBy { it.id }
+                        val households = households.map { dto -> dto.toDomain(allProfiles) }.sortedBy { it.name.lowercase() }
+                        cachedUserProfiles.update { allProfiles }
+                        households
                     }
             }
         }
@@ -107,14 +164,15 @@ internal class HouseholdRepositoryImpl(
     override suspend fun clearCheckedItems(householdId: String) = dataSource.clearCheckedItems(householdId)
 }
 
-private fun HouseholdDto.toDomain() =
+private fun HouseholdDto.toDomain(profileMap: Map<String, UserProfile>): Household =
     Household(
         id = id,
         name = name,
         description = description,
         ownerId = ownerId,
-        joinedMembers = joinedMembers,
-        pendingMembers = pendingMembers,
+        members = joinedMembers
+            .filter { profileMap.containsKey(it) }
+            .mapNotNull { memberId -> profileMap[memberId] },
     )
 
 private fun ArticleItemDto.toDomain() = ArticleItem(id = id, text = text, isChecked = isChecked, position = position)

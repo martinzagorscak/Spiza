@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
@@ -36,11 +37,13 @@ fun ListingItem(
     trailingContent: (@Composable (() -> Unit))? = null,
     showDivider: Boolean = false,
     modifier: Modifier = Modifier,
+    backgroundColor: Color = MaterialTheme.colorScheme.background,
+    onBackgroundColor: Color = MaterialTheme.colorScheme.onBackground,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
+            .background(backgroundColor)
             .clickable(
                 enabled = onClick != null,
                 onClick = onClick ?: {},
@@ -60,7 +63,7 @@ fun ListingItem(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = onBackgroundColor,
             )
 
             trailingContent?.let {

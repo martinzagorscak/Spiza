@@ -4,6 +4,8 @@ import com.mzagorscak.spiza.ui.screens.app.AppViewModel
 import com.mzagorscak.spiza.ui.screens.app.AppViewModelImpl
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModelImpl
+import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementViewModel
+import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementViewModelImpl
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModel
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModelImpl
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
@@ -46,12 +48,23 @@ val viewModelModule = module {
     }
     viewModel<SettingsViewModel> {
         SettingsViewModelImpl(
+            createHouseholdJoinKey = get(),
+            getHouseholdJoinKey = get(),
             observeUserProfile = get(),
             observeThemeMode = get(),
             observeAppLanguage = get(),
             setThemeMode = get(),
             setAppLanguage = get(),
             signOut = get(),
+        )
+    }
+    viewModel<HouseholdManagementViewModel> {
+        HouseholdManagementViewModelImpl(
+            getCurrentUserProfileUseCase = get(),
+            observeHouseholds = get(),
+            addMemberToHousehold = get(),
+            removeMemberFromHouseholdUseCase = get(),
+            deleteHouseholdUseCase = get(),
         )
     }
     viewModel<SuggestionSavingSettingViewModel> {

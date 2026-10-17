@@ -21,6 +21,12 @@ class GetCurrentUserProfileUseCase(
     operator fun invoke(): UserProfile? = repository.currentProfile
 }
 
+class GetUsersUseCase(
+    private val repository: UserRepository,
+) {
+    suspend operator fun invoke(userIds: List<String>): List<UserProfile> = repository.getUsers(userIds)
+}
+
 class ObserveThemeModeUseCase(
     private val repository: SettingsRepository,
 ) {

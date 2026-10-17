@@ -1,9 +1,19 @@
 <resources>
+    <!--  General terminology  -->
+    <string name="member">Member</string>
+    <string name="current_user">Me</string>
+    <string name="join_key">Join key</string>
     <string name="cancel">Odustani</string>
+    <string name="retry">Pokušaj ponovno</string>
+    <string name="delete">Obriši</string>
+    <string name="remove">Ukloni</string>
+
+    <!--  Screen specifics  -->
     <string name="settings_title">Postavke</string>
     <string name="settings_section_profile">Profil</string>
     <string name="settings_user_key_label">Vaš ključ</string>
     <string name="settings_user_key_hint">Podijelite ovaj ključ s vlasnicima kućanstava kako bi vas mogli dodati.</string>
+    <string name="settings_generate_key">Kreiraj ključ za pridruživanje kućanstvu</string>
     <string name="settings_copy_key">Kopiraj</string>
     <string name="settings_key_copied">Ključ kopiran</string>
     <string name="settings_section_appearance">Izgled</string>
@@ -35,9 +45,8 @@
     <string name="shopping_list_create_household">Stvori kućanstvo</string>
     <string name="shopping_list_loading_error_title">Nešto je pošlo po zlu</string>
     <string name="shopping_list_loading_error_description">Nismo mogli učitati tvoj popis za kupnju. Provjeri vezu i pokušaj ponovno.</string>
-    <string name="shopping_list_retry">Pokušaj ponovno</string>
     <string name="shopping_list_no_household_title">Još nemaš kućanstvo</string>
-    <string name="shopping_list_no_household_description">Stvori kućanstvo kako bi započeo zajednički popis za kupnju.</string>
+    <string name="shopping_list_no_household_description">Stvori ili pridruži se kućanstvu kako bi započeo zajednički popis za kupnju.</string>
     <string name="shopping_list_empty_title">Tvoj popis je prazan</string>
     <string name="shopping_list_empty_description">Dodaj prvi artikl u nastavku.</string>
     <string name="shopping_list_add_item_placeholder">Dodaj artikl</string>
@@ -53,4 +62,11 @@
     <string name="text_field_optional_template">%1$s (opcionalno)</string>
     <string name="create_household_submit">Stvori</string>
     <string name="create_household_error">Kućanstvo nije stvoreno. Pokušaj ponovno.</string>
+    <string name="household_management_add_member_dialog_title">Dodaj člana u kućanstvo</string>
+    <string name="household_management_add_member_dialog_description">Unesite ključ za pridruživanje člana kojeg želite dodati u kućanstvo.</string>
+    <string name="household_management_add_member_dialog_confirm_label">Dodaj člana</string>
+    <string name="household_management_delete_household_dialog_title_template">Obrisati %1$s</string>
+    <string name="household_management_delete_household_dialog_description">Jeste li sigurni da želite obrisati ovo kućanstvo? Ova se radnja ne može poništiti.</string>
+    <string name="household_management_remove_member_dialog_title_template">Ukloni %1$s iz %2$s</string>
+    <string name="household_management_remove_member_dialog_description">Jeste li sigurni da želite ukloniti ovog člana iz kućanstva?</string>
 </resources>

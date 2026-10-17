@@ -5,8 +5,7 @@ data class Household(
     val name: String,
     val description: String,
     val ownerId: String,
-    val joinedMembers: List<String>,
-    val pendingMembers: List<String>,
+    val members: List<UserProfile>,
 )
 
 /** Items of one household live in a single list; [isChecked] decides whether it is pending or done. */

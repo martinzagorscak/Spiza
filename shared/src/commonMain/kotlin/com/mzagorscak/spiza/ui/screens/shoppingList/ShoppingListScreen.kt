@@ -38,6 +38,7 @@ import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.ic_plus
+import spiza.shared.generated.resources.retry
 import spiza.shared.generated.resources.shopping_list_clear_checked_items_dialog_confirm
 import spiza.shared.generated.resources.shopping_list_clear_checked_items_dialog_description
 import spiza.shared.generated.resources.shopping_list_clear_checked_items_dialog_title
@@ -46,7 +47,6 @@ import spiza.shared.generated.resources.shopping_list_loading_error_description
 import spiza.shared.generated.resources.shopping_list_loading_error_title
 import spiza.shared.generated.resources.shopping_list_no_household_description
 import spiza.shared.generated.resources.shopping_list_no_household_title
-import spiza.shared.generated.resources.shopping_list_retry
 import spiza.shared.generated.resources.shopping_list_write_error
 
 private const val ERROR_LOTTIE_PATH = "files/lottie_error.json"
@@ -125,7 +125,7 @@ fun ShoppingListScreen(
                             description = stringResource(Res.string.shopping_list_loading_error_description),
                             lottiePath = ERROR_LOTTIE_PATH,
                             cta = CTA(
-                                label = stringResource(Res.string.shopping_list_retry),
+                                label = stringResource(Res.string.retry),
                                 onClick = callbacks.onRetryClick,
                             ),
                             modifier = Modifier.align(Alignment.Center),
@@ -161,10 +161,7 @@ fun ShoppingListScreen(
                                     ),
                                     confirmCTA = CTA(
                                         label = stringResource(Res.string.shopping_list_clear_checked_items_dialog_confirm),
-                                        onClick = {
-                                            callbacks.clearCheckedItems()
-                                            callbacks.onDismissDialog()
-                                        },
+                                        onClick = callbacks.clearCheckedItems,
                                     ),
                                 )
                             }
@@ -179,21 +176,21 @@ fun ShoppingListScreen(
 }
 
 data class ShoppingListScreenCallbacks(
-    val onSettingsClick: () -> Unit = {},
-    val onOtherHouseholdClick: (householdId: String) -> Unit = { _ -> },
-    val onCreateHouseholdClick: () -> Unit = {},
-    val onRetryClick: () -> Unit = {},
-    val onAddItem: (text: String) -> Unit = { _ -> },
-    val onItemTextChange: (itemId: String, text: String) -> Unit = { _, _ -> },
-    val onItemCheckedChange: (itemId: String, isChecked: Boolean) -> Unit = { _, _ -> },
-    val onItemMoved: (itemId: String, toIndex: Int) -> Unit = { _, _ -> },
-    val onItemDelete: (String) -> Unit = { _ -> },
-    val onCheckedItemsCollapse: () -> Unit = {},
+    val onSettingsClick: () -> Unit,
+    val onOtherHouseholdClick: (householdId: String) -> Unit,
+    val onCreateHouseholdClick: () -> Unit,
+    val onRetryClick: () -> Unit,
+    val onAddItem: (text: String) -> Unit,
+    val onItemTextChange: (itemId: String, text: String) -> Unit,
+    val onItemCheckedChange: (itemId: String, isChecked: Boolean) -> Unit,
+    val onItemMoved: (itemId: String, toIndex: Int) -> Unit,
+    val onItemDelete: (String) -> Unit,
+    val onCheckedItemsCollapse: () -> Unit,
     // shows a confirmation dialog, which when confirmed calls clearCheckedItems
-    val showClearCheckedItemsConfirmationDialog: () -> Unit = {},
-    val onDismissDialog: () -> Unit = {},
-    val clearCheckedItems: () -> Unit = {},
-    val onWriteErrorShown: () -> Unit = {},
+    val showClearCheckedItemsConfirmationDialog: () -> Unit,
+    val onDismissDialog: () -> Unit,
+    val clearCheckedItems: () -> Unit,
+    val onWriteErrorShown: () -> Unit,
 )
 
 @Preview
@@ -216,7 +213,22 @@ private fun ShoppingListScreenPreview() {
                 doneItems = listOf(PresentableArticleItem(id = "3", text = "Bread", isChecked = true)),
                 areCheckedItemsCollapsed = false,
             ),
-            callbacks = ShoppingListScreenCallbacks(),
+            callbacks = ShoppingListScreenCallbacks(
+                onSettingsClick = {},
+                onOtherHouseholdClick = {},
+                onCreateHouseholdClick = {},
+                onRetryClick = {},
+                onAddItem = {},
+                onItemTextChange = { _, _ -> },
+                onItemCheckedChange = { _, _ -> },
+                onItemMoved = { _, _ -> },
+                onItemDelete = {},
+                onCheckedItemsCollapse = {},
+                showClearCheckedItemsConfirmationDialog = {},
+                onDismissDialog = {},
+                clearCheckedItems = {},
+                onWriteErrorShown = {},
+            ),
         )
     }
 }

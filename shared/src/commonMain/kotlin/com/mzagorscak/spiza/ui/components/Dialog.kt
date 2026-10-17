@@ -30,7 +30,7 @@ fun Dialog(
     confirmCTA: CTA,
 ) {
     Dialog(onDismissRequest = dismissCTA.onClick) {
-        DialogContent(
+        BasicDialogContent(
             title = title,
             description = description,
             dismissCTA = dismissCTA,
@@ -40,7 +40,110 @@ fun Dialog(
 }
 
 @Composable
-private fun DialogContent(
+fun Dialog(
+    title: String,
+    description: String,
+    textInput: String,
+    onTextInputChange: (String) -> Unit,
+    label: String? = null,
+    placeholder: String? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    dismissCTA: CTA,
+    confirmCTA: CTA,
+) {
+    Dialog(onDismissRequest = dismissCTA.onClick) {
+        UserInputDialogContent(
+            title = title,
+            description = description,
+            textInput = textInput,
+            onTextInputChange = onTextInputChange,
+            label = label,
+            placeholder = placeholder,
+            trailingIcon = trailingIcon,
+            dismissCTA = dismissCTA,
+            confirmCTA = confirmCTA,
+        )
+    }
+}
+
+@Composable
+private fun UserInputDialogContent(
+    title: String,
+    description: String,
+    textInput: String,
+    onTextInputChange: (String) -> Unit,
+    dismissCTA: CTA,
+    confirmCTA: CTA,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    placeholder: String? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(padding400),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(roundedShape400)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(padding600),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        TextField(
+            text = textInput,
+            onTextChange = onTextInputChange,
+            appearance = TextFieldAppearance(
+                variant = TextFieldVariant.Outlined,
+                singleLine = true,
+                label = label,
+                placeholder = placeholder,
+                trailingIcon = trailingIcon,
+            ),
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Button(
+                label = dismissCTA.label,
+                onClick = dismissCTA.onClick,
+                isEnabled = dismissCTA.isEnabled,
+                appearance = ButtonAppearance(
+                    variant = ButtonVariant.Tertiary,
+                    size = ButtonSize.Medium,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            )
+
+            Button(
+                label = confirmCTA.label,
+                onClick = confirmCTA.onClick,
+                isEnabled = confirmCTA.isEnabled,
+                appearance = ButtonAppearance(
+                    variant = ButtonVariant.Tertiary,
+                    size = ButtonSize.Medium,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun BasicDialogContent(
     title: String,
     description: String,
     dismissCTA: CTA,
@@ -87,6 +190,7 @@ private fun DialogContent(
             Button(
                 label = confirmCTA.label,
                 onClick = confirmCTA.onClick,
+                isEnabled = confirmCTA.isEnabled,
                 appearance = ButtonAppearance(
                     variant = ButtonVariant.Tertiary,
                     size = ButtonSize.Medium,
@@ -103,11 +207,22 @@ private fun DialogLayoutPreview() {
         verticalArrangement = Arrangement.spacedBy(padding200),
         modifier = Modifier.padding(padding200),
     ) {
-        DialogContent(
+        BasicDialogContent(
             title = "Dialog Title",
             description = "This is a sample dialog description.",
             dismissCTA = CTA(label = "Cancel", onClick = {}),
             confirmCTA = CTA(label = "Confirm", onClick = {}),
+        )
+
+        UserInputDialogContent(
+            title = "Dialog Title",
+            description = "This is a sample dialog description.",
+            textInput = "",
+            onTextInputChange = {},
+            dismissCTA = CTA(label = "Cancel", onClick = {}),
+            confirmCTA = CTA(label = "Confirm", onClick = {}),
+            label = "Input Label",
+            placeholder = "Enter text here",
         )
     }
 }

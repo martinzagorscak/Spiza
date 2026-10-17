@@ -6,4 +6,5 @@ data class CTA(
     val label: String,
     val iconResource: DrawableResource? = null,
     val onClick: () -> Unit,
+    val isEnabled: Boolean = true,
 )

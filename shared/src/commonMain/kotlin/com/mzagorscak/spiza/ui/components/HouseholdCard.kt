@@ -16,35 +16,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import com.mzagorscak.spiza.ui.components.common.CTA
+import com.mzagorscak.spiza.ui.model.PresentableHousehold
+import com.mzagorscak.spiza.ui.model.PresentableHouseholdMember
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.roundedShape200
+import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.current_user
 import spiza.shared.generated.resources.ic_close
 import spiza.shared.generated.resources.ic_trash
+import spiza.shared.generated.resources.member
 
 private const val SINGLE_LINE_COUNT = 1
 
-data class PresentableHouseholdMember(
-    val id: String,
-    val name: String,
-    val photoUrl: String?,
-    val cta: CTA?,
-)
-
 @Composable
 fun HouseholdCard(
-    name: String,
+    household: PresentableHousehold,
     nameTrailingContent: @Composable (() -> Unit)? = null,
-    members: List<PresentableHouseholdMember>,
+    onRemoveUserClick: (household: PresentableHousehold, member: PresentableHouseholdMember) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val householdOwnerId = household.members.firstOrNull { it.isOwner }?.id
+
     Column(
         modifier = modifier
             .clip(roundedShape200)
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.onBackground)
             .padding(padding200),
     ) {
         Row(
@@ -55,9 +54,9 @@ fun HouseholdCard(
                 .padding(bottom = padding200),
         ) {
             Text(
-                text = name,
+                text = household.name,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.background,
                 maxLines = SINGLE_LINE_COUNT,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -71,8 +70,23 @@ fun HouseholdCard(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         LazyColumn(modifier = Modifier.padding(top = padding200)) {
-            items(members) { member ->
-                HouseholdMemberItem(member = member)
+            items(household.members) { member ->
+                // Show the remove user option only for owner removing other members or for non-owner removing themselves
+                val showRemoveUserOption = (household.isCurrentUserOwner && householdOwnerId != member.id) ||
+                    (household.isCurrentUserOwner.not() && member.isCurrentUser)
+
+                HouseholdMemberItem(
+                    showRemoveUserOption = showRemoveUserOption,
+                    member = member,
+                    onRemoveUserClick = {
+                        householdOwnerId?.let {
+                            onRemoveUserClick(
+                                household,
+                                member,
+                            )
+                        }
+                    },
+                )
             }
         }
     }
@@ -80,32 +94,36 @@ fun HouseholdCard(
 
 @Composable
 private fun HouseholdMemberItem(
+    showRemoveUserOption: Boolean,
     member: PresentableHouseholdMember,
+    onRemoveUserClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ListingItem(
-        label = member.name,
+        label = if (member.isCurrentUser) stringResource(Res.string.current_user) else member.name ?: stringResource(Res.string.member),
         onClick = null,
         leadingContent = {
             Avatar(
                 photoUrl = member.photoUrl,
-                size = AvatarSize.Medium,
+                size = AvatarSize.Small,
             )
         },
         trailingContent = {
-            member.cta?.let { cta ->
-                cta.iconResource?.let { resource ->
-                    IconButton(
-                        resource = resource,
-                        appearance = IconButtonAppearance(
-                            variant = IconButtonVariant.IconBased,
-                            size = IconButtonSize.Medium,
-                        ),
-                        onClick = cta.onClick,
-                    )
-                }
+            if (showRemoveUserOption) {
+                IconButton(
+                    resource = Res.drawable.ic_close,
+                    appearance = IconButtonAppearance(
+                        variant = IconButtonVariant.IconBased,
+                        size = IconButtonSize.Medium,
+                        tintColor = MaterialTheme.colorScheme.background,
+                    ),
+                    onClick = onRemoveUserClick,
+                )
             }
         },
+        // need to inverse the colors because it is the card background on a screen background
+        backgroundColor = MaterialTheme.colorScheme.onBackground,
+        onBackgroundColor = MaterialTheme.colorScheme.background,
         modifier = modifier,
     )
 }
@@ -113,7 +131,36 @@ private fun HouseholdMemberItem(
 @Composable
 private fun CardListLayoutPreview() {
     HouseholdCard(
-        name = "Household Name",
+        household = PresentableHousehold(
+            id = "1",
+            name = "Household 1",
+            description = "Description 1",
+            members = listOf(
+                PresentableHouseholdMember(
+                    id = "1",
+                    name = "User 1",
+                    photoUrl = null,
+                    isOwner = true,
+                    isCurrentUser = true,
+                ),
+                PresentableHouseholdMember(
+                    id = "2",
+                    name = "User 2",
+                    photoUrl = null,
+                    isOwner = false,
+                    isCurrentUser = false,
+                ),
+                PresentableHouseholdMember(
+                    id = "3",
+                    name = "User 3",
+                    photoUrl = null,
+                    isOwner = false,
+                    isCurrentUser = false,
+                ),
+            ),
+            ownerId = "1",
+            isCurrentUserOwner = true,
+        ),
         nameTrailingContent = {
             IconButton(
                 resource = Res.drawable.ic_trash,
@@ -124,28 +171,7 @@ private fun CardListLayoutPreview() {
                 onClick = {},
             )
         },
-        members = listOf(
-            PresentableHouseholdMember(
-                id = "1",
-                name = "Member 1",
-                photoUrl = null,
-                cta = CTA(
-                    label = "CTA 1",
-                    iconResource = Res.drawable.ic_close,
-                    onClick = {},
-                ),
-            ),
-            PresentableHouseholdMember(
-                id = "2",
-                name = "Member 2",
-                photoUrl = null,
-                cta = CTA(
-                    label = "CTA 2",
-                    iconResource = Res.drawable.ic_close,
-                    onClick = {},
-                ),
-            ),
-        ),
+        onRemoveUserClick = { _, _ -> },
         modifier = Modifier.padding(padding200),
     )
 }

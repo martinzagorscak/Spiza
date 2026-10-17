@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -15,6 +16,9 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdCallbacks
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdScreen
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
+import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementScreen
+import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementScreenCallbacks
+import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementViewModel
 import com.mzagorscak.spiza.ui.screens.login.LoginCallbacks
 import com.mzagorscak.spiza.ui.screens.login.LoginScreen
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModel
@@ -122,11 +126,36 @@ fun AppNavigation(isSignedIn: Boolean) {
                         callbacks = remember {
                             SettingsScreenCallbacks(
                                 onBackClick = { backStack.popIfTop(Route.Settings) },
+                                onCreateJoinKeyClick = viewModel::createJoinKey,
+                                onRefreshJoinKeyClick = viewModel::refreshJoinKey,
                                 onThemeModeSelected = viewModel::onThemeModeSelected,
                                 onLanguageSelected = viewModel::onLanguageSelected,
-                                onHouseholdManagementClick = {},
+                                onHouseholdManagementClick = { backStack.add(Route.HouseholdManagement) },
                                 onShoppingItemsSavingClick = { backStack.add(Route.SuggestionsSavingSettings) },
                                 onSignOutClick = viewModel::onSignOutClicked,
+                            )
+                        },
+                    )
+                }
+                entry<Route.HouseholdManagement> {
+                    val viewModel = koinViewModel<HouseholdManagementViewModel>()
+                    val state by viewModel.state().collectAsStateWithLifecycle()
+                    val dialogInput by viewModel.dialogInput().collectAsStateWithLifecycle()
+                    HouseholdManagementScreen(
+                        state = state,
+                        dialogInput = dialogInput,
+                        callbacks = remember {
+                            HouseholdManagementScreenCallbacks(
+                                onBackClick = { backStack.popIfTop(Route.HouseholdManagement) },
+                                onCreateHousehold = { backStack.add(Route.CreateHousehold) },
+                                onAddMember = viewModel::addMemberToHousehold,
+                                onRemoveMember = viewModel::removeMemberFromHousehold,
+                                onDeleteHousehold = viewModel::deleteHousehold,
+                                showAddMemberToHouseholdsDialog = viewModel::showAddMemberToHouseholdDialog,
+                                showRemoveMemberFromHouseholdDialog = viewModel::showRemoveMemberFromHouseholdDialog,
+                                showDeleteHouseholdDialog = viewModel::showDeleteHouseholdDialog,
+                                onDialogJoinKeyInputChanged = viewModel::onDialogJoinKeyInputChanged,
+                                onDismissDialog = viewModel::dismissDialog,
                             )
                         },
                     )
@@ -153,7 +182,7 @@ fun AppNavigation(isSignedIn: Boolean) {
     )
 }
 
-private fun androidx.navigation3.runtime.NavBackStack<NavKey>.popIfTop(route: Route) {
+private fun NavBackStack<NavKey>.popIfTop(route: Route) {
     if (size > 1 && lastOrNull() == route) {
         removeLastOrNull()
     }

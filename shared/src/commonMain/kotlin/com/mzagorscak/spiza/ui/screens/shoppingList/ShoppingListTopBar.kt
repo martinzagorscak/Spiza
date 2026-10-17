@@ -101,7 +101,22 @@ private fun ShoppingListTopBarLayoutPreview() {
             currentHouseholdName = "My Household",
             otherHouseholds = emptyList(),
         ),
-        callbacks = ShoppingListScreenCallbacks {},
+        callbacks = ShoppingListScreenCallbacks(
+            onSettingsClick = {},
+            onOtherHouseholdClick = {},
+            onCreateHouseholdClick = {},
+            onRetryClick = {},
+            onAddItem = {},
+            onItemTextChange = { _, _ -> },
+            onItemCheckedChange = { _, _ -> },
+            onItemDelete = {},
+            onItemMoved = { _, _ -> },
+            onCheckedItemsCollapse = {},
+            showClearCheckedItemsConfirmationDialog = {},
+            onDismissDialog = {},
+            clearCheckedItems = {},
+            onWriteErrorShown = {},
+        ),
     )
 }
 

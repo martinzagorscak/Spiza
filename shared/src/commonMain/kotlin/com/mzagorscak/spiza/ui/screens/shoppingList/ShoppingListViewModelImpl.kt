@@ -172,6 +172,7 @@ internal class ShoppingListViewModelImpl(
             delay(CHECKED_ITEMS_COLLAPSE_DELAY_MS.milliseconds)
             clearCheckedItems(householdId = loaded.current.id)
         }
+        dismissDialog()
     }
 
     override fun onWriteErrorShown() {

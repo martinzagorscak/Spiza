@@ -44,8 +44,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_back
+import spiza.shared.generated.resources.ic_refresh
 import spiza.shared.generated.resources.ic_right_chevron
 import spiza.shared.generated.resources.settings_copy_key
+import spiza.shared.generated.resources.settings_generate_key
 import spiza.shared.generated.resources.settings_household_management
 import spiza.shared.generated.resources.settings_key_copied
 import spiza.shared.generated.resources.settings_language_croatian
@@ -98,13 +100,13 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(padding400),
         ) {
-            state.profile?.let { profile ->
-                Section(stringResource(Res.string.settings_section_profile)) {
-                    ProfileCard(
-                        profile = profile,
-                        snackbarHostState = snackbarHostState,
-                    )
-                }
+            Section(stringResource(Res.string.settings_section_profile)) {
+                ProfileCard(
+                    profile = state.profile,
+                    snackbarHostState = snackbarHostState,
+                    onCreateJoinKeyClick = callbacks.onCreateJoinKeyClick,
+                    onRefreshJoinKeyClick = callbacks.onRefreshJoinKeyClick,
+                )
             }
             Section(stringResource(Res.string.settings_section_appearance)) {
                 ThemeMode.entries.forEach { mode ->
@@ -172,6 +174,8 @@ fun SettingsScreen(
 private fun ProfileCard(
     profile: PresentableUserProfile,
     snackbarHostState: SnackbarHostState,
+    onCreateJoinKeyClick: () -> Unit,
+    onRefreshJoinKeyClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val clipboard = LocalClipboardManager.current
@@ -190,31 +194,52 @@ private fun ProfileCard(
                 }
             }
         }
-        Text(
-            text = stringResource(Res.string.settings_user_key_label),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Text(
-            text = profile.key,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Text(
-            text = stringResource(Res.string.settings_user_key_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Button(
-            label = stringResource(Res.string.settings_copy_key),
-            onClick = {
-                scope.launch {
-                    clipboard.setText(AnnotatedString(profile.key))
-                    snackbarHostState.showSnackbar(copiedMessage)
-                }
-            },
-            appearance = ButtonAppearance(variant = ButtonVariant.Tertiary, size = ButtonSize.Small),
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(Res.string.settings_user_key_label),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f),
+            )
+
+            IconButton(
+                resource = Res.drawable.ic_refresh,
+                onClick = onRefreshJoinKeyClick,
+                appearance = IconButtonAppearance(
+                    variant = IconButtonVariant.IconBased,
+                    size = IconButtonSize.Medium,
+                    tintColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            )
+        }
+        if (profile.joinKey != null) {
+            Text(
+                text = profile.joinKey,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = stringResource(Res.string.settings_user_key_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(
+                label = stringResource(Res.string.settings_copy_key),
+                onClick = {
+                    scope.launch {
+                        clipboard.setText(AnnotatedString(profile.joinKey))
+                        snackbarHostState.showSnackbar(copiedMessage)
+                    }
+                },
+                appearance = ButtonAppearance(variant = ButtonVariant.Tertiary, size = ButtonSize.Small),
+            )
+        } else {
+            Button(
+                label = stringResource(Res.string.settings_generate_key),
+                onClick = onCreateJoinKeyClick,
+                appearance = ButtonAppearance(variant = ButtonVariant.Secondary, size = ButtonSize.Medium),
+            )
+        }
     }
 }
 
@@ -263,12 +288,14 @@ private fun AppLanguage.labelRes() =
     }
 
 data class SettingsScreenCallbacks(
-    val onBackClick: () -> Unit = {},
-    val onThemeModeSelected: (ThemeMode) -> Unit = {},
-    val onLanguageSelected: (AppLanguage) -> Unit = {},
-    val onHouseholdManagementClick: () -> Unit = {},
-    val onShoppingItemsSavingClick: () -> Unit = {},
-    val onSignOutClick: () -> Unit = {},
+    val onBackClick: () -> Unit,
+    val onCreateJoinKeyClick: () -> Unit,
+    val onRefreshJoinKeyClick: () -> Unit,
+    val onThemeModeSelected: (ThemeMode) -> Unit,
+    val onLanguageSelected: (AppLanguage) -> Unit,
+    val onHouseholdManagementClick: () -> Unit,
+    val onShoppingItemsSavingClick: () -> Unit,
+    val onSignOutClick: () -> Unit,
 )
 
 @Preview
@@ -279,7 +306,16 @@ private fun SettingsScreenPreview() {
             state = SettingsState(
                 profile = PresentableUserProfile("Jane Doe", "jane@example.com", null, "abc123"),
             ),
-            callbacks = SettingsScreenCallbacks(),
+            callbacks = SettingsScreenCallbacks(
+                onBackClick = {},
+                onCreateJoinKeyClick = {},
+                onRefreshJoinKeyClick = {},
+                onThemeModeSelected = {},
+                onLanguageSelected = {},
+                onHouseholdManagementClick = {},
+                onShoppingItemsSavingClick = {},
+                onSignOutClick = {},
+            ),
         )
     }
 }

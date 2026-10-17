@@ -77,5 +77,6 @@ internal class SuggestionSavingSettingViewModelImpl(
 
     override fun removeAllSuggestions() {
         viewModelScope.launch { deleteAllSuggestionsUseCase() }
+        dismissDialog()
     }
 }

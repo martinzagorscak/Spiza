@@ -7,5 +7,4 @@ data class HouseholdDto(
     val description: String,
     val ownerId: String,
     val joinedMembers: List<String>,
-    val pendingMembers: List<String>,
 )

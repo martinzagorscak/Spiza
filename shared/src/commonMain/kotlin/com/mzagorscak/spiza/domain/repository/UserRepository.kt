@@ -12,6 +12,8 @@ interface UserRepository {
     /** Synchronous snapshot of the signed-in user, used to seed state before [profile] emits. */
     val currentProfile: UserProfile?
 
+    suspend fun getUsers(userIds: List<String>): List<UserProfile>
+
     suspend fun signIn(provider: AuthProvider): AuthResult
 
     suspend fun signOut()

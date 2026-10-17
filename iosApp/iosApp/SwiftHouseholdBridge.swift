@@ -15,10 +15,81 @@ private final class FirestoreListenerHandle: NSObject, IosListenerHandle {
 }
 
 final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
-    private var households: CollectionReference { Firestore.firestore().collection(HouseholdFields.shared.COLLECTION) }
+    private var households: CollectionReference { Firestore.firestore().collection(HouseholdFields.shared.COLLECTION_HOUSEHOLDS) }
+    private var joinKeys: CollectionReference { Firestore.firestore().collection(HouseholdFields.shared.COLLECTION_JOIN_KEYS) }
 
     private func items(_ householdId: String) -> CollectionReference {
         households.document(householdId).collection(HouseholdFields.shared.ITEMS)
+    }
+
+    func createHouseholdJoinKey(userId: String, onComplete: @escaping (String?, String?) -> Void) {
+        let fields = HouseholdFields.shared
+        let generatedKey = UUID().uuidString.lowercased()
+        joinKeys.document(userId).setData([
+            fields.JOIN_KEY: generatedKey
+        ]) { error in
+            if let error = error {
+                onComplete(nil, error.localizedDescription)
+            } else {
+                onComplete(generatedKey, nil)
+            }
+        }
+    }
+
+    func getHouseholdJoinKey(userId: String, onComplete: @escaping (String?, String?) -> Void) {
+        let fields = HouseholdFields.shared
+        joinKeys.document(userId).getDocument { snapshot, error in
+            if let error = error {
+                onComplete(nil, error.localizedDescription)
+            } else if let snapshot = snapshot, snapshot.exists, let data = snapshot.data(), let joinKey = data[fields.JOIN_KEY] as? String {
+                onComplete(joinKey, nil)
+            } else {
+                onComplete(nil, nil)
+            }
+        }
+    }
+
+    private func deleteJoinKey(userId: String, onComplete: @escaping (String?) -> Void) {
+        joinKeys.document(userId).delete(completion: completion(onComplete))
+    }
+
+    func addMemberToHousehold(householdId: String, userJoinKey: String, onComplete: @escaping (String?) -> Void) {
+        let fields = HouseholdFields.shared
+        joinKeys.whereField(fields.JOIN_KEY, isEqualTo: userJoinKey).getDocuments { snapshot, error in
+            if let error = error {
+                onComplete(error.localizedDescription)
+                return
+            }
+
+            guard let documents = snapshot?.documents, let firstDoc = documents.first else {
+                onComplete("Invalid join key")
+                return
+            }
+
+            let userId = firstDoc.documentID
+            let householdRef = self.households.document(householdId)
+
+            householdRef.updateData([
+                fields.JOINED_MEMBERS: FieldValue.arrayUnion([userId])
+            ]) { error in
+                if let error = error {
+                    onComplete(error.localizedDescription)
+                } else {
+                    self.deleteJoinKey(userId: userId, onComplete: onComplete)
+                }
+            }
+        }
+    }
+
+    func removeMemberFromHousehold(householdId: String, memberId: String, onComplete: @escaping (String?) -> Void) {
+        let fields = HouseholdFields.shared
+        households.document(householdId).updateData([
+            fields.JOINED_MEMBERS: FieldValue.arrayRemove([memberId])
+        ], completion: completion(onComplete))
+    }
+
+    func deleteHousehold(householdId: String, onComplete: @escaping (String?) -> Void) {
+        households.document(householdId).delete(completion: completion(onComplete))
     }
 
     func observeHouseholds(
@@ -26,7 +97,8 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         onChange: @escaping ([HouseholdDto]) -> Void,
         onError: @escaping (String) -> Void
     ) -> IosListenerHandle {
-        let registration = households
+        let registration =
+            households
             .whereField(HouseholdFields.shared.JOINED_MEMBERS, arrayContains: userId)
             .addSnapshotListener { snapshot, error in
                 if let error = error {
@@ -66,7 +138,6 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
             fields.DESCRIPTION: description,
             fields.OWNER_ID: ownerId,
             fields.JOINED_MEMBERS: [ownerId],
-            fields.PENDING_MEMBERS: [String](),
         ]) { error in
             if let error = error {
                 onComplete(nil, error.localizedDescription)
@@ -78,11 +149,12 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
 
     func addItem(householdId: String, text: String, position: Double, onComplete: @escaping (String?) -> Void) {
         let fields = HouseholdFields.shared
-        items(householdId).document().setData([
-            fields.TEXT: text,
-            fields.IS_CHECKED: false,
-            fields.POSITION: position,
-        ], completion: completion(onComplete))
+        items(householdId).document().setData(
+            [
+                fields.TEXT: text,
+                fields.IS_CHECKED: false,
+                fields.POSITION: position,
+            ], completion: completion(onComplete))
     }
 
     func updateItemText(householdId: String, itemId: String, text: String, onComplete: @escaping (String?) -> Void) {
@@ -124,6 +196,7 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
             }
     }
 
+
     private func completion(_ onComplete: @escaping (String?) -> Void) -> (Error?) -> Void {
         { error in onComplete(error?.localizedDescription) }
     }
@@ -140,7 +213,6 @@ extension QueryDocumentSnapshot {
             description: data[fields.DESCRIPTION] as? String ?? "",
             ownerId: data[fields.OWNER_ID] as? String ?? "",
             joinedMembers: data[fields.JOINED_MEMBERS] as? [String] ?? [],
-            pendingMembers: data[fields.PENDING_MEMBERS] as? [String] ?? []
         )
     }
 

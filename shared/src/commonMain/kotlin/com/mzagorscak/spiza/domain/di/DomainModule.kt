@@ -1,13 +1,18 @@
 package com.mzagorscak.spiza.domain.di
 
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
+import com.mzagorscak.spiza.domain.usecase.AddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
+import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteAllSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCase
+import com.mzagorscak.spiza.domain.usecase.DeleteHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
+import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCase
+import com.mzagorscak.spiza.domain.usecase.GetUsersUseCase
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
@@ -17,6 +22,7 @@ import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCas
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveUserProfileUseCase
+import com.mzagorscak.spiza.domain.usecase.RemoveMemberFromHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
 import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCase
@@ -31,6 +37,7 @@ val domainModule =
     module {
         single { GetCurrentUserProfileUseCase(repository = get()) }
         single { ObserveUserProfileUseCase(repository = get()) }
+        single { GetUsersUseCase(repository = get()) }
         single { ObserveThemeModeUseCase(repository = get()) }
         single { SetThemeModeUseCase(repository = get()) }
         single { ObserveAppLanguageUseCase(repository = get()) }
@@ -39,6 +46,11 @@ val domainModule =
         single { SetSuggestionsSavingEnabledUseCase(repository = get()) }
         single { SignInUseCase(repository = get()) }
         single { SignOutUseCase(repository = get()) }
+        single { CreateHouseholdJoinKeyUseCase(repository = get()) }
+        single { GetHouseholdJoinKeyUseCase(repository = get()) }
+        single { AddMemberToHouseholdUseCase(repository = get()) }
+        single { RemoveMemberFromHouseholdUseCase(repository = get()) }
+        single { DeleteHouseholdUseCase(repository = get()) }
         single { ObserveHouseholdsUseCase(repository = get()) }
         single { ObserveArticleItemsUseCase(repository = get()) }
         single { CreateHouseholdUseCase(repository = get()) }

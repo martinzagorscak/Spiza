@@ -6,6 +6,22 @@ import kotlinx.coroutines.flow.Flow
 
 /** Streams fail with an exception on listener errors (e.g. permission denied); suspend calls throw on failure. */
 interface HouseholdDataSource {
+    suspend fun createHouseholdJoinKey(userId: String): String
+
+    fun getHouseholdJoinKey(userId: String): Flow<String?>
+
+    suspend fun addMemberToHousehold(
+        householdId: String,
+        userJoinKey: String,
+    )
+
+    suspend fun removeMemberFromHousehold(
+        householdId: String,
+        memberId: String,
+    )
+
+    suspend fun deleteHousehold(householdId: String)
+
     fun observeHouseholds(userId: String): Flow<List<HouseholdDto>>
 
     fun observeItems(householdId: String): Flow<List<ArticleItemDto>>
@@ -49,13 +65,14 @@ interface HouseholdDataSource {
 }
 
 object HouseholdFields {
-    const val COLLECTION = "households"
+    const val COLLECTION_JOIN_KEYS = "joinKeys"
+    const val COLLECTION_HOUSEHOLDS = "households"
+    const val JOIN_KEY = "joinKey"
     const val ITEMS = "items"
     const val NAME = "name"
     const val DESCRIPTION = "description"
     const val OWNER_ID = "ownerId"
     const val JOINED_MEMBERS = "joinedMembers"
-    const val PENDING_MEMBERS = "pendingMembers"
     const val TEXT = "text"
     const val IS_CHECKED = "isChecked"
     const val POSITION = "position"

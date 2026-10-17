@@ -1,9 +1,19 @@
 <resources>
+    <!--  General terminology  -->
+    <string name="member">Member</string>
+    <string name="current_user">Me</string>
+    <string name="join_key">Join key</string>
     <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="delete">Delete</string>
+    <string name="remove">Remove</string>
+
+    <!--  Screen specifics  -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_profile">Profile</string>
     <string name="settings_user_key_label">Your key</string>
     <string name="settings_user_key_hint">Share this key with household owners so they can add you.</string>
+    <string name="settings_generate_key">Create a key to join a household</string>
     <string name="settings_copy_key">Copy</string>
     <string name="settings_key_copied">Key copied</string>
     <string name="settings_section_appearance">Appearance</string>
@@ -35,9 +45,8 @@
     <string name="shopping_list_create_household">Create household</string>
     <string name="shopping_list_loading_error_title">Something went wrong</string>
     <string name="shopping_list_loading_error_description">We couldn't load your shopping list. Check your connection and try again.</string>
-    <string name="shopping_list_retry">Retry</string>
     <string name="shopping_list_no_household_title">No household yet</string>
-    <string name="shopping_list_no_household_description">Create a household to start a shared shopping list.</string>
+    <string name="shopping_list_no_household_description">Create or join a household to start a shared shopping list.</string>
     <string name="shopping_list_empty_title">Your list is empty</string>
     <string name="shopping_list_empty_description">Add your first item below.</string>
     <string name="shopping_list_add_item_placeholder">Add item</string>
@@ -53,4 +62,11 @@
     <string name="text_field_optional_template">%1$s (optional)</string>
     <string name="create_household_submit">Create</string>
     <string name="create_household_error">Couldn't create the household. Please try again.</string>
+    <string name="household_management_add_member_dialog_title">Add member to household</string>
+    <string name="household_management_add_member_dialog_description">Enter the join key of the member you want to add to the household.</string>
+    <string name="household_management_add_member_dialog_confirm_label">Add member</string>
+    <string name="household_management_delete_household_dialog_title_template">Delete %1$s</string>
+    <string name="household_management_delete_household_dialog_description">Are you sure you want to delete this household? This action cannot be undone.</string>
+    <string name="household_management_remove_member_dialog_title_template">Remove %1$s from %2$s</string>
+    <string name="household_management_remove_member_dialog_description">Are you sure you want to remove this member from the household?</string>
 </resources>

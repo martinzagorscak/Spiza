@@ -6,7 +6,7 @@ data class PresentableUserProfile(
     val name: String?,
     val email: String?,
     val photoUrl: String?,
-    val key: String,
+    val joinKey: String?,
 )
 
-fun UserProfile.toPresentable() = PresentableUserProfile(name = name, email = email, photoUrl = photoUrl, key = id)
+fun UserProfile.toPresentable(joinKey: String?) = PresentableUserProfile(name = name, email = email, photoUrl = photoUrl, joinKey = joinKey)
