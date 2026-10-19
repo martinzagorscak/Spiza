@@ -108,7 +108,7 @@ fun HouseholdManagementScreen(
                     verticalArrangement = Arrangement.spacedBy(padding200),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    items(state.households) { household ->
+                    items(items = state.households, key = PresentableHousehold::id) { household ->
                         HouseholdCard(
                             household = household,
                             nameTrailingContent = {

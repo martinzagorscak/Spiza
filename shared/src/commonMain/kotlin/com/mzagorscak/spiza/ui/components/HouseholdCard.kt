@@ -70,7 +70,7 @@ fun HouseholdCard(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         LazyColumn(modifier = Modifier.padding(top = padding200)) {
-            items(household.members) { member ->
+            items(items = household.members, key = PresentableHouseholdMember::id) { member ->
                 // Show the remove user option only for owner removing other members or for non-owner removing themselves
                 val showRemoveUserOption = (household.isCurrentUserOwner && householdOwnerId != member.id) ||
                     (household.isCurrentUserOwner.not() && member.isCurrentUser)

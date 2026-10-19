@@ -152,7 +152,7 @@ fun SuggestionSavingSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(padding100),
                     horizontalArrangement = Arrangement.spacedBy(padding100),
                 ) {
-                    items(state.suggestions) { suggestion ->
+                    items(items = state.suggestions, key = PresentableShoppingItemSuggestion::id) { suggestion ->
                         TextChip(
                             text = suggestion.name,
                             trailingContent = {

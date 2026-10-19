@@ -99,7 +99,7 @@ fun ShoppingListContent(
                 )
             }
         }
-        items(displayedPending, key = { it.id }) { item ->
+        items(items = displayedPending, key = PresentableArticleItem::id) { item ->
             val isDragging = draggedKey == item.id
             Draggable(
                 offsetY = if (isDragging) dragOffset else 0f,
@@ -189,7 +189,7 @@ fun ShoppingListContent(
                 }
             }
             if (state.areCheckedItemsCollapsed.not()) {
-                items(state.doneItems, key = { it.id }) { item ->
+                items(items = state.doneItems, key = PresentableArticleItem::id) { item ->
                     ArticleRow(item = item, callbacks = callbacks, modifier = Modifier.animateItem())
                 }
             }

@@ -72,7 +72,7 @@ fun ShoppingListSuggestionsDrawer(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                items(suggestions) { suggestion ->
+                items(items = suggestions, key = PresentableShoppingItemSuggestion::id) { suggestion ->
                     TextChip(
                         text = suggestion.name,
                         onClick = { onAddItem(suggestion.name) },
