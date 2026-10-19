@@ -77,7 +77,7 @@ internal class SettingsViewModelImpl(
     }
 
     // Navigation reacts to the auth state change, so there is nothing to do on success.
-    override fun onSignOutClicked() {
+    override fun onSignOut() {
         if (state.value.isSigningOut) return
         viewModelScope.launch {
             state.update { it.copy(isSigningOut = true) }

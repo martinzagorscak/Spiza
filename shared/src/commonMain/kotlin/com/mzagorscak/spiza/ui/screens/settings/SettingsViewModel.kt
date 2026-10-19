@@ -33,5 +33,5 @@ abstract class SettingsViewModel : ViewModel() {
 
     abstract fun onLanguageSelected(language: AppLanguage)
 
-    abstract fun onSignOutClicked()
+    abstract fun onSignOut()
 }

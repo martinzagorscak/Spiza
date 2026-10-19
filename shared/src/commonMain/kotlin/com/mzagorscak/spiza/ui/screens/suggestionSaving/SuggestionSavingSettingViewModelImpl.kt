@@ -63,7 +63,7 @@ internal class SuggestionSavingSettingViewModelImpl(
         this.sortingType.value = sortingType
     }
 
-    override fun onRemoveSuggestion(suggestionId: Long) {
+    override fun removeSuggestion(suggestionId: Long) {
         viewModelScope.launch { deleteSuggestionUseCase(id = suggestionId) }
     }
 

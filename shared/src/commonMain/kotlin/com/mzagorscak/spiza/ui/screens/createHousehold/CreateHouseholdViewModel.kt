@@ -25,5 +25,5 @@ abstract class CreateHouseholdViewModel : ViewModel() {
 
     abstract fun onDescriptionChange(description: String)
 
-    abstract fun onCreateClicked()
+    abstract fun createHousehold()
 }

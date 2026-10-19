@@ -11,7 +11,7 @@ data class LoginState(
 abstract class LoginViewModel : ViewModel() {
     abstract fun state(): StateFlow<LoginState>
 
-    abstract fun onSignInWithGoogleClicked()
+    abstract fun signInWithGoogle()
 
     abstract fun onLoginErrorShown()
 }

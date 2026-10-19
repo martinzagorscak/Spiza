@@ -29,7 +29,7 @@ internal class CreateHouseholdViewModelImpl(
         state.update { it.copy(description = description, hasError = false) }
     }
 
-    override fun onCreateClicked() {
+    override fun createHousehold() {
         val current = state.value
         if (!current.canSubmit) return
         viewModelScope.launch {

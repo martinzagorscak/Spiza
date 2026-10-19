@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -13,6 +14,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.mzagorscak.spiza.ui.components.common.performHapticFeedback
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdCallbacks
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdScreen
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
@@ -36,6 +38,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun AppNavigation(isSignedIn: Boolean) {
     val startRoute: Route = if (isSignedIn) Route.ShoppingList else Route.Login
+    val hapticFeedback = LocalHapticFeedback.current
 
     val backStack =
         rememberNavBackStack(
@@ -69,7 +72,10 @@ fun AppNavigation(isSignedIn: Boolean) {
                         state = state,
                         callbacks = remember {
                             LoginCallbacks(
-                                onSignInWithGoogle = viewModel::onSignInWithGoogleClicked,
+                                onSignInWithGoogle = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.signInWithGoogle()
+                                },
                                 onLoginErrorShown = viewModel::onLoginErrorShown,
                             )
                         },
@@ -82,10 +88,16 @@ fun AppNavigation(isSignedIn: Boolean) {
                         state = state,
                         callbacks = remember {
                             CreateHouseholdCallbacks(
-                                onBackClick = { backStack.popIfTop(Route.CreateHousehold) },
+                                onBackClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.popIfTop(Route.CreateHousehold)
+                                },
                                 onNameChange = viewModel::onNameChange,
                                 onDescriptionChange = viewModel::onDescriptionChange,
-                                onCreateClick = viewModel::onCreateClicked,
+                                onCreateClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.createHousehold()
+                                },
                                 onCreated = { backStack.popIfTop(Route.CreateHousehold) },
                             )
                         },
@@ -100,19 +112,43 @@ fun AppNavigation(isSignedIn: Boolean) {
                         bodyState = bodyState,
                         callbacks = remember {
                             ShoppingListScreenCallbacks(
-                                onSettingsClick = { backStack.add(Route.Settings) },
+                                onSettingsClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(Route.Settings)
+                                },
                                 onOtherHouseholdClick = viewModel::onHouseholdSelected,
-                                onCreateHouseholdClick = { backStack.add(Route.CreateHousehold) },
-                                onRetryClick = viewModel::onRetryClicked,
+                                onCreateHouseholdClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(Route.CreateHousehold)
+                                },
+                                onRetryClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.retry()
+                                },
                                 onAddItem = viewModel::onAddItem,
                                 onItemTextChange = viewModel::onItemTextChange,
-                                onItemCheckedChange = viewModel::onItemCheckedChange,
+                                onItemCheckedChange = { itemId, isChecked ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.onItemCheckedChange(itemId = itemId, isChecked = isChecked)
+                                },
                                 onItemMoved = viewModel::onItemMoved,
-                                onItemDelete = viewModel::onItemDelete,
-                                onCheckedItemsCollapse = viewModel::onCheckedItemsCollapse,
-                                showClearCheckedItemsConfirmationDialog = viewModel::showClearCheckedItemsConfirmationDialog,
+                                onItemDelete = { itemId ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.onItemDelete(itemId = itemId)
+                                },
+                                onCheckedItemsCollapse = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.onCheckedItemsCollapse()
+                                },
+                                showClearCheckedItemsConfirmationDialog = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.showClearCheckedItemsConfirmationDialog()
+                                },
                                 onDismissDialog = viewModel::dismissDialog,
-                                clearCheckedItems = viewModel::clearCheckedItems,
+                                clearCheckedItems = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.clearCheckedItems()
+                                },
                                 onWriteErrorShown = viewModel::onWriteErrorShown,
                             )
                         },
@@ -125,14 +161,38 @@ fun AppNavigation(isSignedIn: Boolean) {
                         state = state,
                         callbacks = remember {
                             SettingsScreenCallbacks(
-                                onBackClick = { backStack.popIfTop(Route.Settings) },
-                                onCreateJoinKeyClick = viewModel::createJoinKey,
-                                onRefreshJoinKeyClick = viewModel::refreshJoinKey,
-                                onThemeModeSelected = viewModel::onThemeModeSelected,
-                                onLanguageSelected = viewModel::onLanguageSelected,
-                                onHouseholdManagementClick = { backStack.add(Route.HouseholdManagement) },
-                                onShoppingItemsSavingClick = { backStack.add(Route.SuggestionsSavingSettings) },
-                                onSignOutClick = viewModel::onSignOutClicked,
+                                onBackClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.popIfTop(Route.Settings)
+                                },
+                                onCreateJoinKeyClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.createJoinKey()
+                                },
+                                onRefreshJoinKeyClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.refreshJoinKey()
+                                },
+                                onThemeModeSelected = { themeMode ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.onThemeModeSelected(mode = themeMode)
+                                },
+                                onLanguageSelected = { language ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.onLanguageSelected(language = language)
+                                },
+                                onHouseholdManagementClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(Route.HouseholdManagement)
+                                },
+                                onShoppingItemsSavingClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(Route.SuggestionsSavingSettings)
+                                },
+                                onSignOutClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.onSignOut()
+                                },
                             )
                         },
                     )
@@ -146,14 +206,45 @@ fun AppNavigation(isSignedIn: Boolean) {
                         dialogInput = dialogInput,
                         callbacks = remember {
                             HouseholdManagementScreenCallbacks(
-                                onBackClick = { backStack.popIfTop(Route.HouseholdManagement) },
-                                onCreateHousehold = { backStack.add(Route.CreateHousehold) },
-                                onAddMember = viewModel::addMemberToHousehold,
-                                onRemoveMember = viewModel::removeMemberFromHousehold,
-                                onDeleteHousehold = viewModel::deleteHousehold,
-                                showAddMemberToHouseholdsDialog = viewModel::showAddMemberToHouseholdDialog,
-                                showRemoveMemberFromHouseholdDialog = viewModel::showRemoveMemberFromHouseholdDialog,
-                                showDeleteHouseholdDialog = viewModel::showDeleteHouseholdDialog,
+                                onBackClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.popIfTop(Route.HouseholdManagement)
+                                },
+                                onCreateHousehold = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(Route.CreateHousehold)
+                                },
+                                showAddMemberToHouseholdsDialog = { householdId ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.showAddMemberToHouseholdDialog(householdId = householdId)
+                                },
+                                onAddMember = { householdId ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.addMemberToHousehold(householdId = householdId)
+                                },
+                                showRemoveMemberFromHouseholdDialog = { household, member ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.showRemoveMemberFromHouseholdDialog(household = household, member = member)
+                                },
+                                onRemoveMember = { householdId, memberId, householdOwnerId ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.removeMemberFromHousehold(
+                                        householdId = householdId,
+                                        memberId = memberId,
+                                        householdOwnerId = householdOwnerId,
+                                    )
+                                },
+                                showDeleteHouseholdDialog = { household ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.showDeleteHouseholdDialog(household = household)
+                                },
+                                onDeleteHousehold = { householdId, householdOwnerId ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.deleteHousehold(
+                                        householdId = householdId,
+                                        householdOwnerId = householdOwnerId,
+                                    )
+                                },
                                 onDialogJoinKeyInputChanged = viewModel::onDialogJoinKeyInputChanged,
                                 onDismissDialog = viewModel::dismissDialog,
                             )
@@ -167,13 +258,28 @@ fun AppNavigation(isSignedIn: Boolean) {
                         state = state,
                         callbacks = remember {
                             SuggestionSavingSettingsScreenCallbacks(
-                                onBackClick = { backStack.popIfTop(Route.SuggestionsSavingSettings) },
-                                onToggleSavingEnabled = viewModel::onToggleSavingEnabled,
+                                onBackClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.popIfTop(Route.SuggestionsSavingSettings)
+                                },
+                                onToggleSavingEnabled = { enabled ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.onToggleSavingEnabled(enabled = enabled)
+                                },
                                 onSortingTypeChange = viewModel::setSortingType,
-                                onRemoveSuggestion = viewModel::onRemoveSuggestion,
-                                showRemoveAllSuggestionsConfirmationDialog = viewModel::showRemoveAllSuggestionsConfirmationDialog,
+                                onRemoveSuggestion = { suggestionId ->
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.removeSuggestion(suggestionId = suggestionId)
+                                },
+                                showRemoveAllSuggestionsConfirmationDialog = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.showRemoveAllSuggestionsConfirmationDialog()
+                                },
                                 onDismissDialog = viewModel::dismissDialog,
-                                removeAllSuggestions = viewModel::removeAllSuggestions,
+                                removeAllSuggestions = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.removeAllSuggestions()
+                                },
                             )
                         },
                     )

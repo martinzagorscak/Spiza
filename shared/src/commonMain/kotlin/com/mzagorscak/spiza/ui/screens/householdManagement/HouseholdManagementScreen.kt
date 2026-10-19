@@ -129,11 +129,7 @@ fun HouseholdManagementScreen(
                                         IconButton(
                                             resource = Res.drawable.ic_trash,
                                             onClick = {
-                                                callbacks.showDeleteHouseholdDialog(
-                                                    household.id,
-                                                    household.ownerId,
-                                                    household.name,
-                                                )
+                                                callbacks.showDeleteHouseholdDialog(household)
                                             },
                                             appearance = IconButtonAppearance(
                                                 variant = IconButtonVariant.IconBased,
@@ -204,7 +200,12 @@ fun HouseholdManagementScreen(
                     ),
                     confirmCTA = CTA(
                         label = stringResource(Res.string.delete),
-                        onClick = { callbacks.onDeleteHousehold(state.dialogState.householdId, state.dialogState.householdOwnerId) },
+                        onClick = {
+                            callbacks.onDeleteHousehold(
+                                state.dialogState.householdId,
+                                state.dialogState.householdOwnerId,
+                            )
+                        },
                     ),
                 )
             }
@@ -242,12 +243,12 @@ fun HouseholdManagementScreen(
 data class HouseholdManagementScreenCallbacks(
     val onBackClick: () -> Unit,
     val onCreateHousehold: () -> Unit,
-    val onAddMember: (joinKey: String) -> Unit,
-    val onRemoveMember: (householdId: String, memberId: String, householdOwnerId: String) -> Unit,
-    val onDeleteHousehold: (String, String) -> Unit,
     val showAddMemberToHouseholdsDialog: (String) -> Unit,
+    val onAddMember: (joinKey: String) -> Unit,
     val showRemoveMemberFromHouseholdDialog: (household: PresentableHousehold, member: PresentableHouseholdMember) -> Unit,
-    val showDeleteHouseholdDialog: (householdId: String, householdOwnerId: String, householdName: String) -> Unit,
+    val onRemoveMember: (householdId: String, memberId: String, householdOwnerId: String) -> Unit,
+    val showDeleteHouseholdDialog: (household: PresentableHousehold) -> Unit,
+    val onDeleteHousehold: (householdId: String, householdOwnerId: String) -> Unit,
     val onDialogJoinKeyInputChanged: (String) -> Unit,
     val onDismissDialog: () -> Unit,
 )

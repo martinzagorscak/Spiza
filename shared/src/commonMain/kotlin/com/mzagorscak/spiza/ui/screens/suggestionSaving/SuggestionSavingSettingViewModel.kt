@@ -24,7 +24,7 @@ abstract class SuggestionSavingSettingViewModel : ViewModel() {
 
     abstract fun setSortingType(sortingType: SuggestionSortingType)
 
-    abstract fun onRemoveSuggestion(suggestionId: Long)
+    abstract fun removeSuggestion(suggestionId: Long)
 
     abstract fun showRemoveAllSuggestionsConfirmationDialog()
 

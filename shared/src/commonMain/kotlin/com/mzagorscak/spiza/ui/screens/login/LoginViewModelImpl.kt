@@ -18,7 +18,7 @@ internal class LoginViewModelImpl(
     override fun state(): StateFlow<LoginState> = state.asStateFlow()
 
     // Successful sign-in is not handled here: auth state changes and navigation reacts to it.
-    override fun onSignInWithGoogleClicked() {
+    override fun signInWithGoogle() {
         if (state.value.isLoading) return
         viewModelScope.launch {
             state.update { LoginState(isLoading = true) }

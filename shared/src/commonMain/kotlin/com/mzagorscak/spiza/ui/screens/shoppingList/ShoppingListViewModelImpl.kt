@@ -105,7 +105,7 @@ internal class ShoppingListViewModelImpl(
 
     override fun bodyState(): StateFlow<ShoppingListState.Body> = body.asStateFlow()
 
-    override fun onRetryClicked() {
+    override fun retry() {
         Logger.i(tag = LOG_TAG) { "Retry clicked" }
         retryTrigger.update { it + 1 }
     }

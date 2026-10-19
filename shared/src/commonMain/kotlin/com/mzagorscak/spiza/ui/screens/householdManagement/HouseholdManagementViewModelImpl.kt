@@ -97,16 +97,12 @@ internal class HouseholdManagementViewModelImpl(
         dismissDialog()
     }
 
-    override fun showDeleteHouseholdDialog(
-        householdId: String,
-        householdOwnerId: String,
-        householdName: String,
-    ) {
+    override fun showDeleteHouseholdDialog(household: PresentableHousehold) {
         dialogStatePublisher.update {
             HouseholdManagementScreenState.DialogState.DeleteHousehold(
-                householdId = householdId,
-                householdOwnerId = householdOwnerId,
-                householdName = householdName,
+                householdId = household.id,
+                householdOwnerId = household.ownerId,
+                householdName = household.name,
             )
         }
     }

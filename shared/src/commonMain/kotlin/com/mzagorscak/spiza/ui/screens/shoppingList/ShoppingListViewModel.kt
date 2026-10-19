@@ -40,7 +40,7 @@ abstract class ShoppingListViewModel : ViewModel() {
 
     abstract fun bodyState(): StateFlow<ShoppingListState.Body>
 
-    abstract fun onRetryClicked()
+    abstract fun retry()
 
     abstract fun onHouseholdSelected(householdId: String)
 

@@ -58,11 +58,7 @@ abstract class HouseholdManagementViewModel : ViewModel() {
         householdOwnerId: String,
     )
 
-    abstract fun showDeleteHouseholdDialog(
-        householdId: String,
-        householdOwnerId: String,
-        householdName: String,
-    )
+    abstract fun showDeleteHouseholdDialog(household: PresentableHousehold)
 
     /**
      * Owner can delete the household, but members can only leave the household.
