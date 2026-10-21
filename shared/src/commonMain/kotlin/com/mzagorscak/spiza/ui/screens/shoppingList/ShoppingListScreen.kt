@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
@@ -30,6 +31,7 @@ import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.LoadingIndicator
 import com.mzagorscak.spiza.ui.components.LoadingIndicatorSize
 import com.mzagorscak.spiza.ui.components.common.CTA
+import com.mzagorscak.spiza.ui.components.common.performHapticFeedback
 import com.mzagorscak.spiza.ui.model.PresentableArticleItem
 import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
@@ -60,6 +62,7 @@ fun ShoppingListScreen(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
+    val hapticFeedback = LocalHapticFeedback.current
     val suggestionsDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val snackbarHostState = remember { SnackbarHostState() }
     val writeErrorMessage = stringResource(Res.string.shopping_list_write_error)
@@ -96,6 +99,7 @@ fun ShoppingListScreen(
                         resource = Res.drawable.ic_plus,
                         onClick = {
                             scope.launch {
+                                performHapticFeedback(hapticFeedback)
                                 suggestionsDrawerState.open()
                             }
                         },

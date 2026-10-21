@@ -15,12 +15,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.TextChip
+import com.mzagorscak.spiza.ui.components.common.performHapticFeedback
 import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import com.mzagorscak.spiza.ui.theme.padding200
@@ -39,6 +41,7 @@ fun ShoppingListSuggestionsDrawer(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
     ModalDrawerSheet(
         drawerContainerColor = MaterialTheme.colorScheme.background,
         modifier = modifier,
@@ -76,7 +79,10 @@ fun ShoppingListSuggestionsDrawer(
                 items(items = suggestions, key = PresentableShoppingItemSuggestion::id) { suggestion ->
                     TextChip(
                         text = suggestion.name,
-                        onClick = { onAddItem(suggestion.name) },
+                        onClick = {
+                            performHapticFeedback(hapticFeedback)
+                            onAddItem(suggestion.name)
+                        },
                         enabled = suggestion.isEnabled && areSuggestionsEnabled,
                         trailingContent = {
                             IconButton(
