@@ -37,9 +37,11 @@ class RemoveMemberFromHouseholdUseCase(
         isCurrentUserOwner: Boolean,
         isCurrentUserRemovingHimself: Boolean,
     ) {
-        require(isCurrentUserOwner || isCurrentUserRemovingHimself) {
-            "Only the owner can remove other members and not himself."
+        // Only the owner can remove other members and not himself
+        if (isCurrentUserOwner.not() && isCurrentUserRemovingHimself.not()) {
+            return // todo return error state
         }
+
         repository.removeMemberFromHousehold(householdId, memberId)
     }
 }
@@ -51,7 +53,11 @@ class DeleteHouseholdUseCase(
         householdId: String,
         isCurrentUserOwner: Boolean,
     ) {
-        require(isCurrentUserOwner) { "Only the owner can delete the household" }
+        // Only the owner can delete the household
+        if (isCurrentUserOwner.not()) {
+            return // todo return error state
+        }
+
         repository.deleteHousehold(householdId)
     }
 }
@@ -76,6 +82,7 @@ class CreateHouseholdUseCase(
         name: String,
         description: String,
     ): String {
+        // todo return error state
         require(name.isNotBlank()) { "Household name must not be blank" }
         return repository.createHousehold(name = name.trim(), description = description.trim())
     }
