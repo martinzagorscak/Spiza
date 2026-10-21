@@ -224,6 +224,7 @@ private fun ArticleRow(
         onTextChange = { text = it },
         onCheckedChange = { callbacks.onItemCheckedChange(item.id, it) },
         onDelete = { callbacks.onItemDelete(item.id) },
+        singleLine = false,
         modifier = modifier,
     )
 }
