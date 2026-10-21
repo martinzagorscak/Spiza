@@ -1,16 +1,18 @@
 package com.mzagorscak.spiza.domain.usecase
 
+import com.mzagorscak.spiza.domain.constraints.ConstraintsManager
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.ArticleItemOrdering
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import com.mzagorscak.spiza.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class CreateHouseholdJoinKeyUseCase(
     private val repository: HouseholdRepository,
 ) {
-    suspend operator fun invoke(): String = repository.createHouseholdJoinKey()
+    suspend operator fun invoke(): String? = repository.createHouseholdJoinKey()
 }
 
 class GetHouseholdJoinKeyUseCase(
@@ -77,13 +79,11 @@ class ObserveArticleItemsUseCase(
 class CreateHouseholdUseCase(
     private val repository: HouseholdRepository,
 ) {
-    /** Throws [IllegalArgumentException] when the name is blank. */
     suspend operator fun invoke(
         name: String,
         description: String,
-    ): String {
-        // todo return error state
-        require(name.isNotBlank()) { "Household name must not be blank" }
+    ): String? {
+        if (name.isBlank()) return null
         return repository.createHousehold(name = name.trim(), description = description.trim())
     }
 }
@@ -100,7 +100,12 @@ class AddArticleItemUseCase(
         if (trimmed.isEmpty()) return
         if (currentItems.map { it.text }.contains(trimmed)) return
         val pending = currentItems.filterNot { it.isChecked }
-        repository.addItem(householdId, trimmed, ArticleItemOrdering.appendPosition(pending))
+        repository.addItem(
+            householdId = householdId,
+            text = trimmed,
+            position = ArticleItemOrdering.appendPosition(pending),
+            currentItemsCount = currentItems.count(),
+        )
     }
 }
 
@@ -172,4 +177,32 @@ class SetSelectedHouseholdIdUseCase(
     private val repository: SettingsRepository,
 ) {
     suspend operator fun invoke(householdId: String) = repository.setSelectedHouseholdId(householdId)
+}
+
+class CanUserCreateHouseholdUseCase(
+    private val constraintsManager: ConstraintsManager,
+) {
+    operator fun invoke(householdCount: Int): Boolean = constraintsManager.canUserCreateOrJoinHousehold(householdCount = householdCount)
+}
+
+class CanUserJoinHouseholdUseCase(
+    private val repository: HouseholdRepository,
+    private val constraintsManager: ConstraintsManager,
+) {
+    operator fun invoke(): Flow<Boolean> =
+        repository.getCachedHouseholdCount().map { householdCount ->
+            constraintsManager.canUserCreateOrJoinHousehold(householdCount = householdCount)
+        }
+}
+
+class CanAddItemToHouseholdUseCase(
+    private val constraintsManager: ConstraintsManager,
+) {
+    operator fun invoke(itemCount: Int): Boolean = constraintsManager.canAddItemToHousehold(itemCount = itemCount)
+}
+
+class CanAddMemberToHouseholdUseCase(
+    private val constraintsManager: ConstraintsManager,
+) {
+    operator fun invoke(memberCount: Int): Boolean = constraintsManager.canAddMemberToHousehold(memberCount = memberCount)
 }

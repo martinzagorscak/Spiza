@@ -2,6 +2,8 @@ package com.mzagorscak.spiza.ui.screens.householdManagement
 
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.domain.usecase.AddMemberToHouseholdUseCase
+import com.mzagorscak.spiza.domain.usecase.CanAddMemberToHouseholdUseCase
+import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCase
@@ -25,6 +27,8 @@ internal class HouseholdManagementViewModelImpl(
     private val addMemberToHousehold: AddMemberToHouseholdUseCase,
     private val removeMemberFromHouseholdUseCase: RemoveMemberFromHouseholdUseCase,
     private val deleteHouseholdUseCase: DeleteHouseholdUseCase,
+    private val canUserCreateHousehold: CanUserCreateHouseholdUseCase,
+    private val canAddMemberToHousehold: CanAddMemberToHouseholdUseCase,
 ) : HouseholdManagementViewModel() {
     private val state = MutableStateFlow(HouseholdManagementScreenState())
     private val currentUserId = getCurrentUserProfileUseCase()?.id
@@ -39,7 +43,13 @@ internal class HouseholdManagementViewModelImpl(
         ) { households, dialogState ->
             state.update {
                 it.copy(
-                    households = households.map { household -> household.toPresentable(currentUserId) },
+                    households = households.map { household ->
+                        household.toPresentable(
+                            currentUserId = currentUserId,
+                            canAddMemberToHousehold = canAddMemberToHousehold(memberCount = household.members.count()),
+                        )
+                    },
+                    canUserCreateHousehold = canUserCreateHousehold(householdCount = households.count()),
                     dialogState = dialogState,
                 )
             }

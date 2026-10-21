@@ -64,18 +64,20 @@ fun ShoppingListTopBar(
                             },
                         )
                     }
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(Res.string.shopping_list_create_household),
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        },
-                        onClick = {
-                            isDropdownExpanded = false
-                            callbacks.onCreateHouseholdClick()
-                        },
-                    )
+                    if (headerState.canUserCreateHousehold) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = stringResource(Res.string.shopping_list_create_household),
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            },
+                            onClick = {
+                                isDropdownExpanded = false
+                                callbacks.onCreateHouseholdClick()
+                            },
+                        )
+                    }
                 }
             }
         },

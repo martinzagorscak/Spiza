@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 data class SettingsState(
     val profile: PresentableUserProfile = PlaceholderProfile,
+    val showHouseholdJoinKeySection: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.System,
     val language: AppLanguage = AppLanguage.Default,
     val isSigningOut: Boolean = false,

@@ -3,6 +3,7 @@ package com.mzagorscak.spiza.ui.screens.settings
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.domain.model.AppLanguage
 import com.mzagorscak.spiza.domain.model.ThemeMode
+import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCase
@@ -27,6 +28,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class SettingsViewModelImpl(
     observeUserProfile: ObserveUserProfileUseCase,
+    private val canUserJoinHousehold: CanUserJoinHouseholdUseCase,
     private val createHouseholdJoinKey: CreateHouseholdJoinKeyUseCase,
     getHouseholdJoinKey: GetHouseholdJoinKeyUseCase,
     observeThemeMode: ObserveThemeModeUseCase,
@@ -44,13 +46,15 @@ internal class SettingsViewModelImpl(
     init {
         combine(
             observeUserProfile(),
+            canUserJoinHousehold(),
             observeHouseholdJoinKey,
             observeThemeMode(),
             observeAppLanguage(),
-        ) { userProfile, joinKey, themeMode, appLanguage ->
+        ) { userProfile, canUserJoinHousehold, joinKey, themeMode, appLanguage ->
             state.update {
                 it.copy(
                     profile = userProfile?.toPresentable(joinKey) ?: SettingsState.PlaceholderProfile,
+                    showHouseholdJoinKeySection = canUserJoinHousehold,
                     themeMode = themeMode,
                     language = appLanguage,
                 )

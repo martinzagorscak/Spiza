@@ -15,6 +15,7 @@ sealed class ShoppingListState {
     data class Header(
         val currentHouseholdName: String? = null,
         val otherHouseholds: List<PresentableSimpleHousehold> = emptyList(),
+        val canUserCreateHousehold: Boolean = false,
     ) : ShoppingListState()
 
     sealed class Body : ShoppingListState() {
@@ -27,6 +28,7 @@ sealed class ShoppingListState {
         data class Content(
             val pendingItems: List<PresentableArticleItem> = emptyList(),
             val doneItems: List<PresentableArticleItem> = emptyList(),
+            val canAddItemToHousehold: Boolean = false,
             val suggestions: List<PresentableShoppingItemSuggestion> = emptyList(),
             val areCheckedItemsCollapsed: Boolean = false,
             val dialogState: DialogState = DialogState.Hidden,

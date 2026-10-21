@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.mzagorscak.spiza.auth.AuthService
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
+import com.mzagorscak.spiza.domain.constraints.ConstraintsManager
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.UserProfile
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
@@ -30,19 +32,23 @@ private const val CREATE_TIMEOUT_MS = 10_000L
 private const val ITEMS_RETRY_COUNT = 3
 private const val ITEMS_RETRY_DELAY_MS = 1_000L
 
-class HouseholdCreationTimeoutException : Exception("Creating the household timed out. Check your connection.")
-
 internal class HouseholdRepositoryImpl(
     private val dataSource: HouseholdDataSource,
     private val authService: AuthService,
     private val userRepository: UserRepository,
+    private val constraintsManager: ConstraintsManager,
 ) : HouseholdRepository {
     private val newlyCreatedHouseholdJoinKeyPublisher = MutableSharedFlow<String>()
     private val cachedUserProfiles = MutableStateFlow(emptyMap<String, UserProfile>()) // <userId, UserProfile>
+    private val cachedHouseholds = MutableStateFlow(emptyMap<String, HouseholdDto>()) // <householdId, memberCount>
 
-    override suspend fun createHouseholdJoinKey(): String {
+    override suspend fun createHouseholdJoinKey(): String? {
         val userId = authService.currentUser?.uid ?: error("No signed-in user")
-        Logger.i(tag = LOG_TAG) { "Creating household join key for user $userId" }
+        // Constraint verification
+        if (constraintsManager.canUserCreateOrJoinHousehold(householdCount = cachedHouseholds.value.count()).not()) {
+            return null
+        }
+
         val joinKey = dataSource.createHouseholdJoinKey(userId)
         newlyCreatedHouseholdJoinKeyPublisher.emit(joinKey)
         return joinKey
@@ -65,6 +71,11 @@ internal class HouseholdRepositoryImpl(
         householdId: String,
         userJoinKey: String,
     ) {
+        // Constraint verification
+        cachedHouseholds.value[householdId]?.let { household ->
+            if (constraintsManager.canAddMemberToHousehold(memberCount = household.joinedMembers.count())) return
+        }
+
         val userId = authService.currentUser?.uid ?: error("No signed-in user")
         Logger.i(tag = LOG_TAG) { "Adding member $userId to household $householdId with join key $userJoinKey" }
         dataSource.addMemberToHousehold(householdId, userJoinKey)
@@ -94,6 +105,7 @@ internal class HouseholdRepositoryImpl(
                 dataSource
                     .observeHouseholds(user.uid)
                     .map { households ->
+                        cachedHouseholds.update { households.associateBy { it.id } }
                         val memberIdsToFetch = households.flatMap { it.joinedMembers }.distinct().toSet() - cachedUserProfiles.value.keys
                         val freshUsers = userRepository.getUsers(memberIdsToFetch.toList())
                         val allProfiles = cachedUserProfiles.value + freshUsers.associateBy { it.id }
@@ -103,6 +115,9 @@ internal class HouseholdRepositoryImpl(
                     }
             }
         }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getCachedHouseholdCount(): Flow<Int> = cachedHouseholds.mapLatest { it.count() }
 
     override fun observeItems(householdId: String): Flow<List<ArticleItem>> =
         dataSource
@@ -119,16 +134,14 @@ internal class HouseholdRepositoryImpl(
     override suspend fun createHousehold(
         name: String,
         description: String,
-    ): String {
+    ): String? {
+        // Constraint verification
+        if (constraintsManager.canUserCreateOrJoinHousehold(householdCount = cachedHouseholds.value.count()).not()) {
+            return null
+        }
+
         val ownerId = authService.currentUser?.uid ?: error("No signed-in user")
-        Logger.i(tag = LOG_TAG) { "Creating household for owner $ownerId" }
-        val id =
-            withTimeoutOrNull(CREATE_TIMEOUT_MS.milliseconds) { dataSource.createHousehold(ownerId, name, description) }
-                ?: run {
-                    Logger.e(tag = LOG_TAG) { "Creating household timed out after ${CREATE_TIMEOUT_MS}ms" }
-                    throw HouseholdCreationTimeoutException()
-                }
-        Logger.i(tag = LOG_TAG) { "Household created: $id" }
+        val id = withTimeoutOrNull(CREATE_TIMEOUT_MS.milliseconds) { dataSource.createHousehold(ownerId, name, description) }
         return id
     }
 
@@ -136,7 +149,13 @@ internal class HouseholdRepositoryImpl(
         householdId: String,
         text: String,
         position: Double,
-    ) = dataSource.addItem(householdId, text, position)
+        currentItemsCount: Int,
+    ) {
+        // Constraint verification
+        if (constraintsManager.canAddItemToHousehold(itemCount = currentItemsCount).not()) return
+
+        dataSource.addItem(householdId, text, position)
+    }
 
     override suspend fun updateItemText(
         householdId: String,

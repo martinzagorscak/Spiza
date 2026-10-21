@@ -44,6 +44,7 @@ import spiza.shared.generated.resources.shopping_list_empty_title
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val TEXT_COMMIT_DEBOUNCE_MS = 600L
+private const val ARTICLE_TEXT_MAX_LENGTH = 100
 private const val OPTIMISTIC_ORDER_TIMEOUT_MS = 3_000L
 private const val EMPTY_KEY = "empty"
 private const val ADD_ITEM_KEY = "add-item"
@@ -146,8 +147,10 @@ fun ShoppingListContent(
                 ArticleRow(item = item, callbacks = callbacks)
             }
         }
-        item(key = ADD_ITEM_KEY) {
-            AddItemRow(onAddItem = callbacks.onAddItem)
+        if (state.canAddItemToHousehold) {
+            item(key = ADD_ITEM_KEY) {
+                AddItemRow(onAddItem = callbacks.onAddItem)
+            }
         }
         if (state.doneItems.isNotEmpty()) {
             item(key = DONE_HEADER_KEY) {
@@ -221,7 +224,11 @@ private fun ArticleRow(
     EditableCheckListItem(
         text = text,
         checked = item.isChecked,
-        onTextChange = { text = it },
+        onTextChange = {
+            if (it.length <= ARTICLE_TEXT_MAX_LENGTH) {
+                text = it
+            }
+        },
         onCheckedChange = { callbacks.onItemCheckedChange(item.id, it) },
         onDelete = { callbacks.onItemDelete(item.id) },
         singleLine = false,
@@ -238,9 +245,14 @@ private fun AddItemRow(
     EditableCheckListItem(
         text = text,
         checked = false,
-        onTextChange = { text = it },
+        onTextChange = {
+            if (it.length <= ARTICLE_TEXT_MAX_LENGTH) {
+                text = it
+            }
+        },
         onCheckedChange = {},
         onDelete = { text = "" },
+        singleLine = false,
         placeholder = stringResource(Res.string.shopping_list_add_item_placeholder),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         onKeyboardAction = KeyboardActions(

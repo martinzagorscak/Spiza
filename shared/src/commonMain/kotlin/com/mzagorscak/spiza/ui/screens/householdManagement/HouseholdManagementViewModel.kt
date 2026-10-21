@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 data class HouseholdManagementScreenState(
     val households: List<PresentableHousehold> = emptyList(),
+    val canUserCreateHousehold: Boolean = false,
     val dialogState: DialogState = DialogState.Hidden,
 ) {
     sealed class DialogState {

@@ -75,6 +75,7 @@ fun ShoppingListScreen(
         drawerState = suggestionsDrawerState,
         drawerContent = {
             ShoppingListSuggestionsDrawer(
+                areSuggestionsEnabled = (bodyState as? ShoppingListState.Body.Content)?.canAddItemToHousehold == true,
                 suggestions = (bodyState as? ShoppingListState.Body.Content)?.suggestions ?: emptyList(),
                 onAddItem = { text -> callbacks.onAddItem(text) },
                 onClose = { scope.launch { suggestionsDrawerState.close() } },

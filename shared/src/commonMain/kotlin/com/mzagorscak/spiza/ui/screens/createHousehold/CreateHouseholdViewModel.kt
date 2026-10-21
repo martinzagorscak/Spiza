@@ -15,7 +15,7 @@ data class CreateHouseholdState(
         const val MAX_DESCRIPTION_LENGTH = 200
     }
 
-    val canSubmit: Boolean get() = name.isNotBlank() && !isSubmitting
+    val canSubmit: Boolean get() = name.isNotBlank() && isSubmitting.not()
 }
 
 abstract class CreateHouseholdViewModel : ViewModel() {

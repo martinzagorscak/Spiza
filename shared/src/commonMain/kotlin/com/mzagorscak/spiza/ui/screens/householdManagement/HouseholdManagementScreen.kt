@@ -84,16 +84,18 @@ fun HouseholdManagementScreen(
             )
         },
         floatingActionButton = {
-            IconButton(
-                resource = Res.drawable.ic_plus,
-                onClick = callbacks.onCreateHousehold,
-                appearance = IconButtonAppearance(
-                    variant = IconButtonVariant.IconBased,
-                    size = IconButtonSize.Large,
-                    tintColor = MaterialTheme.colorScheme.primary,
-                ),
-                modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface),
-            )
+            if (state.canUserCreateHousehold) {
+                IconButton(
+                    resource = Res.drawable.ic_plus,
+                    onClick = callbacks.onCreateHousehold,
+                    appearance = IconButtonAppearance(
+                        variant = IconButtonVariant.IconBased,
+                        size = IconButtonSize.Large,
+                        tintColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface),
+                )
+            }
         },
         modifier = modifier.fillMaxSize(),
     ) { paddingValues ->
@@ -114,17 +116,19 @@ fun HouseholdManagementScreen(
                             nameTrailingContent = {
                                 if (household.isCurrentUserOwner) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        IconButton(
-                                            resource = Res.drawable.ic_plus,
-                                            onClick = { callbacks.showAddMemberToHouseholdsDialog(household.id) },
-                                            appearance = IconButtonAppearance(
-                                                variant = IconButtonVariant.IconBased,
-                                                size = IconButtonSize.Medium,
-                                                tintColor = MaterialTheme.colorScheme.background,
-                                            ),
-                                        )
+                                        if (household.canOwnerAddNewMember) {
+                                            IconButton(
+                                                resource = Res.drawable.ic_plus,
+                                                onClick = { callbacks.showAddMemberToHouseholdsDialog(household.id) },
+                                                appearance = IconButtonAppearance(
+                                                    variant = IconButtonVariant.IconBased,
+                                                    size = IconButtonSize.Medium,
+                                                    tintColor = MaterialTheme.colorScheme.background,
+                                                ),
+                                            )
 
-                                        Spacer(modifier = Modifier.width(padding100))
+                                            Spacer(modifier = Modifier.width(padding100))
+                                        }
 
                                         IconButton(
                                             resource = Res.drawable.ic_trash,

@@ -103,6 +103,7 @@ fun SettingsScreen(
             Section(stringResource(Res.string.settings_section_profile)) {
                 ProfileCard(
                     profile = state.profile,
+                    showHouseholdJoinKeySection = state.showHouseholdJoinKeySection,
                     snackbarHostState = snackbarHostState,
                     onCreateJoinKeyClick = callbacks.onCreateJoinKeyClick,
                     onRefreshJoinKeyClick = callbacks.onRefreshJoinKeyClick,
@@ -173,6 +174,7 @@ fun SettingsScreen(
 @Composable
 private fun ProfileCard(
     profile: PresentableUserProfile,
+    showHouseholdJoinKeySection: Boolean,
     snackbarHostState: SnackbarHostState,
     onCreateJoinKeyClick: () -> Unit,
     onRefreshJoinKeyClick: () -> Unit,
@@ -194,52 +196,74 @@ private fun ProfileCard(
                 }
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(Res.string.settings_user_key_label),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f),
-            )
-
-            IconButton(
-                resource = Res.drawable.ic_refresh,
-                onClick = onRefreshJoinKeyClick,
-                appearance = IconButtonAppearance(
-                    variant = IconButtonVariant.IconBased,
-                    size = IconButtonSize.Medium,
-                    tintColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-            )
-        }
-        if (profile.joinKey != null) {
-            Text(
-                text = profile.joinKey,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Text(
-                text = stringResource(Res.string.settings_user_key_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Button(
-                label = stringResource(Res.string.settings_copy_key),
-                onClick = {
+        if (showHouseholdJoinKeySection) {
+            HouseholdJoinKeySection(
+                profile = profile,
+                onCreateJoinKeyClick = onCreateJoinKeyClick,
+                onRefreshJoinKeyClick = onRefreshJoinKeyClick,
+                onCopyJoinKeyClick = { joinKey ->
                     scope.launch {
-                        clipboard.setText(AnnotatedString(profile.joinKey))
+                        clipboard.setText(AnnotatedString(joinKey))
                         snackbarHostState.showSnackbar(copiedMessage)
                     }
                 },
-                appearance = ButtonAppearance(variant = ButtonVariant.Tertiary, size = ButtonSize.Small),
-            )
-        } else {
-            Button(
-                label = stringResource(Res.string.settings_generate_key),
-                onClick = onCreateJoinKeyClick,
-                appearance = ButtonAppearance(variant = ButtonVariant.Secondary, size = ButtonSize.Medium),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
+    }
+}
+
+@Composable
+private fun HouseholdJoinKeySection(
+    profile: PresentableUserProfile,
+    onCreateJoinKeyClick: () -> Unit,
+    onRefreshJoinKeyClick: () -> Unit,
+    onCopyJoinKeyClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier,
+    ) {
+        Text(
+            text = stringResource(Res.string.settings_user_key_label),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f),
+        )
+
+        IconButton(
+            resource = Res.drawable.ic_refresh,
+            onClick = onRefreshJoinKeyClick,
+            appearance = IconButtonAppearance(
+                variant = IconButtonVariant.IconBased,
+                size = IconButtonSize.Medium,
+                tintColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        )
+    }
+    if (profile.joinKey != null) {
+        Text(
+            text = profile.joinKey,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Text(
+            text = stringResource(Res.string.settings_user_key_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Button(
+            label = stringResource(Res.string.settings_copy_key),
+            onClick = { onCopyJoinKeyClick(profile.joinKey) },
+            appearance = ButtonAppearance(variant = ButtonVariant.Tertiary, size = ButtonSize.Small),
+        )
+    } else {
+        Button(
+            label = stringResource(Res.string.settings_generate_key),
+            onClick = onCreateJoinKeyClick,
+            appearance = ButtonAppearance(variant = ButtonVariant.Secondary, size = ButtonSize.Medium),
+        )
     }
 }
 

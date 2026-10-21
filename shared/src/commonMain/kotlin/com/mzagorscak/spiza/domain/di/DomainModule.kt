@@ -1,8 +1,14 @@
 package com.mzagorscak.spiza.domain.di
 
+import com.mzagorscak.spiza.domain.constraints.ConstraintsManager
+import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.AddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
+import com.mzagorscak.spiza.domain.usecase.CanAddItemToHouseholdUseCase
+import com.mzagorscak.spiza.domain.usecase.CanAddMemberToHouseholdUseCase
+import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCase
+import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
@@ -35,6 +41,7 @@ import org.koin.dsl.module
 
 val domainModule =
     module {
+        single<ConstraintsManager> { ConstraintsManagerImpl }
         single { GetCurrentUserProfileUseCase(repository = get()) }
         single { ObserveUserProfileUseCase(repository = get()) }
         single { GetUsersUseCase(repository = get()) }
@@ -62,6 +69,10 @@ val domainModule =
         single { ClearCheckedItemsUseCase(repository = get()) }
         single { ObserveSelectedHouseholdIdUseCase(repository = get()) }
         single { SetSelectedHouseholdIdUseCase(repository = get()) }
+        single { CanUserCreateHouseholdUseCase(constraintsManager = get()) }
+        single { CanUserJoinHouseholdUseCase(repository = get(), constraintsManager = get()) }
+        single { CanAddItemToHouseholdUseCase(constraintsManager = get()) }
+        single { CanAddMemberToHouseholdUseCase(constraintsManager = get()) }
         single { ObserveSuggestionsUseCase(localDataSource = get()) }
         single { AddOrUpdateSuggestionUseCase(localDataSource = get()) }
         single { DeleteSuggestionUseCase(localDataSource = get()) }

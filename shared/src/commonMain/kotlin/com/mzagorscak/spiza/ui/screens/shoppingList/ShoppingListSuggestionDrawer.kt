@@ -33,6 +33,7 @@ import spiza.shared.generated.resources.shopping_list_suggestions_title
 
 @Composable
 fun ShoppingListSuggestionsDrawer(
+    areSuggestionsEnabled: Boolean,
     suggestions: List<PresentableShoppingItemSuggestion>,
     onAddItem: (String) -> Unit,
     onClose: () -> Unit,
@@ -76,7 +77,7 @@ fun ShoppingListSuggestionsDrawer(
                     TextChip(
                         text = suggestion.name,
                         onClick = { onAddItem(suggestion.name) },
-                        enabled = suggestion.isEnabled,
+                        enabled = suggestion.isEnabled && areSuggestionsEnabled,
                         trailingContent = {
                             IconButton(
                                 resource = Res.drawable.ic_plus,
@@ -99,6 +100,7 @@ fun ShoppingListSuggestionsDrawer(
 @Composable
 private fun ShoppingListSuggestionDrawerLayoutPreview() {
     ShoppingListSuggestionsDrawer(
+        areSuggestionsEnabled = true,
         suggestions = listOf(
             PresentableShoppingItemSuggestion(
                 id = 0,

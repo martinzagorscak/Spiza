@@ -160,6 +160,7 @@ private fun CardListLayoutPreview() {
             ),
             ownerId = "1",
             isCurrentUserOwner = true,
+            canOwnerAddNewMember = true,
         ),
         nameTrailingContent = {
             IconButton(

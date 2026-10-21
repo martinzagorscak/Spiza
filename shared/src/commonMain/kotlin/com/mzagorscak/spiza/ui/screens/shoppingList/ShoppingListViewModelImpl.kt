@@ -7,6 +7,8 @@ import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
+import com.mzagorscak.spiza.domain.usecase.CanAddItemToHouseholdUseCase
+import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
@@ -63,7 +65,9 @@ internal class ShoppingListViewModelImpl(
     private val observeItems: ObserveArticleItemsUseCase,
     observeSelectedHouseholdId: ObserveSelectedHouseholdIdUseCase,
     private val setSelectedHouseholdId: SetSelectedHouseholdIdUseCase,
+    private val canUserCreateHousehold: CanUserCreateHouseholdUseCase,
     private val getCurrentUserProfile: GetCurrentUserProfileUseCase,
+    private val canAddItemToHousehold: CanAddItemToHouseholdUseCase,
     private val addItem: AddArticleItemUseCase,
     private val updateItemText: UpdateArticleItemTextUseCase,
     private val setItemChecked: SetArticleItemCheckedUseCase,
@@ -249,6 +253,7 @@ internal class ShoppingListViewModelImpl(
                             snapshot.households
                                 .filterNot { it.id == snapshot.current.id }
                                 .map { PresentableSimpleHousehold(id = it.id, name = it.name) },
+                        canUserCreateHousehold = canUserCreateHousehold(snapshot.households.size),
                     )
                 val (done, pending) = snapshot.items.partition { it.isChecked }
                 val previousWriteError = (body.value as? ShoppingListState.Body.Content)?.hasWriteError ?: false
@@ -258,6 +263,7 @@ internal class ShoppingListViewModelImpl(
                     ShoppingListState.Body.Content(
                         pendingItems = pendingItems,
                         doneItems = doneItems,
+                        canAddItemToHousehold = canAddItemToHousehold(snapshot.items.count()),
                         suggestions = suggestions.map {
                             val pendingItemsContain = pendingItems.map { it.text }.contains(it.name)
                             val doneItemsContain = doneItems.map { it.text }.contains(it.name)

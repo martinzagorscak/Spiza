@@ -9,6 +9,7 @@ data class PresentableHousehold(
     val members: List<PresentableHouseholdMember>,
     val ownerId: String,
     val isCurrentUserOwner: Boolean,
+    val canOwnerAddNewMember: Boolean,
 )
 
 data class PresentableHouseholdMember(
@@ -19,7 +20,10 @@ data class PresentableHouseholdMember(
     val isCurrentUser: Boolean,
 )
 
-fun Household.toPresentable(currentUserId: String?): PresentableHousehold =
+fun Household.toPresentable(
+    currentUserId: String?,
+    canAddMemberToHousehold: Boolean,
+): PresentableHousehold =
     PresentableHousehold(
         id = id,
         name = name,
@@ -35,4 +39,5 @@ fun Household.toPresentable(currentUserId: String?): PresentableHousehold =
         },
         ownerId = ownerId,
         isCurrentUserOwner = currentUserId == ownerId,
+        canOwnerAddNewMember = canAddMemberToHousehold,
     )

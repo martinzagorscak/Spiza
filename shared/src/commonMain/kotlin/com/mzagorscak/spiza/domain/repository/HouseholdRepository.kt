@@ -5,7 +5,7 @@ import com.mzagorscak.spiza.domain.model.Household
 import kotlinx.coroutines.flow.Flow
 
 interface HouseholdRepository {
-    suspend fun createHouseholdJoinKey(): String
+    suspend fun createHouseholdJoinKey(): String?
 
     fun getHouseholdJoinKey(): Flow<String?>
 
@@ -24,6 +24,9 @@ interface HouseholdRepository {
     /** Realtime households the signed-in user has joined. Fails the flow when the data source errors. */
     fun observeHouseholds(): Flow<List<Household>>
 
+    /** Returns the cached count of households the signed-in user has joined. Usage:  */
+    fun getCachedHouseholdCount(): Flow<Int>
+
     /** Realtime items of a household, ordered by position. */
     fun observeItems(householdId: String): Flow<List<ArticleItem>>
 
@@ -31,12 +34,13 @@ interface HouseholdRepository {
     suspend fun createHousehold(
         name: String,
         description: String,
-    ): String
+    ): String?
 
     suspend fun addItem(
         householdId: String,
         text: String,
         position: Double,
+        currentItemsCount: Int,
     )
 
     suspend fun updateItemText(

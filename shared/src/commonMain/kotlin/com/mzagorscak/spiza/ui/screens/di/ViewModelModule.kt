@@ -34,7 +34,9 @@ val viewModelModule = module {
             observeItems = get(),
             observeSelectedHouseholdId = get(),
             setSelectedHouseholdId = get(),
+            canUserCreateHousehold = get(),
             getCurrentUserProfile = get(),
+            canAddItemToHousehold = get(),
             addItem = get(),
             updateItemText = get(),
             setItemChecked = get(),
@@ -48,9 +50,10 @@ val viewModelModule = module {
     }
     viewModel<SettingsViewModel> {
         SettingsViewModelImpl(
+            observeUserProfile = get(),
+            canUserJoinHousehold = get(),
             createHouseholdJoinKey = get(),
             getHouseholdJoinKey = get(),
-            observeUserProfile = get(),
             observeThemeMode = get(),
             observeAppLanguage = get(),
             setThemeMode = get(),
@@ -65,6 +68,8 @@ val viewModelModule = module {
             addMemberToHousehold = get(),
             removeMemberFromHouseholdUseCase = get(),
             deleteHouseholdUseCase = get(),
+            canUserCreateHousehold = get(),
+            canAddMemberToHousehold = get(),
         )
     }
     viewModel<SuggestionSavingSettingViewModel> {

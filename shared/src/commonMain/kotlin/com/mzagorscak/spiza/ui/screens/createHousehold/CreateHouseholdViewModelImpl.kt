@@ -31,7 +31,7 @@ internal class CreateHouseholdViewModelImpl(
 
     override fun createHousehold() {
         val current = state.value
-        if (!current.canSubmit) return
+        if (current.canSubmit.not()) return
         viewModelScope.launch {
             state.update { it.copy(isSubmitting = true, hasError = false) }
             try {
