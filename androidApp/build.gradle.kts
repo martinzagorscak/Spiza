@@ -30,8 +30,12 @@ android {
         applicationId = "com.mzagorscak.spiza"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        val majorVersion = 1
+        val minorVersion = 0
+        val patchVersion = 0
+
+        versionCode = majorVersion * 10_000 + minorVersion * 100 + patchVersion
+        versionName = "$majorVersion.$minorVersion.$patchVersion"
     }
     packaging {
         resources {
@@ -39,12 +43,33 @@ android {
         }
     }
     buildTypes {
-        release {
-            isMinifyEnabled = false
+        debug {
+            buildConfigField("boolean", "IS_DEBUGGABLE", "true")
+        }
+
+        create("minifiedDebug") {
+            initWith(getByName("debug"))
+            matchingFallbacks += listOf("debug")
+            isDebuggable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            buildConfigField("boolean", "IS_DEBUGGABLE", "false")
+        }
+        release {
+            isDebuggable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
+            buildConfigField("boolean", "IS_DEBUGGABLE", "false")
         }
     }
     compileOptions {
@@ -53,5 +78,6 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }

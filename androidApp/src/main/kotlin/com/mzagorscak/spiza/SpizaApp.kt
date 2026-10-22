@@ -16,7 +16,7 @@ class SpizaApp : Application() {
     override fun onCreate() {
         super.onCreate()
         registerActivityLifecycleCallbacks(activityProvider)
-        initKoin {
+        initKoin(enableLogger = BuildConfig.IS_DEBUGGABLE) {
             androidContext(this@SpizaApp)
             modules(
                 module {
