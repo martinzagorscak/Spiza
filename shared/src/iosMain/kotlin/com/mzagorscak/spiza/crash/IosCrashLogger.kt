@@ -12,4 +12,8 @@ class IosCrashLogger(
             stackTrace = throwable.getStackTrace().toList(),
         )
     }
+
+    override fun logWarning(message: String) {
+        bridge?.logWarning(message)
+    }
 }

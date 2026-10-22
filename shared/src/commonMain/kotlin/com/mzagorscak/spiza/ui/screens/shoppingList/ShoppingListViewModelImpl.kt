@@ -1,7 +1,7 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
+import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
@@ -42,7 +42,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-private const val LOG_TAG = "Spiza.Household"
 private const val INITIAL_COUNT = 0
 private const val CHECKED_ITEMS_COLLAPSE_DELAY_MS = 300L
 
@@ -77,6 +76,7 @@ internal class ShoppingListViewModelImpl(
     private val addOrUpdateSuggestion: AddOrUpdateSuggestionUseCase,
     observeSuggestionsSavingEnabled: ObserveSuggestionsSavingEnabledUseCase,
     observeSuggestions: ObserveSuggestionsUseCase,
+    private val crashLogger: CrashLogger,
 ) : ShoppingListViewModel() {
     private val header = MutableStateFlow(ShoppingListState.Header())
     private val body = MutableStateFlow<ShoppingListState.Body>(ShoppingListState.Body.Loading)
@@ -110,12 +110,10 @@ internal class ShoppingListViewModelImpl(
     override fun bodyState(): StateFlow<ShoppingListState.Body> = body.asStateFlow()
 
     override fun retry() {
-        Logger.i(tag = LOG_TAG) { "Retry clicked" }
         retryTrigger.update { it + 1 }
     }
 
     override fun onHouseholdSelected(householdId: String) {
-        Logger.i(tag = LOG_TAG) { "Household selected: $householdId" }
         persistSelection(householdId)
     }
 
@@ -179,8 +177,16 @@ internal class ShoppingListViewModelImpl(
         dismissDialog()
     }
 
-    override fun onWriteErrorShown() {
-        body.update { if (it is ShoppingListState.Body.Content) it.copy(hasWriteError = false) else it }
+    override fun onErrorShown() {
+        body.update {
+            if (it is ShoppingListState.Body.Content) {
+                it.copy(
+                    contentErrorState = ShoppingListState.ContentErrorState.None,
+                )
+            } else {
+                it
+            }
+        }
     }
 
     // Firestore applies local writes to the listeners immediately, so a failure here means the server rejected it.
@@ -191,8 +197,21 @@ internal class ShoppingListViewModelImpl(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: Exception) {
-                Logger.e(throwable = error, tag = LOG_TAG) { "Shopping list write failed" }
-                body.update { if (it is ShoppingListState.Body.Content) it.copy(hasWriteError = true) else it }
+                crashLogger.recordException(
+                    Throwable(
+                        message = "Shopping list write failed; ${error.message}",
+                        cause = error.cause,
+                    ),
+                )
+                body.update {
+                    if (it is ShoppingListState.Body.Content) {
+                        it.copy(
+                            contentErrorState = ShoppingListState.ContentErrorState.WriteError,
+                        )
+                    } else {
+                        it
+                    }
+                }
             }
         }
     }
@@ -218,8 +237,13 @@ internal class ShoppingListViewModelImpl(
                     }
                 }
             }.onStart<Snapshot> { emit(Snapshot.Loading) }
-                .catch {
-                    Logger.e(throwable = it, tag = LOG_TAG) { "Shopping list stream failed" }
+                .catch { throwable ->
+                    crashLogger.recordException(
+                        Throwable(
+                            message = "Shopping list stream failed; ${throwable.message}",
+                            cause = throwable.cause,
+                        ),
+                    )
                     emit(Snapshot.Failed)
                 }
         }
@@ -256,7 +280,8 @@ internal class ShoppingListViewModelImpl(
                         canUserCreateHousehold = canUserCreateHousehold(snapshot.households.size),
                     )
                 val (done, pending) = snapshot.items.partition { it.isChecked }
-                val previousWriteError = (body.value as? ShoppingListState.Body.Content)?.hasWriteError ?: false
+                val previousError =
+                    (body.value as? ShoppingListState.Body.Content)?.contentErrorState ?: ShoppingListState.ContentErrorState.None
                 val pendingItems = pending.map { it.toPresentable() }
                 val doneItems = done.map { it.toPresentable() }
                 body.value =
@@ -271,7 +296,7 @@ internal class ShoppingListViewModelImpl(
                         },
                         areCheckedItemsCollapsed = areCheckedItemsCollapsed,
                         dialogState = dialogState,
-                        hasWriteError = previousWriteError,
+                        contentErrorState = previousError,
                     )
             }
         }
@@ -287,7 +312,6 @@ internal class ShoppingListViewModelImpl(
         households
             .firstOrNull { it.id !in known && it.ownerId == ownerId }
             ?.let {
-                Logger.i(tag = LOG_TAG) { "Auto-selecting newly created household ${it.id}" }
                 persistSelection(it.id)
             }
     }

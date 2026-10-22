@@ -27,7 +27,7 @@ class AddMemberToHouseholdUseCase(
     suspend operator fun invoke(
         householdId: String,
         userJoinKey: String,
-    ) = repository.addMemberToHousehold(householdId, userJoinKey)
+    ): Boolean = repository.addMemberToHousehold(householdId, userJoinKey)
 }
 
 class RemoveMemberFromHouseholdUseCase(
@@ -38,13 +38,14 @@ class RemoveMemberFromHouseholdUseCase(
         memberId: String,
         isCurrentUserOwner: Boolean,
         isCurrentUserRemovingHimself: Boolean,
-    ) {
+    ): Boolean {
         // Only the owner can remove other members and not himself
         if (isCurrentUserOwner.not() && isCurrentUserRemovingHimself.not()) {
-            return // todo return error state
+            return false
         }
 
         repository.removeMemberFromHousehold(householdId, memberId)
+        return true
     }
 }
 
@@ -54,13 +55,14 @@ class DeleteHouseholdUseCase(
     suspend operator fun invoke(
         householdId: String,
         isCurrentUserOwner: Boolean,
-    ) {
+    ): Boolean {
         // Only the owner can delete the household
         if (isCurrentUserOwner.not()) {
-            return // todo return error state
+            return false
         }
 
         repository.deleteHousehold(householdId)
+        return true
     }
 }
 

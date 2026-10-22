@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.data.household
 
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FieldValue.arrayUnion
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mzagorscak.spiza.data.household.HouseholdFields.JOIN_KEY
@@ -51,10 +52,10 @@ class FirestoreHouseholdDataSource(
     override suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
-    ) {
+    ): Boolean {
         val joinKeySnapshot = householdJoinKeys.whereEqualTo(JOIN_KEY, userJoinKey).get().await()
         if (joinKeySnapshot.isEmpty) {
-            return // todo return error state
+            return false
         }
 
         val userId = joinKeySnapshot.documents.first().id
@@ -62,6 +63,7 @@ class FirestoreHouseholdDataSource(
 
         householdRef.update(HouseholdFields.JOINED_MEMBERS, arrayUnion(userId)).await()
         deleteHouseholdJoinKey(userId) // Delete the join key after it's used
+        return true
     }
 
     override suspend fun removeMemberFromHousehold(
@@ -72,8 +74,7 @@ class FirestoreHouseholdDataSource(
             .document(householdId)
             .update(
                 HouseholdFields.JOINED_MEMBERS,
-                com.google.firebase.firestore.FieldValue
-                    .arrayRemove(memberId),
+                FieldValue.arrayRemove(memberId),
             ).await()
     }
 

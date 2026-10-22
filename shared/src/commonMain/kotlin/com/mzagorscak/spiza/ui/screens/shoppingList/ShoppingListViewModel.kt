@@ -7,11 +7,6 @@ import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import kotlinx.coroutines.flow.StateFlow
 
 sealed class ShoppingListState {
-    enum class DialogState {
-        Hidden,
-        ClearCheckedItemsConfirmation,
-    }
-
     data class Header(
         val currentHouseholdName: String? = null,
         val otherHouseholds: List<PresentableSimpleHousehold> = emptyList(),
@@ -32,8 +27,18 @@ sealed class ShoppingListState {
             val suggestions: List<PresentableShoppingItemSuggestion> = emptyList(),
             val areCheckedItemsCollapsed: Boolean = false,
             val dialogState: DialogState = DialogState.Hidden,
-            val hasWriteError: Boolean = false,
+            val contentErrorState: ContentErrorState = ContentErrorState.None,
         ) : Body()
+    }
+
+    enum class DialogState {
+        Hidden,
+        ClearCheckedItemsConfirmation,
+    }
+
+    enum class ContentErrorState {
+        None,
+        WriteError,
     }
 }
 
@@ -74,5 +79,5 @@ abstract class ShoppingListViewModel : ViewModel() {
 
     abstract fun clearCheckedItems()
 
-    abstract fun onWriteErrorShown()
+    abstract fun onErrorShown()
 }

@@ -6,4 +6,6 @@ interface IosCrashLoggerBridge {
         message: String,
         stackTrace: List<String>,
     )
+
+    fun logWarning(message: String)
 }

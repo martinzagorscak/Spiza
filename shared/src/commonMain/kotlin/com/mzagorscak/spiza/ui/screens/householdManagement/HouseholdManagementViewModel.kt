@@ -9,6 +9,7 @@ data class HouseholdManagementScreenState(
     val households: List<PresentableHousehold> = emptyList(),
     val canUserCreateHousehold: Boolean = false,
     val dialogState: DialogState = DialogState.Hidden,
+    val errorState: ErrorState = ErrorState.None,
 ) {
     sealed class DialogState {
         object Hidden : DialogState()
@@ -30,6 +31,13 @@ data class HouseholdManagementScreenState(
             val householdName: String,
             val memberName: String,
         ) : DialogState()
+    }
+
+    enum class ErrorState {
+        None,
+        UserNotFound,
+        OnlyOwnerCanRemoveOtherMembers,
+        OnlyOwnerCanDeleteHousehold,
     }
 }
 
@@ -72,4 +80,6 @@ abstract class HouseholdManagementViewModel : ViewModel() {
     abstract fun onDialogJoinKeyInputChanged(input: String)
 
     abstract fun dismissDialog()
+
+    abstract fun onErrorShown()
 }

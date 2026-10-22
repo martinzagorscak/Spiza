@@ -14,4 +14,8 @@ final class SwiftCrashLoggerBridge: IosCrashLoggerBridge {
         )
         Crashlytics.crashlytics().record(error: error)
     }
+
+    func logWarning(message: String) {
+        Crashlytics.crashlytics().log(message)
+    }
 }

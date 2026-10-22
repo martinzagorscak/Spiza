@@ -53,16 +53,19 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         joinKeys.document(userId).delete(completion: completion(onComplete))
     }
 
-    func addMemberToHousehold(householdId: String, userJoinKey: String, onComplete: @escaping (String?) -> Void) {
+    func addMemberToHousehold(
+        householdId: String, userJoinKey: String,
+        onComplete: @escaping (KotlinBoolean, String?) -> Void,
+    ) {
         let fields = HouseholdFields.shared
         joinKeys.whereField(fields.JOIN_KEY, isEqualTo: userJoinKey).getDocuments { snapshot, error in
             if let error = error {
-                onComplete(error.localizedDescription)
+                onComplete(false, error.localizedDescription)
                 return
             }
 
             guard let documents = snapshot?.documents, let firstDoc = documents.first else {
-                onComplete("Invalid join key")
+                onComplete(false, nil)
                 return
             }
 
@@ -73,9 +76,11 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
                 fields.JOINED_MEMBERS: FieldValue.arrayUnion([userId])
             ]) { error in
                 if let error = error {
-                    onComplete(error.localizedDescription)
+                    onComplete(false, error.localizedDescription)
                 } else {
-                    self.deleteJoinKey(userId: userId, onComplete: onComplete)
+                    self.deleteJoinKey(userId: userId) { deleteError in
+                        onComplete(KotlinBoolean(bool: deleteError == nil), deleteError)
+                    }
                 }
             }
         }
@@ -83,9 +88,10 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
 
     func removeMemberFromHousehold(householdId: String, memberId: String, onComplete: @escaping (String?) -> Void) {
         let fields = HouseholdFields.shared
-        households.document(householdId).updateData([
-            fields.JOINED_MEMBERS: FieldValue.arrayRemove([memberId])
-        ], completion: completion(onComplete))
+        households.document(householdId).updateData(
+            [
+                fields.JOINED_MEMBERS: FieldValue.arrayRemove([memberId])
+            ], completion: completion(onComplete))
     }
 
     func deleteHousehold(householdId: String, onComplete: @escaping (String?) -> Void) {

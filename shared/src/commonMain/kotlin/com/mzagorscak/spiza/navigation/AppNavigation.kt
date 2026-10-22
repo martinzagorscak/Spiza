@@ -149,7 +149,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     performHapticFeedback(hapticFeedback)
                                     viewModel.clearCheckedItems()
                                 },
-                                onWriteErrorShown = viewModel::onWriteErrorShown,
+                                onWriteErrorShown = viewModel::onErrorShown,
                             )
                         },
                     )
@@ -247,6 +247,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                                 },
                                 onDialogJoinKeyInputChanged = viewModel::onDialogJoinKeyInputChanged,
                                 onDismissDialog = viewModel::dismissDialog,
+                                onUserNotFoundErrorShown = viewModel::onErrorShown,
                             )
                         },
                     )

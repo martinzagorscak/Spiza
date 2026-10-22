@@ -16,7 +16,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,8 +48,11 @@ import spiza.shared.generated.resources.household_management_add_member_dialog_d
 import spiza.shared.generated.resources.household_management_add_member_dialog_title
 import spiza.shared.generated.resources.household_management_delete_household_dialog_description
 import spiza.shared.generated.resources.household_management_delete_household_dialog_title_template
+import spiza.shared.generated.resources.household_management_only_owner_can_delete_household_error
+import spiza.shared.generated.resources.household_management_only_owner_can_remove_other_members_error
 import spiza.shared.generated.resources.household_management_remove_member_dialog_description
 import spiza.shared.generated.resources.household_management_remove_member_dialog_title_template
+import spiza.shared.generated.resources.household_management_user_not_found_error
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_close
 import spiza.shared.generated.resources.ic_plus
@@ -66,6 +73,26 @@ fun HouseholdManagementScreen(
     callbacks: HouseholdManagementScreenCallbacks,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = when (state.errorState) {
+        HouseholdManagementScreenState.ErrorState.UserNotFound -> stringResource(Res.string.household_management_user_not_found_error)
+        HouseholdManagementScreenState.ErrorState.OnlyOwnerCanRemoveOtherMembers -> stringResource(
+            Res.string.household_management_only_owner_can_remove_other_members_error,
+        )
+        HouseholdManagementScreenState.ErrorState.OnlyOwnerCanDeleteHousehold -> stringResource(
+            Res.string.household_management_only_owner_can_delete_household_error,
+        )
+        HouseholdManagementScreenState.ErrorState.None -> null
+    }
+    LaunchedEffect(state.errorState) {
+        if (state.errorState != HouseholdManagementScreenState.ErrorState.None) {
+            errorMessage?.let {
+                snackbarHostState.showSnackbar(errorMessage)
+                callbacks.onUserNotFoundErrorShown()
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopBar(
@@ -83,6 +110,7 @@ fun HouseholdManagementScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (state.canUserCreateHousehold) {
                 IconButton(
@@ -255,4 +283,5 @@ data class HouseholdManagementScreenCallbacks(
     val onDeleteHousehold: (householdId: String, householdOwnerId: String) -> Unit,
     val onDialogJoinKeyInputChanged: (String) -> Unit,
     val onDismissDialog: () -> Unit,
+    val onUserNotFoundErrorShown: () -> Unit,
 )

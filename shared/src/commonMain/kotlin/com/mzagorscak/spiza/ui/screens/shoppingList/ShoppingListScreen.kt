@@ -68,12 +68,21 @@ fun ShoppingListScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val suggestionsDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val snackbarHostState = remember { SnackbarHostState() }
-    val writeErrorMessage = stringResource(Res.string.shopping_list_write_error)
-    val hasWriteError = (bodyState as? ShoppingListState.Body.Content)?.hasWriteError == true
-    LaunchedEffect(hasWriteError) {
-        if (hasWriteError) {
-            callbacks.onWriteErrorShown()
-            snackbarHostState.showSnackbar(writeErrorMessage)
+    val writeErrorMessage = if (bodyState is ShoppingListState.Body.Content) {
+        when (bodyState.contentErrorState) {
+            ShoppingListState.ContentErrorState.WriteError -> stringResource(Res.string.shopping_list_write_error)
+            ShoppingListState.ContentErrorState.None -> null
+        }
+    } else {
+        null
+    }
+    val hasError = (bodyState as? ShoppingListState.Body.Content)?.contentErrorState != ShoppingListState.ContentErrorState.None
+    LaunchedEffect(hasError) {
+        if (hasError) {
+            writeErrorMessage?.let {
+                snackbarHostState.showSnackbar(writeErrorMessage)
+                callbacks.onWriteErrorShown()
+            }
         }
     }
 

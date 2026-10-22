@@ -68,10 +68,13 @@ internal class HouseholdManagementViewModelImpl(
     override fun addMemberToHousehold(householdId: String) {
         viewModelScope.launch {
             if (joinKeyInputPublisher.value.isEmpty()) return@launch
-            addMemberToHousehold(
+            val isSuccess = addMemberToHousehold(
                 householdId = householdId,
                 userJoinKey = joinKeyInputPublisher.value,
             )
+            if (isSuccess.not()) {
+                updateErrorState(HouseholdManagementScreenState.ErrorState.UserNotFound)
+            }
         }
         dismissDialog()
     }
@@ -97,12 +100,15 @@ internal class HouseholdManagementViewModelImpl(
         householdOwnerId: String,
     ) {
         viewModelScope.launch {
-            removeMemberFromHouseholdUseCase(
+            val isSuccess = removeMemberFromHouseholdUseCase(
                 householdId = householdId,
                 memberId = memberId,
                 isCurrentUserOwner = currentUserId == householdOwnerId,
                 isCurrentUserRemovingHimself = currentUserId == memberId,
             )
+            if (isSuccess.not()) {
+                updateErrorState(HouseholdManagementScreenState.ErrorState.OnlyOwnerCanRemoveOtherMembers)
+            }
         }
         dismissDialog()
     }
@@ -122,7 +128,10 @@ internal class HouseholdManagementViewModelImpl(
         householdOwnerId: String,
     ) {
         viewModelScope.launch {
-            deleteHouseholdUseCase(householdId, currentUserId == householdOwnerId)
+            val isSuccess = deleteHouseholdUseCase(householdId, currentUserId == householdOwnerId)
+            if (isSuccess.not()) {
+                updateErrorState(HouseholdManagementScreenState.ErrorState.OnlyOwnerCanDeleteHousehold)
+            }
         }
         dismissDialog()
     }
@@ -134,5 +143,13 @@ internal class HouseholdManagementViewModelImpl(
     override fun dismissDialog() {
         dialogStatePublisher.update { HouseholdManagementScreenState.DialogState.Hidden }
         joinKeyInputPublisher.update { EMPTY }
+    }
+
+    private fun updateErrorState(errorState: HouseholdManagementScreenState.ErrorState) {
+        state.update { it.copy(errorState = errorState) }
+    }
+
+    override fun onErrorShown() {
+        state.update { it.copy(errorState = HouseholdManagementScreenState.ErrorState.None) }
     }
 }

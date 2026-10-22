@@ -4,6 +4,7 @@ import com.mzagorscak.spiza.auth.AuthProvider
 import com.mzagorscak.spiza.auth.AuthResult
 import com.mzagorscak.spiza.auth.AuthService
 import com.mzagorscak.spiza.auth.AuthUser
+import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.data.user.model.UserProfileDto
 import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.domain.repository.UserRepository
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.onEach
 internal class UserRepositoryImpl(
     private val authService: AuthService,
     private val userDataSource: UserDataSource,
+    private val crashLogger: CrashLogger,
 ) : UserRepository {
     override val profile: Flow<UserProfile?> =
         authService.authState
@@ -28,7 +30,17 @@ internal class UserRepositoryImpl(
 
     override suspend fun getUsers(userIds: List<String>): List<UserProfile> = userDataSource.getUsers(userIds).map { it.toDomain() }
 
-    override suspend fun signIn(provider: AuthProvider): AuthResult = authService.signIn(provider)
+    override suspend fun signIn(provider: AuthProvider): AuthResult =
+        authService.signIn(provider).also { result ->
+            if (result is AuthResult.Failure) {
+                crashLogger.recordException(
+                    Throwable(
+                        message = "Sign-in failed; ${result.error.message}",
+                        cause = result.error.cause,
+                    ),
+                )
+            }
+        }
 
     override suspend fun signOut() = authService.signOut()
 }

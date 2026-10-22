@@ -18,7 +18,12 @@ import org.koin.dsl.module
 actual fun platformModule(): Module =
     module {
         single<CrashLogger> { IosCrashLogger(bridge = getOrNull<IosCrashLoggerBridge>()) }
-        single<AuthService> { IosAuthService(bridge = get()) }
+        single<AuthService> {
+            IosAuthService(
+                bridge = get(),
+                crashLogger = get(),
+            )
+        }
         single<UserDataSource> { IosUserDataSource(bridge = get()) }
         single<HouseholdDataSource> { IosHouseholdDataSource(bridge = get()) }
         single<SpizaDatabase> {

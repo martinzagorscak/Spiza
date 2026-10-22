@@ -13,7 +13,7 @@ interface HouseholdDataSource {
     suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
-    )
+    ): Boolean
 
     suspend fun removeMemberFromHousehold(
         householdId: String,

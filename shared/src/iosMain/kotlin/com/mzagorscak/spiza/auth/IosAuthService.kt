@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.auth
 
+import com.mzagorscak.spiza.crash.CrashLogger
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -8,6 +9,7 @@ import kotlin.coroutines.resume
 
 class IosAuthService(
     private val bridge: IosAuthBridge,
+    private val crashLogger: CrashLogger,
 ) : AuthService {
     override val authState: Flow<AuthUser?> =
         callbackFlow {
@@ -35,6 +37,10 @@ class IosAuthService(
             bridge.signOut { errorMessage ->
                 continuation.resume(errorMessage)
             }
-        }.let { error -> if (error != null) throw IllegalStateException(error) }
+        }.let { error ->
+            if (error != null) {
+                crashLogger.recordException(Throwable(message = "Sign-out failed; $error"))
+            }
+        }
     }
 }

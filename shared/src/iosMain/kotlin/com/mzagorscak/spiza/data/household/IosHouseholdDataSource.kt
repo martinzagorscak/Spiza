@@ -42,15 +42,16 @@ class IosHouseholdDataSource(
     override suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
-    ) = suspendCancellableCoroutine { continuation ->
-        bridge.addMemberToHousehold(householdId, userJoinKey) { error ->
-            if (error == null) {
-                continuation.resume(Unit)
-            } else {
-                continuation.resumeWithException(IllegalStateException(error))
+    ): Boolean =
+        suspendCancellableCoroutine { continuation ->
+            bridge.addMemberToHousehold(householdId, userJoinKey) { isUserFound, error ->
+                if (error == null) {
+                    continuation.resume(isUserFound)
+                } else {
+                    continuation.resumeWithException(IllegalStateException(error))
+                }
             }
         }
-    }
 
     override suspend fun removeMemberFromHousehold(
         householdId: String,

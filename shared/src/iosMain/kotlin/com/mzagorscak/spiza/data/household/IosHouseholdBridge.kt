@@ -30,7 +30,7 @@ interface IosHouseholdBridge {
     fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
-        onComplete: (errorMessage: String?) -> Unit,
+        onComplete: (isUserFound: Boolean, errorMessage: String?) -> Unit,
     )
 
     fun removeMemberFromHousehold(

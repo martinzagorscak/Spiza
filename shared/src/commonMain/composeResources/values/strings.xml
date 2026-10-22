@@ -65,6 +65,9 @@
     <string name="household_management_add_member_dialog_title">Add member to household</string>
     <string name="household_management_add_member_dialog_description">Enter the join key of the member you want to add to the household.</string>
     <string name="household_management_add_member_dialog_confirm_label">Add member</string>
+    <string name="household_management_user_not_found_error">User with that join key does not exist</string>
+    <string name="household_management_only_owner_can_remove_other_members_error">Only the household owner can remove other members</string>
+    <string name="household_management_only_owner_can_delete_household_error">Only the household owner can delete the household</string>
     <string name="household_management_delete_household_dialog_title_template">Delete %1$s</string>
     <string name="household_management_delete_household_dialog_description">Are you sure you want to delete this household? This action cannot be undone.</string>
     <string name="household_management_remove_member_dialog_title_template">Remove %1$s from %2$s</string>

@@ -20,13 +20,20 @@ val dataModule =
         single<Settings> { Settings() }
         single<SettingsDataSource> { SettingsDataSourceImpl(settings = get()) }
         single<SettingsRepository> { SettingsRepositoryImpl(dataSource = get()) }
-        single<UserRepository> { UserRepositoryImpl(authService = get(), userDataSource = get()) }
+        single<UserRepository> {
+            UserRepositoryImpl(
+                authService = get(),
+                userDataSource = get(),
+                crashLogger = get(),
+            )
+        }
         single<HouseholdRepository> {
             HouseholdRepositoryImpl(
                 dataSource = get(),
                 authService = get(),
                 userRepository = get(),
                 constraintsManager = get(),
+                crashLogger = get(),
             )
         }
         single<SuggestionDao> { get<SpizaDatabase>().suggestionDao() }

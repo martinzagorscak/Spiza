@@ -6,4 +6,8 @@ class AndroidCrashLogger : CrashLogger {
     override fun recordException(throwable: Throwable) {
         FirebaseCrashlytics.getInstance().recordException(throwable)
     }
+
+    override fun logWarning(message: String) {
+        FirebaseCrashlytics.getInstance().log(message)
+    }
 }

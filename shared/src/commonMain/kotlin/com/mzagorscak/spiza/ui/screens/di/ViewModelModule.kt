@@ -27,7 +27,12 @@ val viewModelModule = module {
         )
     }
     viewModel<LoginViewModel> { LoginViewModelImpl(signIn = get()) }
-    viewModel<CreateHouseholdViewModel> { CreateHouseholdViewModelImpl(createHousehold = get()) }
+    viewModel<CreateHouseholdViewModel> {
+        CreateHouseholdViewModelImpl(
+            createHousehold = get(),
+            crashLogger = get(),
+        )
+    }
     viewModel<ShoppingListViewModel> {
         ShoppingListViewModelImpl(
             observeHouseholds = get(),
@@ -46,6 +51,7 @@ val viewModelModule = module {
             clearCheckedItems = get(),
             observeSuggestionsSavingEnabled = get(),
             observeSuggestions = get(),
+            crashLogger = get(),
         )
     }
     viewModel<SettingsViewModel> {

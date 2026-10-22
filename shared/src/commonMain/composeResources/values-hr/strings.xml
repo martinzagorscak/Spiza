@@ -65,6 +65,9 @@
     <string name="household_management_add_member_dialog_title">Dodaj člana u kućanstvo</string>
     <string name="household_management_add_member_dialog_description">Unesite ključ za pridruživanje člana kojeg želite dodati u kućanstvo.</string>
     <string name="household_management_add_member_dialog_confirm_label">Dodaj člana</string>
+    <string name="household_management_user_not_found_error">Korisnik s tim ključem ne postoji</string>
+    <string name="household_management_only_owner_can_remove_other_members_error">Samo vlasnik kućanstva može ukloniti druge članove</string>
+    <string name="household_management_only_owner_can_delete_household_error">Samo vlasnik kućanstva može obrisati kućanstvo</string>
     <string name="household_management_delete_household_dialog_title_template">Obrisati %1$s</string>
     <string name="household_management_delete_household_dialog_description">Jeste li sigurni da želite obrisati ovo kućanstvo? Ova se radnja ne može poništiti.</string>
     <string name="household_management_remove_member_dialog_title_template">Ukloni %1$s iz %2$s</string>
