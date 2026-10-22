@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +30,7 @@ import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.model.PresentableArticleItem
+import com.mzagorscak.spiza.ui.theme.padding1600
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
 import kotlinx.coroutines.delay
@@ -90,7 +92,11 @@ fun ShoppingListContent(
         }
     }
 
-    LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
+    LazyColumn(
+        state = listState,
+        contentPadding = PaddingValues(bottom = padding1600),
+        modifier = modifier.fillMaxSize(),
+    ) {
         if (state.pendingItems.isEmpty() && state.doneItems.isEmpty()) {
             item(key = EMPTY_KEY) {
                 FallbackState(

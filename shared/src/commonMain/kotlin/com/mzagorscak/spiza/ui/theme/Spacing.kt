@@ -10,3 +10,4 @@ val padding400 = 16.dp
 val padding500 = 20.dp
 val padding600 = 24.dp
 val padding800 = 32.dp
+val padding1600 = 64.dp
