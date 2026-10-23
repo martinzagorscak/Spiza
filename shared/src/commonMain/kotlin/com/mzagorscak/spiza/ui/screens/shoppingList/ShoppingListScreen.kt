@@ -92,8 +92,14 @@ fun ShoppingListScreen(
             ShoppingListSuggestionsDrawer(
                 areSuggestionsEnabled = (bodyState as? ShoppingListState.Body.Content)?.canAddItemToHousehold == true,
                 suggestions = (bodyState as? ShoppingListState.Body.Content)?.suggestions ?: emptyList(),
-                onAddItem = { text -> callbacks.onAddItem(text) },
-                onClose = { scope.launch { suggestionsDrawerState.close() } },
+                onAddItem = { text ->
+                    performHapticFeedback(hapticFeedback)
+                    callbacks.onAddItem(text)
+                },
+                onClose = {
+                    performHapticFeedback(hapticFeedback)
+                    scope.launch { suggestionsDrawerState.close() }
+                },
                 modifier = Modifier.fillMaxWidth(fraction = OPEN_DRAWER_FRACTION),
             )
         },
