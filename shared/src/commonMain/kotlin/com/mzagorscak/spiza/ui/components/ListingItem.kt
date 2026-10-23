@@ -27,7 +27,7 @@ import com.mzagorscak.spiza.ui.theme.padding200
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_right_chevron
 
-private val MenuListingItemHeight = 36.dp
+private val ListingItemHeight = 36.dp
 
 @Composable
 fun ListingItem(
@@ -53,7 +53,7 @@ fun ListingItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .padding(horizontal = padding200, vertical = padding200)
-                .height(MenuListingItemHeight),
+                .height(ListingItemHeight),
         ) {
             leadingContent?.let {
                 it()

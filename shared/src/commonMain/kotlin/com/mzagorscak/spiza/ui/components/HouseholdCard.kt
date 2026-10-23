@@ -28,6 +28,7 @@ import spiza.shared.generated.resources.current_user
 import spiza.shared.generated.resources.ic_close
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.member
+import spiza.shared.generated.resources.owner
 
 private const val SINGLE_LINE_COUNT = 1
 
@@ -109,16 +110,28 @@ private fun HouseholdMemberItem(
             )
         },
         trailingContent = {
-            if (showRemoveUserOption) {
-                IconButton(
-                    resource = Res.drawable.ic_close,
-                    appearance = IconButtonAppearance(
-                        variant = IconButtonVariant.IconBased,
-                        size = IconButtonSize.Medium,
-                        tintColor = MaterialTheme.colorScheme.background,
-                    ),
-                    onClick = onRemoveUserClick,
-                )
+            Row {
+                if (member.isOwner) {
+                    Badge(
+                        label = stringResource(Res.string.owner),
+                        appearance = BadgeAppearance(
+                            textColor = MaterialTheme.colorScheme.onBackground,
+                            backgroundColor = MaterialTheme.colorScheme.background,
+                            size = BadgeSize.Small,
+                        ),
+                    )
+                }
+                if (showRemoveUserOption) {
+                    IconButton(
+                        resource = Res.drawable.ic_close,
+                        appearance = IconButtonAppearance(
+                            variant = IconButtonVariant.IconBased,
+                            size = IconButtonSize.Medium,
+                            tintColor = MaterialTheme.colorScheme.background,
+                        ),
+                        onClick = onRemoveUserClick,
+                    )
+                }
             }
         },
         // need to inverse the colors because it is the card background on a screen background
