@@ -98,8 +98,8 @@ fun SuggestionSavingSettingsScreen(
                             checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
                             checkedBorderColor = MaterialTheme.colorScheme.primary,
                             uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                            uncheckedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                            uncheckedBorderColor = MaterialTheme.colorScheme.primary,
                         ),
                     )
                 },
