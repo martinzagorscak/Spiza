@@ -16,6 +16,8 @@ import com.mzagorscak.spiza.domain.usecase.DeleteAllSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase
+import com.mzagorscak.spiza.domain.usecase.GetCurrentAppLanguageUseCase
+import com.mzagorscak.spiza.domain.usecase.GetCurrentThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.GetUsersUseCase
@@ -46,8 +48,10 @@ val domainModule =
         single { ObserveUserProfileUseCase(repository = get()) }
         single { GetUsersUseCase(repository = get()) }
         single { ObserveThemeModeUseCase(repository = get()) }
+        single { GetCurrentThemeModeUseCase(repository = get()) }
         single { SetThemeModeUseCase(repository = get()) }
         single { ObserveAppLanguageUseCase(repository = get()) }
+        single { GetCurrentAppLanguageUseCase(repository = get()) }
         single { SetAppLanguageUseCase(repository = get()) }
         single { ObserveSuggestionsSavingEnabledUseCase(repository = get()) }
         single { SetSuggestionsSavingEnabledUseCase(repository = get()) }

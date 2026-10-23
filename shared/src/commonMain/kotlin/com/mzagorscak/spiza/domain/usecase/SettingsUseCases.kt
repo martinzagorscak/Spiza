@@ -33,6 +33,12 @@ class ObserveThemeModeUseCase(
     operator fun invoke(): Flow<ThemeMode> = repository.themeMode
 }
 
+class GetCurrentThemeModeUseCase(
+    private val repository: SettingsRepository,
+) {
+    operator fun invoke(): ThemeMode = repository.currentThemeMode
+}
+
 class SetThemeModeUseCase(
     private val repository: SettingsRepository,
 ) {
@@ -43,6 +49,12 @@ class ObserveAppLanguageUseCase(
     private val repository: SettingsRepository,
 ) {
     operator fun invoke(): Flow<AppLanguage> = repository.language
+}
+
+class GetCurrentAppLanguageUseCase(
+    private val repository: SettingsRepository,
+) {
+    operator fun invoke(): AppLanguage = repository.currentLanguage
 }
 
 class SetAppLanguageUseCase(

@@ -18,6 +18,8 @@ internal class SettingsDataSourceImpl(
 
     override val themeMode: StateFlow<ThemeMode> = themeModeState.asStateFlow()
     override val language: StateFlow<AppLanguage> = languageState.asStateFlow()
+    override val currentThemeMode: ThemeMode get() = themeModeState.value
+    override val currentLanguage: AppLanguage get() = languageState.value
     override val selectedHouseholdId: StateFlow<String?> = selectedHouseholdIdState.asStateFlow()
     override val suggestionsSavingEnabled: StateFlow<Boolean> = suggestionsSavingEnabledState.asStateFlow()
 

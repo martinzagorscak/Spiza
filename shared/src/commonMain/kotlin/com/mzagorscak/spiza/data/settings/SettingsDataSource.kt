@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.StateFlow
 interface SettingsDataSource {
     val themeMode: StateFlow<ThemeMode>
     val language: StateFlow<AppLanguage>
+    val currentThemeMode: ThemeMode
+    val currentLanguage: AppLanguage
     val selectedHouseholdId: StateFlow<String?>
     val suggestionsSavingEnabled: StateFlow<Boolean>
 

@@ -23,6 +23,8 @@ val viewModelModule = module {
             observeThemeMode = get(),
             observeAppLanguage = get(),
             observeUserProfile = get(),
+            getCurrentThemeMode = get(),
+            getCurrentAppLanguage = get(),
             getCurrentUserProfile = get(),
         )
     }

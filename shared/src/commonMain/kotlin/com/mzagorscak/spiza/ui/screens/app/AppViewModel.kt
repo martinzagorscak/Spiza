@@ -6,9 +6,9 @@ import com.mzagorscak.spiza.domain.model.ThemeMode
 import kotlinx.coroutines.flow.StateFlow
 
 data class AppState(
-    val themeMode: ThemeMode = ThemeMode.System,
-    val language: AppLanguage = AppLanguage.Default,
-    val isSignedIn: Boolean = false,
+    val themeMode: ThemeMode,
+    val language: AppLanguage,
+    val isSignedIn: Boolean,
 )
 
 /** Exposes app-wide preferences (theme, language) applied at the root of the UI. */

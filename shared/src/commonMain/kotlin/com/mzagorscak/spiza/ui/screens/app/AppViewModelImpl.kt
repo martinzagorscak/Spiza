@@ -1,6 +1,8 @@
 package com.mzagorscak.spiza.ui.screens.app
 
 import androidx.lifecycle.viewModelScope
+import com.mzagorscak.spiza.domain.usecase.GetCurrentAppLanguageUseCase
+import com.mzagorscak.spiza.domain.usecase.GetCurrentThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveThemeModeUseCase
@@ -14,12 +16,26 @@ internal class AppViewModelImpl(
     observeThemeMode: ObserveThemeModeUseCase,
     observeAppLanguage: ObserveAppLanguageUseCase,
     observeUserProfile: ObserveUserProfileUseCase,
+    getCurrentThemeMode: GetCurrentThemeModeUseCase,
+    getCurrentAppLanguage: GetCurrentAppLanguageUseCase,
     getCurrentUserProfile: GetCurrentUserProfileUseCase,
 ) : AppViewModel() {
     private val state =
-        combine(observeThemeMode(), observeAppLanguage(), observeUserProfile()) { theme, language, profile ->
+        combine(
+            observeThemeMode(),
+            observeAppLanguage(),
+            observeUserProfile(),
+        ) { theme, language, profile ->
             AppState(themeMode = theme, language = language, isSignedIn = profile != null)
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, AppState(isSignedIn = getCurrentUserProfile() != null))
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            AppState(
+                themeMode = getCurrentThemeMode(),
+                language = getCurrentAppLanguage(),
+                isSignedIn = getCurrentUserProfile() != null,
+            ),
+        )
 
     override fun state(): StateFlow<AppState> = state
 }

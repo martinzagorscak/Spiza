@@ -10,6 +10,8 @@ internal class SettingsRepositoryImpl(
 ) : SettingsRepository {
     override val themeMode: Flow<ThemeMode> = dataSource.themeMode
     override val language: Flow<AppLanguage> = dataSource.language
+    override val currentThemeMode: ThemeMode get() = dataSource.currentThemeMode
+    override val currentLanguage: AppLanguage get() = dataSource.currentLanguage
     override val selectedHouseholdId: Flow<String?> = dataSource.selectedHouseholdId
     override val suggestionsSavingEnabled: Flow<Boolean> = dataSource.suggestionsSavingEnabled
 
