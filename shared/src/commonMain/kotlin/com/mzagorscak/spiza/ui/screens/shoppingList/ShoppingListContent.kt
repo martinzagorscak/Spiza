@@ -1,5 +1,8 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,6 +54,7 @@ private const val OPTIMISTIC_ORDER_TIMEOUT_MS = 3_000L
 private const val EMPTY_KEY = "empty"
 private const val ADD_ITEM_KEY = "add-item"
 private const val DONE_HEADER_KEY = "done-header"
+private const val DONE_ITEM_TEMPLATE_KEY = "done-item"
 
 @Composable
 fun ShoppingListContent(
@@ -158,8 +162,13 @@ fun ShoppingListContent(
                 AddItemRow(onAddItem = callbacks.onAddItem)
             }
         }
-        if (state.doneItems.isNotEmpty()) {
-            item(key = DONE_HEADER_KEY) {
+
+        item(key = DONE_HEADER_KEY) {
+            AnimatedVisibility(
+                visible = state.doneItems.isNotEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -168,7 +177,7 @@ fun ShoppingListContent(
                         .padding(top = padding400),
                 ) {
                     val checkedIconRes =
-                        if (state.areCheckedItemsCollapsed) Res.drawable.ic_filled_chevron_down else Res.drawable.ic_filled_chevron_up
+                        if (state.areCheckedItemsCollapsed) Res.drawable.ic_filled_chevron_up else Res.drawable.ic_filled_chevron_down
                     IconButton(
                         resource = checkedIconRes,
                         onClick = callbacks.onCheckedItemsCollapse,
@@ -197,10 +206,11 @@ fun ShoppingListContent(
                     )
                 }
             }
-            if (state.areCheckedItemsCollapsed.not()) {
-                items(items = state.doneItems, key = PresentableArticleItem::id) { item ->
-                    ArticleRow(item = item, callbacks = callbacks, modifier = Modifier.animateItem())
-                }
+        }
+
+        if (state.areCheckedItemsCollapsed.not()) {
+            items(items = state.doneItems, key = { "$DONE_ITEM_TEMPLATE_KEY-${it.id}" }) { item ->
+                ArticleRow(item = item, callbacks = callbacks, modifier = Modifier.animateItem())
             }
         }
     }
@@ -238,6 +248,7 @@ private fun ArticleRow(
         onCheckedChange = { callbacks.onItemCheckedChange(item.id, it) },
         onDelete = { callbacks.onItemDelete(item.id) },
         singleLine = false,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         modifier = modifier,
     )
 }

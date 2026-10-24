@@ -25,7 +25,7 @@ sealed class ShoppingListState {
             val doneItems: List<PresentableArticleItem> = emptyList(),
             val canAddItemToHousehold: Boolean = false,
             val suggestions: List<PresentableShoppingItemSuggestion> = emptyList(),
-            val areCheckedItemsCollapsed: Boolean = false,
+            val areCheckedItemsCollapsed: Boolean = true,
             val dialogState: DialogState = DialogState.Hidden,
             val contentErrorState: ContentErrorState = ContentErrorState.None,
         ) : Body()

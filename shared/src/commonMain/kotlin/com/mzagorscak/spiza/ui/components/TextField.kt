@@ -27,7 +27,7 @@ import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.text_field_optional_template
 
 private const val SINGLE_LINE_COUNT = 1
-private const val MAX_LINE_COUNT = 5
+private const val MAX_LINE_COUNT = 3
 
 enum class TextFieldVariant {
     Filled,

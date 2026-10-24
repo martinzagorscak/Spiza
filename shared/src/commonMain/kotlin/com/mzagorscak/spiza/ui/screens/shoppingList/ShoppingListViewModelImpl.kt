@@ -82,7 +82,7 @@ internal class ShoppingListViewModelImpl(
     private val body = MutableStateFlow<ShoppingListState.Body>(ShoppingListState.Body.Loading)
     private val retryTrigger = MutableStateFlow(INITIAL_COUNT)
     private val selectedHouseholdId = observeSelectedHouseholdId()
-    private val areCheckedItemsCollapsedState = MutableStateFlow(false)
+    private val areCheckedItemsCollapsedState = MutableStateFlow(true)
     private val dialogStatePublisher = MutableStateFlow(ShoppingListState.DialogState.Hidden)
     private val isSuggestionsSavingEnabled = observeSuggestionsSavingEnabled()
 
