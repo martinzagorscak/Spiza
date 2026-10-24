@@ -123,10 +123,20 @@ internal class ShoppingListViewModelImpl(
 
     override fun onAddItem(text: String) {
         val loaded = latest ?: return
-        write {
-            addItem(loaded.current.id, text, loaded.items)
-            if (isSuggestionsSavingEnabled.first()) {
-                addOrUpdateSuggestion(name = text)
+        val normalizedText = text.trim().lowercase()
+        val existingItem = loaded.items.firstOrNull { it.text.trim().lowercase() == normalizedText }
+
+        // if item already exists and is checked, uncheck it instead of adding a new one
+        if (existingItem != null && existingItem.isChecked.not()) {
+            return
+        } else if (existingItem != null && existingItem.isChecked) {
+            onItemCheckedChange(existingItem.id, isChecked = false)
+        } else {
+            write {
+                addItem(loaded.current.id, text, loaded.items)
+                if (isSuggestionsSavingEnabled.first()) {
+                    addOrUpdateSuggestion(name = text)
+                }
             }
         }
     }

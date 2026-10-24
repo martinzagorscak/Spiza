@@ -168,43 +168,13 @@ fun ShoppingListContent(
                 visible = state.doneItems.isNotEmpty(),
                 enter = fadeIn(),
                 exit = fadeOut(),
+                modifier = Modifier.padding(top = padding200),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(padding200)
-                        .padding(top = padding400),
-                ) {
-                    val checkedIconRes =
-                        if (state.areCheckedItemsCollapsed) Res.drawable.ic_filled_chevron_up else Res.drawable.ic_filled_chevron_down
-                    IconButton(
-                        resource = checkedIconRes,
-                        onClick = callbacks.onCheckedItemsCollapse,
-                        appearance = IconButtonAppearance(
-                            variant = IconButtonVariant.IconBased,
-                            size = IconButtonSize.Medium,
-                            tintColor = MaterialTheme.colorScheme.onBackground,
-                        ),
-                    )
-
-                    Text(
-                        text = stringResource(Res.string.shopping_list_done_section),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.weight(1f).padding(horizontal = padding400, vertical = padding200),
-                    )
-
-                    IconButton(
-                        resource = Res.drawable.ic_trash,
-                        onClick = callbacks.showClearCheckedItemsConfirmationDialog,
-                        appearance = IconButtonAppearance(
-                            variant = IconButtonVariant.IconBased,
-                            size = IconButtonSize.Medium,
-                            tintColor = MaterialTheme.colorScheme.onBackground,
-                        ),
-                    )
-                }
+                DoneHeader(
+                    areCheckedItemsCollapsed = state.areCheckedItemsCollapsed,
+                    onCheckedItemsCollapse = callbacks.onCheckedItemsCollapse,
+                    showClearCheckedItemsConfirmationDialog = callbacks.showClearCheckedItemsConfirmationDialog,
+                )
             }
         }
 
@@ -284,4 +254,47 @@ private fun AddItemRow(
         ),
         modifier = modifier,
     )
+}
+
+@Composable
+private fun DoneHeader(
+    areCheckedItemsCollapsed: Boolean,
+    onCheckedItemsCollapse: () -> Unit,
+    showClearCheckedItemsConfirmationDialog: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(padding200),
+    ) {
+        val checkedIconRes = if (areCheckedItemsCollapsed) Res.drawable.ic_filled_chevron_up else Res.drawable.ic_filled_chevron_down
+        IconButton(
+            resource = checkedIconRes,
+            onClick = onCheckedItemsCollapse,
+            appearance = IconButtonAppearance(
+                variant = IconButtonVariant.IconBased,
+                size = IconButtonSize.Medium,
+                tintColor = MaterialTheme.colorScheme.onBackground,
+            ),
+        )
+
+        Text(
+            text = stringResource(Res.string.shopping_list_done_section),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f).padding(horizontal = padding400, vertical = padding200),
+        )
+
+        IconButton(
+            resource = Res.drawable.ic_trash,
+            onClick = showClearCheckedItemsConfirmationDialog,
+            appearance = IconButtonAppearance(
+                variant = IconButtonVariant.IconBased,
+                size = IconButtonSize.Medium,
+                tintColor = MaterialTheme.colorScheme.onBackground,
+            ),
+        )
+    }
 }
