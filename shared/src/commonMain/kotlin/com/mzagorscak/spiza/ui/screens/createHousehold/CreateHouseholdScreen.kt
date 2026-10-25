@@ -38,6 +38,9 @@ import spiza.shared.generated.resources.create_household_error
 import spiza.shared.generated.resources.create_household_name_label
 import spiza.shared.generated.resources.create_household_submit
 import spiza.shared.generated.resources.create_household_title
+import spiza.shared.generated.resources.edit_household_error
+import spiza.shared.generated.resources.edit_household_submit
+import spiza.shared.generated.resources.edit_household_title
 import spiza.shared.generated.resources.ic_back
 
 @Composable
@@ -53,7 +56,9 @@ fun CreateHouseholdScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = stringResource(Res.string.create_household_title),
+                title = stringResource(
+                    if (state.isEditScenario) Res.string.edit_household_title else Res.string.create_household_title,
+                ),
                 leadingContent = {
                     IconButton(
                         resource = Res.drawable.ic_back,
@@ -106,13 +111,17 @@ fun CreateHouseholdScreen(
             )
             if (state.hasError) {
                 Text(
-                    text = stringResource(Res.string.create_household_error),
+                    text = stringResource(
+                        if (state.isEditScenario) Res.string.edit_household_error else Res.string.create_household_error,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
             }
             Button(
-                label = stringResource(Res.string.create_household_submit),
+                label = stringResource(
+                    if (state.isEditScenario) Res.string.edit_household_submit else Res.string.create_household_submit,
+                ),
                 onClick = callbacks.onCreateClick,
                 isEnabled = state.canSubmit,
                 appearance = ButtonAppearance(

@@ -63,6 +63,9 @@
     <string name="text_field_optional_template">%1$s (opcionalno)</string>
     <string name="create_household_submit">Stvori</string>
     <string name="create_household_error">Kućanstvo nije stvoreno. Pokušaj ponovno.</string>
+    <string name="edit_household_title">Uredi kućanstvo</string>
+    <string name="edit_household_submit">Spremi</string>
+    <string name="edit_household_error">Promjene nisu spremljene. Pokušaj ponovno.</string>
     <string name="household_management_add_member_dialog_title">Dodaj člana u kućanstvo</string>
     <string name="household_management_add_member_dialog_description">Unesite ključ za pridruživanje člana kojeg želite dodati u kućanstvo.</string>
     <string name="household_management_add_member_dialog_confirm_label">Dodaj člana</string>

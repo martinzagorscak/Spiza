@@ -1,6 +1,7 @@
 package com.mzagorscak.spiza.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +39,7 @@ private const val DESCRIPTION_MAX_LINE_COUNT = 3
 @Composable
 fun HouseholdCard(
     household: PresentableHousehold,
+    onTitleClick: (() -> Unit)? = null,
     nameTrailingContent: @Composable (() -> Unit)? = null,
     onRemoveUserClick: (household: PresentableHousehold, member: PresentableHouseholdMember) -> Unit,
     modifier: Modifier = Modifier,
@@ -63,7 +65,12 @@ fun HouseholdCard(
                 color = MaterialTheme.colorScheme.background,
                 maxLines = SINGLE_LINE_COUNT,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(
+                        enabled = household.isCurrentUserOwner && onTitleClick != null,
+                        onClick = { onTitleClick?.invoke() },
+                    ),
             )
 
             nameTrailingContent?.let {
@@ -81,7 +88,11 @@ fun HouseholdCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = padding100, end = padding200)
-                    .padding(bottom = padding300),
+                    .padding(bottom = padding300)
+                    .clickable(
+                        enabled = household.isCurrentUserOwner && onTitleClick != null,
+                        onClick = { onTitleClick?.invoke() },
+                    ),
             )
         }
 

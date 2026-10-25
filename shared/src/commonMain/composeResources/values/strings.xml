@@ -63,6 +63,9 @@
     <string name="text_field_optional_template">%1$s (optional)</string>
     <string name="create_household_submit">Create</string>
     <string name="create_household_error">Couldn't create the household. Please try again.</string>
+    <string name="edit_household_title">Edit household</string>
+    <string name="edit_household_submit">Save</string>
+    <string name="edit_household_error">Couldn't save household changes. Please try again.</string>
     <string name="household_management_add_member_dialog_title">Add member to household</string>
     <string name="household_management_add_member_dialog_description">Enter the join key of the member you want to add to the household.</string>
     <string name="household_management_add_member_dialog_confirm_label">Add member</string>

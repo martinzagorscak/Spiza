@@ -141,6 +141,7 @@ fun HouseholdManagementScreen(
                     items(items = state.households, key = PresentableHousehold::id) { household ->
                         HouseholdCard(
                             household = household,
+                            onTitleClick = { callbacks.onEditHousehold(household) }.takeIf { household.isCurrentUserOwner },
                             nameTrailingContent = {
                                 if (household.isCurrentUserOwner) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -275,6 +276,7 @@ fun HouseholdManagementScreen(
 data class HouseholdManagementScreenCallbacks(
     val onBackClick: () -> Unit,
     val onCreateHousehold: () -> Unit,
+    val onEditHousehold: (household: PresentableHousehold) -> Unit,
     val showAddMemberToHouseholdsDialog: (String) -> Unit,
     val onAddMember: (joinKey: String) -> Unit,
     val showRemoveMemberFromHouseholdDialog: (household: PresentableHousehold, member: PresentableHouseholdMember) -> Unit,

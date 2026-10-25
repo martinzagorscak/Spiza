@@ -128,6 +128,21 @@ class FirestoreHouseholdDataSource(
         return document.id
     }
 
+    override suspend fun updateHousehold(
+        householdId: String,
+        name: String,
+        description: String,
+    ) {
+        households
+            .document(householdId)
+            .update(
+                mapOf(
+                    HouseholdFields.NAME to name,
+                    HouseholdFields.DESCRIPTION to description,
+                ),
+            ).await()
+    }
+
     override suspend fun addItem(
         householdId: String,
         text: String,

@@ -12,7 +12,11 @@ sealed interface Route : NavKey {
     data object Login : Route
 
     @Serializable
-    data object CreateHousehold : Route
+    data class CreateHousehold(
+        val householdId: String? = null,
+        val householdName: String? = null,
+        val householdDescription: String? = null,
+    ) : Route
 
     @Serializable
     data object ShoppingList : Route

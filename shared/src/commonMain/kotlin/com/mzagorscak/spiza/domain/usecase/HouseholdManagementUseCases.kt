@@ -132,6 +132,28 @@ class CreateHouseholdUseCaseImpl(
     }
 }
 
+interface UpdateHouseholdUseCase {
+    suspend operator fun invoke(
+        householdId: String,
+        name: String,
+        description: String,
+    ): Boolean
+}
+
+class UpdateHouseholdUseCaseImpl(
+    private val repository: HouseholdRepository,
+) : UpdateHouseholdUseCase {
+    override suspend operator fun invoke(
+        householdId: String,
+        name: String,
+        description: String,
+    ): Boolean {
+        if (name.isBlank()) return false
+        repository.updateHousehold(householdId = householdId, name = name.trim(), description = description.trim())
+        return true
+    }
+}
+
 interface ObserveSelectedHouseholdIdUseCase {
     operator fun invoke(): Flow<String?>
 }

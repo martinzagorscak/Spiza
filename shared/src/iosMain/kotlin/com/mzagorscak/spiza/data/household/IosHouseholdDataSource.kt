@@ -108,6 +108,12 @@ class IosHouseholdDataSource(
             }
         }
 
+    override suspend fun updateHousehold(
+        householdId: String,
+        name: String,
+        description: String,
+    ) = write { bridge.updateHousehold(householdId, name, description, it) }
+
     override suspend fun addItem(
         householdId: String,
         text: String,

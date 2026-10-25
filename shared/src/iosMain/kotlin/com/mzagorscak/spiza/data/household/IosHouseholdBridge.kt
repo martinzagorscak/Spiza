@@ -57,6 +57,13 @@ interface IosHouseholdBridge {
         onComplete: (householdId: String?, errorMessage: String?) -> Unit,
     )
 
+    fun updateHousehold(
+        householdId: String,
+        name: String,
+        description: String,
+        onComplete: (errorMessage: String?) -> Unit,
+    )
+
     fun addItem(
         householdId: String,
         text: String,

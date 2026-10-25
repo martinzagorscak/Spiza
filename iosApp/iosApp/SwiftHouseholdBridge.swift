@@ -153,6 +153,19 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         }
     }
 
+    func updateHousehold(
+        householdId: String,
+        name: String,
+        description: String,
+        onComplete: @escaping (String?) -> Void
+    ) {
+        let fields = HouseholdFields.shared
+        households.document(householdId).updateData([
+            fields.NAME: name,
+            fields.DESCRIPTION: description,
+        ], completion: completion(onComplete))
+    }
+
     func addItem(householdId: String, text: String, position: Double, onComplete: @escaping (String?) -> Void) {
         let fields = HouseholdFields.shared
         items(householdId).document().setData(

@@ -3,6 +3,7 @@ package com.mzagorscak.spiza.ui.screens.createHousehold
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
+import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,11 +11,30 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
+private const val EMPTY = ""
+
 internal class CreateHouseholdViewModelImpl(
+    scenario: HouseholdScenario = HouseholdScenario.Create,
     private val createHousehold: CreateHouseholdUseCase,
+    private val updateHousehold: UpdateHouseholdUseCase,
     private val crashLogger: CrashLogger,
 ) : CreateHouseholdViewModel() {
-    private val state = MutableStateFlow(CreateHouseholdState())
+    private val state = MutableStateFlow(
+        CreateHouseholdState(
+            id = when (scenario) {
+                is HouseholdScenario.Create -> null
+                is HouseholdScenario.Edit -> scenario.householdId
+            },
+            name = when (scenario) {
+                is HouseholdScenario.Create -> EMPTY
+                is HouseholdScenario.Edit -> scenario.householdName
+            },
+            description = when (scenario) {
+                is HouseholdScenario.Create -> EMPTY
+                is HouseholdScenario.Edit -> scenario.householdDescription
+            },
+        ),
+    )
 
     override fun state(): StateFlow<CreateHouseholdState> = state.asStateFlow()
 
@@ -34,14 +54,23 @@ internal class CreateHouseholdViewModelImpl(
         viewModelScope.launch {
             state.update { it.copy(isSubmitting = true, hasError = false) }
             try {
-                createHousehold(current.name, current.description)
+                if (current.isEditScenario) {
+                    val householdId = current.id ?: return@launch
+                    updateHousehold(householdId, current.name, current.description)
+                } else {
+                    createHousehold(current.name, current.description)
+                }
                 state.update { it.copy(isSubmitting = false, isCreated = true) }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: Exception) {
                 crashLogger.recordException(
                     Throwable(
-                        message = "Creating household failed; ${error.message}",
+                        message = if (current.isEditScenario) {
+                            "Updating household failed; ${error.message}"
+                        } else {
+                            "Creating household failed; ${error.message}"
+                        },
                         cause = error.cause,
                     ),
                 )

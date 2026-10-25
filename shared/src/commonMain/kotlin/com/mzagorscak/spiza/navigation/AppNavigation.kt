@@ -18,6 +18,7 @@ import com.mzagorscak.spiza.ui.components.common.performHapticFeedback
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdCallbacks
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdScreen
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
+import com.mzagorscak.spiza.ui.screens.createHousehold.HouseholdScenario
 import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementScreen
 import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementScreenCallbacks
 import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementViewModel
@@ -34,6 +35,7 @@ import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingV
 import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingsScreen
 import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingsScreenCallbacks
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AppNavigation(isSignedIn: Boolean) {
@@ -81,16 +83,27 @@ fun AppNavigation(isSignedIn: Boolean) {
                         },
                     )
                 }
-                entry<Route.CreateHousehold> {
-                    val viewModel = koinViewModel<CreateHouseholdViewModel>()
+                entry<Route.CreateHousehold> { key ->
+                    val scenario = remember(key) {
+                        if (key.householdId != null && key.householdName != null) {
+                            HouseholdScenario.Edit(
+                                householdId = key.householdId,
+                                householdName = key.householdName,
+                                householdDescription = key.householdDescription.orEmpty(),
+                            )
+                        } else {
+                            HouseholdScenario.Create
+                        }
+                    }
+                    val viewModel = koinViewModel<CreateHouseholdViewModel>(parameters = { parametersOf(scenario) })
                     val state by viewModel.state().collectAsStateWithLifecycle()
                     CreateHouseholdScreen(
                         state = state,
-                        callbacks = remember {
+                        callbacks = remember(key) {
                             CreateHouseholdCallbacks(
                                 onBackClick = {
                                     performHapticFeedback(hapticFeedback)
-                                    backStack.popIfTop(Route.CreateHousehold)
+                                    backStack.popIfTop(key)
                                 },
                                 onNameChange = viewModel::onNameChange,
                                 onDescriptionChange = viewModel::onDescriptionChange,
@@ -98,7 +111,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     performHapticFeedback(hapticFeedback)
                                     viewModel.createHousehold()
                                 },
-                                onCreated = { backStack.popIfTop(Route.CreateHousehold) },
+                                onCreated = { backStack.popIfTop(key) },
                             )
                         },
                     )
@@ -119,7 +132,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                                 onOtherHouseholdClick = viewModel::onHouseholdSelected,
                                 onCreateHouseholdClick = {
                                     performHapticFeedback(hapticFeedback)
-                                    backStack.add(Route.CreateHousehold)
+                                    backStack.add(Route.CreateHousehold())
                                 },
                                 onRetryClick = {
                                     performHapticFeedback(hapticFeedback)
@@ -212,7 +225,17 @@ fun AppNavigation(isSignedIn: Boolean) {
                                 },
                                 onCreateHousehold = {
                                     performHapticFeedback(hapticFeedback)
-                                    backStack.add(Route.CreateHousehold)
+                                    backStack.add(Route.CreateHousehold())
+                                },
+                                onEditHousehold = { household ->
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(
+                                        Route.CreateHousehold(
+                                            householdId = household.id,
+                                            householdName = household.name,
+                                            householdDescription = household.description,
+                                        ),
+                                    )
                                 },
                                 showAddMemberToHouseholdsDialog = { householdId ->
                                     performHapticFeedback(hapticFeedback)

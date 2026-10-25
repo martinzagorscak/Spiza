@@ -78,6 +78,8 @@ import com.mzagorscak.spiza.domain.usecase.SignOutUseCase
 import com.mzagorscak.spiza.domain.usecase.SignOutUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
+import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCaseImpl
 import org.koin.dsl.module
 
 val domainModule =
@@ -108,6 +110,7 @@ val domainModule =
         single<DeleteHouseholdUseCase> { DeleteHouseholdUseCaseImpl(repository = get()) }
         single<ObserveHouseholdsUseCase> { ObserveHouseholdsUseCaseImpl(repository = get()) }
         single<CreateHouseholdUseCase> { CreateHouseholdUseCaseImpl(repository = get()) }
+        single<UpdateHouseholdUseCase> { UpdateHouseholdUseCaseImpl(repository = get()) }
         single<ObserveSelectedHouseholdIdUseCase> { ObserveSelectedHouseholdIdUseCaseImpl(repository = get()) }
         single<SetSelectedHouseholdIdUseCase> { SetSelectedHouseholdIdUseCaseImpl(repository = get()) }
 

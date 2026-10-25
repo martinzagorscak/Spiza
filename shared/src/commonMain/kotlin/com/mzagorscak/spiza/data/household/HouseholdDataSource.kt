@@ -34,6 +34,12 @@ interface HouseholdDataSource {
         description: String,
     ): String
 
+    suspend fun updateHousehold(
+        householdId: String,
+        name: String,
+        description: String,
+    )
+
     suspend fun addItem(
         householdId: String,
         text: String,

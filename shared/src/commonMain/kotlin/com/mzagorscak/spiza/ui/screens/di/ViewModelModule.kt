@@ -4,6 +4,7 @@ import com.mzagorscak.spiza.ui.screens.app.AppViewModel
 import com.mzagorscak.spiza.ui.screens.app.AppViewModelImpl
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModelImpl
+import com.mzagorscak.spiza.ui.screens.createHousehold.HouseholdScenario
 import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementViewModel
 import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementViewModelImpl
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModel
@@ -29,9 +30,11 @@ val viewModelModule = module {
         )
     }
     viewModel<LoginViewModel> { LoginViewModelImpl(signIn = get()) }
-    viewModel<CreateHouseholdViewModel> {
+    viewModel<CreateHouseholdViewModel> { (scenario: HouseholdScenario) ->
         CreateHouseholdViewModelImpl(
+            scenario = scenario,
             createHousehold = get(),
+            updateHousehold = get(),
             crashLogger = get(),
         )
     }

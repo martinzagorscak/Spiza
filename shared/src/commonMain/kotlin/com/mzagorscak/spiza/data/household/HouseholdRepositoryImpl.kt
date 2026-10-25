@@ -186,6 +186,18 @@ internal class HouseholdRepositoryImpl(
         return id
     }
 
+    override suspend fun updateHousehold(
+        householdId: String,
+        name: String,
+        description: String,
+    ) {
+        authService.currentUser?.uid
+            ?: recordNonAuthenticatedError(message = "User tried to update household $householdId")
+                .let { return }
+
+        dataSource.updateHousehold(householdId, name, description)
+    }
+
     override suspend fun addItem(
         householdId: String,
         text: String,
