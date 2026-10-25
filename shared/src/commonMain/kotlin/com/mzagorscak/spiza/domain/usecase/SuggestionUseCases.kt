@@ -6,36 +6,55 @@ import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Clock
 
-class ObserveSuggestionsUseCase(
+interface ObserveSuggestionsUseCase {
+    operator fun invoke(sortingType: SuggestionSortingType = SuggestionSortingType.ALPHABETICAL_ASC): Flow<List<ShoppingItemSuggestion>>
+}
+
+class ObserveSuggestionsUseCaseImpl(
     private val localDataSource: SuggestionLocalDataSource,
-) {
-    operator fun invoke(sortingType: SuggestionSortingType = SuggestionSortingType.ALPHABETICAL_ASC): Flow<List<ShoppingItemSuggestion>> =
+) : ObserveSuggestionsUseCase {
+    override operator fun invoke(sortingType: SuggestionSortingType): Flow<List<ShoppingItemSuggestion>> =
         localDataSource.observeAll(sortingType)
 }
 
-class AddOrUpdateSuggestionUseCase(
-    private val localDataSource: SuggestionLocalDataSource,
-) {
+interface AddOrUpdateSuggestionUseCase {
     suspend operator fun invoke(
         name: String,
         timestamp: Long = Clock.System.now().toEpochMilliseconds(),
+    )
+}
+
+class AddOrUpdateSuggestionUseCaseImpl(
+    private val localDataSource: SuggestionLocalDataSource,
+) : AddOrUpdateSuggestionUseCase {
+    override suspend operator fun invoke(
+        name: String,
+        timestamp: Long,
     ) {
         localDataSource.addOrUpdate(name, timestamp)
     }
 }
 
-class DeleteSuggestionUseCase(
+interface DeleteSuggestionUseCase {
+    suspend operator fun invoke(id: Long)
+}
+
+class DeleteSuggestionUseCaseImpl(
     private val localDataSource: SuggestionLocalDataSource,
-) {
-    suspend operator fun invoke(id: Long) {
+) : DeleteSuggestionUseCase {
+    override suspend operator fun invoke(id: Long) {
         localDataSource.delete(id)
     }
 }
 
-class DeleteAllSuggestionsUseCase(
+interface DeleteAllSuggestionsUseCase {
+    suspend operator fun invoke()
+}
+
+class DeleteAllSuggestionsUseCaseImpl(
     private val localDataSource: SuggestionLocalDataSource,
-) {
-    suspend operator fun invoke() {
+) : DeleteAllSuggestionsUseCase {
+    override suspend operator fun invoke() {
         localDataSource.deleteAll()
     }
 }

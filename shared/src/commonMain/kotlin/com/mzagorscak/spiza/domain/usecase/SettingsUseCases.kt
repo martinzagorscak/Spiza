@@ -9,80 +9,132 @@ import com.mzagorscak.spiza.domain.repository.SettingsRepository
 import com.mzagorscak.spiza.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 
-class ObserveUserProfileUseCase(
+interface ObserveUserProfileUseCase {
+    operator fun invoke(): Flow<UserProfile?>
+}
+
+class ObserveUserProfileUseCaseImpl(
     private val repository: UserRepository,
-) {
-    operator fun invoke(): Flow<UserProfile?> = repository.profile
+) : ObserveUserProfileUseCase {
+    override operator fun invoke(): Flow<UserProfile?> = repository.profile
 }
 
-class GetCurrentUserProfileUseCase(
+interface GetCurrentUserProfileUseCase {
+    operator fun invoke(): UserProfile?
+}
+
+class GetCurrentUserProfileUseCaseImpl(
     private val repository: UserRepository,
-) {
-    operator fun invoke(): UserProfile? = repository.currentProfile
+) : GetCurrentUserProfileUseCase {
+    override operator fun invoke(): UserProfile? = repository.currentProfile
 }
 
-class GetUsersUseCase(
+interface GetUsersUseCase {
+    suspend operator fun invoke(userIds: List<String>): List<UserProfile>
+}
+
+class GetUsersUseCaseImpl(
     private val repository: UserRepository,
-) {
-    suspend operator fun invoke(userIds: List<String>): List<UserProfile> = repository.getUsers(userIds)
+) : GetUsersUseCase {
+    override suspend operator fun invoke(userIds: List<String>): List<UserProfile> = repository.getUsers(userIds)
 }
 
-class ObserveThemeModeUseCase(
+interface ObserveThemeModeUseCase {
+    operator fun invoke(): Flow<ThemeMode>
+}
+
+class ObserveThemeModeUseCaseImpl(
     private val repository: SettingsRepository,
-) {
-    operator fun invoke(): Flow<ThemeMode> = repository.themeMode
+) : ObserveThemeModeUseCase {
+    override operator fun invoke(): Flow<ThemeMode> = repository.themeMode
 }
 
-class GetCurrentThemeModeUseCase(
+interface GetCurrentThemeModeUseCase {
+    operator fun invoke(): ThemeMode
+}
+
+class GetCurrentThemeModeUseCaseImpl(
     private val repository: SettingsRepository,
-) {
-    operator fun invoke(): ThemeMode = repository.currentThemeMode
+) : GetCurrentThemeModeUseCase {
+    override operator fun invoke(): ThemeMode = repository.currentThemeMode
 }
 
-class SetThemeModeUseCase(
+interface SetThemeModeUseCase {
+    suspend operator fun invoke(mode: ThemeMode)
+}
+
+class SetThemeModeUseCaseImpl(
     private val repository: SettingsRepository,
-) {
-    suspend operator fun invoke(mode: ThemeMode) = repository.setThemeMode(mode)
+) : SetThemeModeUseCase {
+    override suspend operator fun invoke(mode: ThemeMode) = repository.setThemeMode(mode)
 }
 
-class ObserveAppLanguageUseCase(
+interface ObserveAppLanguageUseCase {
+    operator fun invoke(): Flow<AppLanguage>
+}
+
+class ObserveAppLanguageUseCaseImpl(
     private val repository: SettingsRepository,
-) {
-    operator fun invoke(): Flow<AppLanguage> = repository.language
+) : ObserveAppLanguageUseCase {
+    override operator fun invoke(): Flow<AppLanguage> = repository.language
 }
 
-class GetCurrentAppLanguageUseCase(
+interface GetCurrentAppLanguageUseCase {
+    operator fun invoke(): AppLanguage
+}
+
+class GetCurrentAppLanguageUseCaseImpl(
     private val repository: SettingsRepository,
-) {
-    operator fun invoke(): AppLanguage = repository.currentLanguage
+) : GetCurrentAppLanguageUseCase {
+    override operator fun invoke(): AppLanguage = repository.currentLanguage
 }
 
-class SetAppLanguageUseCase(
+interface SetAppLanguageUseCase {
+    suspend operator fun invoke(language: AppLanguage)
+}
+
+class SetAppLanguageUseCaseImpl(
     private val repository: SettingsRepository,
-) {
-    suspend operator fun invoke(language: AppLanguage) = repository.setLanguage(language)
+) : SetAppLanguageUseCase {
+    override suspend operator fun invoke(language: AppLanguage) = repository.setLanguage(language)
 }
 
-class ObserveSuggestionsSavingEnabledUseCase(
+interface ObserveSuggestionsSavingEnabledUseCase {
+    operator fun invoke(): Flow<Boolean>
+}
+
+class ObserveSuggestionsSavingEnabledUseCaseImpl(
     private val repository: SettingsRepository,
-) {
-    operator fun invoke(): Flow<Boolean> = repository.suggestionsSavingEnabled
+) : ObserveSuggestionsSavingEnabledUseCase {
+    override operator fun invoke(): Flow<Boolean> = repository.suggestionsSavingEnabled
 }
 
-class SetSuggestionsSavingEnabledUseCase(
+interface SetSuggestionsSavingEnabledUseCase {
+    suspend operator fun invoke(enabled: Boolean)
+}
+
+class SetSuggestionsSavingEnabledUseCaseImpl(
     private val repository: SettingsRepository,
-) {
-    suspend operator fun invoke(enabled: Boolean) = repository.setSuggestionsSavingEnabled(enabled)
+) : SetSuggestionsSavingEnabledUseCase {
+    override suspend operator fun invoke(enabled: Boolean) = repository.setSuggestionsSavingEnabled(enabled)
 }
 
-class SignInUseCase(
+interface SignInUseCase {
+    suspend operator fun invoke(provider: AuthProvider): AuthResult
+}
+
+class SignInUseCaseImpl(
     private val repository: UserRepository,
-) {
-    suspend operator fun invoke(provider: AuthProvider): AuthResult = repository.signIn(provider)
+) : SignInUseCase {
+    override suspend operator fun invoke(provider: AuthProvider): AuthResult = repository.signIn(provider)
 }
 
-class SignOutUseCase(
+interface SignOutUseCase {
+    suspend operator fun invoke()
+}
+
+class SignOutUseCaseImpl(
     private val repository: UserRepository,
-) {
-    suspend operator fun invoke() = repository.signOut()
+) : SignOutUseCase {
+    override suspend operator fun invoke() = repository.signOut()
 }
