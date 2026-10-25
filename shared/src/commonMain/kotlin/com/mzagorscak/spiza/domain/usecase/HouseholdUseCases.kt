@@ -21,6 +21,12 @@ class GetHouseholdJoinKeyUseCase(
     operator fun invoke(): Flow<String?> = repository.getHouseholdJoinKey()
 }
 
+class RefreshHouseholdJoinKeyUseCase(
+    private val repository: HouseholdRepository,
+) {
+    suspend operator fun invoke() = repository.refreshHouseholdJoinKey()
+}
+
 class AddMemberToHouseholdUseCase(
     private val repository: HouseholdRepository,
 ) {

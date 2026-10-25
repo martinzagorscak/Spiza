@@ -35,7 +35,7 @@ class FirestoreHouseholdDataSource(
 
     private fun generateJoinKey(): String = UUID.randomUUID().toString()
 
-    private suspend fun deleteHouseholdJoinKey(userId: String) {
+    override suspend fun deleteHouseholdJoinKey(userId: String) {
         householdJoinKeys.document(userId).delete().await()
     }
 

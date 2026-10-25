@@ -9,6 +9,8 @@ interface HouseholdRepository {
 
     fun getHouseholdJoinKey(): Flow<String?>
 
+    suspend fun refreshHouseholdJoinKey()
+
     suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,

@@ -22,6 +22,11 @@ interface IosHouseholdBridge {
         onComplete: (key: String?, errorMessage: String?) -> Unit,
     )
 
+    fun deleteHouseholdJoinKey(
+        userId: String,
+        onComplete: (errorMessage: String?) -> Unit,
+    )
+
     fun getHouseholdJoinKey(
         userId: String,
         onComplete: (key: String?, errorMessage: String?) -> Unit,

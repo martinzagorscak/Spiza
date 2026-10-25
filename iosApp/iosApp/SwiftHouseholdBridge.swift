@@ -36,6 +36,10 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         }
     }
 
+    func deleteHouseholdJoinKey(userId: String, onComplete: @escaping (String?) -> Void) {
+        joinKeys.document(userId).delete(completion: completion(onComplete))
+    }
+
     func getHouseholdJoinKey(userId: String, onComplete: @escaping (String?, String?) -> Void) {
         let fields = HouseholdFields.shared
         joinKeys.document(userId).getDocument { snapshot, error in
@@ -47,10 +51,6 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
                 onComplete(nil, nil)
             }
         }
-    }
-
-    private func deleteJoinKey(userId: String, onComplete: @escaping (String?) -> Void) {
-        joinKeys.document(userId).delete(completion: completion(onComplete))
     }
 
     func addMemberToHousehold(
@@ -78,7 +78,7 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
                 if let error = error {
                     onComplete(false, error.localizedDescription)
                 } else {
-                    self.deleteJoinKey(userId: userId) { deleteError in
+                    self.deleteHouseholdJoinKey(userId: userId) { deleteError in
                         onComplete(KotlinBoolean(bool: deleteError == nil), deleteError)
                     }
                 }

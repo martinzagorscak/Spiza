@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.Flow
 interface HouseholdDataSource {
     suspend fun createHouseholdJoinKey(userId: String): String
 
+    suspend fun deleteHouseholdJoinKey(userId: String)
+
     fun getHouseholdJoinKey(userId: String): Flow<String?>
 
     suspend fun addMemberToHousehold(

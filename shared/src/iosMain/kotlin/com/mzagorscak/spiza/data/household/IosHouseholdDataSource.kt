@@ -24,6 +24,17 @@ class IosHouseholdDataSource(
             }
         }
 
+    override suspend fun deleteHouseholdJoinKey(userId: String) =
+        suspendCancellableCoroutine { continuation ->
+            bridge.deleteHouseholdJoinKey(userId) { error ->
+                if (error == null) {
+                    continuation.resume(Unit)
+                } else {
+                    continuation.resumeWithException(IllegalStateException(error))
+                }
+            }
+        }
+
     override fun getHouseholdJoinKey(userId: String): Flow<String?> =
         flow {
             val key =

@@ -30,6 +30,7 @@ import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCas
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveUserProfileUseCase
+import com.mzagorscak.spiza.domain.usecase.RefreshHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.RemoveMemberFromHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
@@ -59,6 +60,7 @@ val domainModule =
         single { SignOutUseCase(repository = get()) }
         single { CreateHouseholdJoinKeyUseCase(repository = get()) }
         single { GetHouseholdJoinKeyUseCase(repository = get()) }
+        single { RefreshHouseholdJoinKeyUseCase(repository = get()) }
         single { AddMemberToHouseholdUseCase(repository = get()) }
         single { RemoveMemberFromHouseholdUseCase(repository = get()) }
         single { DeleteHouseholdUseCase(repository = get()) }

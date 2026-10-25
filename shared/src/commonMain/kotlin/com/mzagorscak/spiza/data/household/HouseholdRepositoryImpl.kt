@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
@@ -37,6 +38,7 @@ internal class HouseholdRepositoryImpl(
     private val constraintsManager: ConstraintsManager,
     private val crashLogger: CrashLogger,
 ) : HouseholdRepository {
+    private val refreshHouseholdJoinKeyPublisher = MutableSharedFlow<Unit>()
     private val newlyCreatedHouseholdJoinKeyPublisher = MutableSharedFlow<String>()
     private val cachedUserProfiles = MutableStateFlow(emptyMap<String, UserProfile>()) // <userId, UserProfile>
     private val cachedHouseholds = MutableStateFlow(emptyMap<String, HouseholdDto>()) // <householdId, memberCount>
@@ -65,11 +67,20 @@ internal class HouseholdRepositoryImpl(
                 flowOf(null)
             } else {
                 merge(
-                    dataSource.getHouseholdJoinKey(user.uid),
+                    refreshHouseholdJoinKeyPublisher
+                        .onStart { emit(Unit) }
+                        .flatMapLatest { dataSource.getHouseholdJoinKey(user.uid) },
                     newlyCreatedHouseholdJoinKeyPublisher,
                 )
             }
         }
+
+    override suspend fun refreshHouseholdJoinKey() {
+        authService.currentUser?.uid
+            ?: recordNonAuthenticatedError(message = "User tried to refresh a household join key while not signed in").let { return }
+
+        refreshHouseholdJoinKeyPublisher.emit(Unit)
+    }
 
     override suspend fun addMemberToHousehold(
         householdId: String,
@@ -159,7 +170,8 @@ internal class HouseholdRepositoryImpl(
                 .let { return null }
 
         // Constraint verification
-        if (constraintsManager.canUserCreateOrJoinHousehold(householdCount = cachedHouseholds.value.count()).not()) {
+        val householdCount = cachedHouseholds.value.count()
+        if (constraintsManager.canUserCreateOrJoinHousehold(householdCount = householdCount).not()) {
             crashLogger.logWarning(
                 message = "User $ownerId tried to create household $name but has already joined the maximum number of households",
             )
@@ -167,6 +179,10 @@ internal class HouseholdRepositoryImpl(
         }
 
         val id = withTimeoutOrNull(CREATE_TIMEOUT_MS.milliseconds) { dataSource.createHousehold(ownerId, name, description) }
+        if (constraintsManager.canUserCreateOrJoinHousehold(householdCount + 1).not() && id != null) {
+            dataSource.deleteHouseholdJoinKey(ownerId)
+            refreshHouseholdJoinKey()
+        }
         return id
     }
 

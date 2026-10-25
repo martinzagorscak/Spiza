@@ -62,6 +62,7 @@ val viewModelModule = module {
             canUserJoinHousehold = get(),
             createHouseholdJoinKey = get(),
             getHouseholdJoinKey = get(),
+            refreshHouseholdJoinKey = get(),
             observeThemeMode = get(),
             observeAppLanguage = get(),
             setThemeMode = get(),
