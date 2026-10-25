@@ -101,7 +101,7 @@ fun CreateHouseholdScreen(
                     label = stringResource(Res.string.create_household_description_label),
                     supportingText = "${state.description.length}/${CreateHouseholdState.MAX_DESCRIPTION_LENGTH}",
                 ),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
                 modifier = Modifier.fillMaxWidth(),
             )
             if (state.hasError) {

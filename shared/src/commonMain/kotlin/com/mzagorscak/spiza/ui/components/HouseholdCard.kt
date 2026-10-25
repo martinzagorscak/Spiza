@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.model.PresentableHousehold
@@ -21,6 +22,7 @@ import com.mzagorscak.spiza.ui.model.PresentableHouseholdMember
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
+import com.mzagorscak.spiza.ui.theme.padding300
 import com.mzagorscak.spiza.ui.theme.roundedShape200
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
@@ -31,6 +33,7 @@ import spiza.shared.generated.resources.member
 import spiza.shared.generated.resources.owner
 
 private const val SINGLE_LINE_COUNT = 1
+private const val DESCRIPTION_MAX_LINE_COUNT = 3
 
 @Composable
 fun HouseholdCard(
@@ -52,7 +55,7 @@ fun HouseholdCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = padding100, end = padding200)
-                .padding(bottom = padding200),
+                .padding(bottom = padding100),
         ) {
             Text(
                 text = household.name,
@@ -66,6 +69,20 @@ fun HouseholdCard(
             nameTrailingContent?.let {
                 it()
             }
+        }
+
+        if (household.description.isNotBlank()) {
+            Text(
+                text = household.description,
+                style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+                color = MaterialTheme.colorScheme.background,
+                maxLines = DESCRIPTION_MAX_LINE_COUNT,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = padding100, end = padding200)
+                    .padding(bottom = padding300),
+            )
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
