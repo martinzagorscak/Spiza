@@ -39,6 +39,10 @@
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_title">Brisanje svih spremljenih prijedloga</string>
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_description">Jeste li sigurni da želite izbrisati sve spremljene prijedloge? Ova se radnja ne može poništiti.</string>
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_confirm">Obriši sve</string>
+    <string name="settings_shopping_items_saving_add_suggestion_dialog_title">Dodaj prijedlog</string>
+    <string name="settings_shopping_items_saving_add_suggestion_dialog_description">Unesi naziv prijedloga koji želiš dodati.</string>
+    <string name="settings_shopping_items_saving_add_suggestion_dialog_label">Naziv prijedloga</string>
+    <string name="settings_shopping_items_saving_add_suggestion_dialog_confirm">Dodaj</string>
     <string name="settings_sign_out">Odjava</string>
     <string name="login_sign_in_with_google">Prijava putem Googlea</string>
     <string name="shopping_list_default_title">Kućanstvo</string>

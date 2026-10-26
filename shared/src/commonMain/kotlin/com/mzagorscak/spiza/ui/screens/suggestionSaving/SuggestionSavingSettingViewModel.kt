@@ -10,10 +10,12 @@ data class SuggestionSavingSettingState(
     val sortingType: SuggestionSortingType = SuggestionSortingType.ALPHABETICAL_ASC,
     val suggestions: List<PresentableShoppingItemSuggestion> = emptyList(),
     val dialogState: DialogState = DialogState.Hidden,
+    val dialogInput: String = "",
 ) {
     enum class DialogState {
         Hidden,
         RemoveAllSuggestionsConfirmation,
+        AddSuggestion,
     }
 }
 
@@ -27,6 +29,12 @@ abstract class SuggestionSavingSettingViewModel : ViewModel() {
     abstract fun removeSuggestion(suggestionId: Long)
 
     abstract fun showRemoveAllSuggestionsConfirmationDialog()
+
+    abstract fun showAddSuggestionDialog()
+
+    abstract fun onDialogInputChanged(input: String)
+
+    abstract fun addSuggestion()
 
     abstract fun dismissDialog()
 

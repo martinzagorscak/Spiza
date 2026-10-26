@@ -39,6 +39,10 @@
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_title">Delete all suggestions</string>
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_description">Are you sure you want to delete all saved suggestions? This action cannot be undone.</string>
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_confirm">Delete all</string>
+    <string name="settings_shopping_items_saving_add_suggestion_dialog_title">Add suggestion</string>
+    <string name="settings_shopping_items_saving_add_suggestion_dialog_description">Enter the name of the suggestion you want to add.</string>
+    <string name="settings_shopping_items_saving_add_suggestion_dialog_label">Suggestion name</string>
+    <string name="settings_shopping_items_saving_add_suggestion_dialog_confirm">Add</string>
     <string name="settings_sign_out">Sign out</string>
     <string name="login_sign_in_with_google">Sign in with Google</string>
     <string name="shopping_list_default_title">Household</string>

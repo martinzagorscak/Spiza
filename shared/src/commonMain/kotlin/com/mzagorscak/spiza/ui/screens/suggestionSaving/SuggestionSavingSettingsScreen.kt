@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.ui.screens.suggestionSaving
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
 import com.mzagorscak.spiza.ui.components.Button
@@ -51,8 +54,13 @@ import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_close
+import spiza.shared.generated.resources.ic_plus
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.settings_shopping_items_saving
+import spiza.shared.generated.resources.settings_shopping_items_saving_add_suggestion_dialog_confirm
+import spiza.shared.generated.resources.settings_shopping_items_saving_add_suggestion_dialog_description
+import spiza.shared.generated.resources.settings_shopping_items_saving_add_suggestion_dialog_label
+import spiza.shared.generated.resources.settings_shopping_items_saving_add_suggestion_dialog_title
 import spiza.shared.generated.resources.settings_shopping_items_saving_empty_state_description
 import spiza.shared.generated.resources.settings_shopping_items_saving_empty_state_title
 import spiza.shared.generated.resources.settings_shopping_items_saving_remove_all_suggestions_dialog_confirm
@@ -103,6 +111,20 @@ fun SuggestionSavingSettingsScreen(
                         ),
                     )
                 },
+            )
+        },
+        floatingActionButton = {
+            IconButton(
+                resource = Res.drawable.ic_plus,
+                onClick = callbacks.showAddSuggestionDialog,
+                appearance = IconButtonAppearance(
+                    variant = IconButtonVariant.IconBased,
+                    size = IconButtonSize.Large,
+                    tintColor = MaterialTheme.colorScheme.primary,
+                ),
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface),
             )
         },
         modifier = modifier.fillMaxSize(),
@@ -171,25 +193,57 @@ fun SuggestionSavingSettingsScreen(
                     }
                 }
             }
+        }
 
-            when (state.dialogState) {
-                SuggestionSavingSettingState.DialogState.RemoveAllSuggestionsConfirmation -> {
-                    Dialog(
-                        title = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_title),
-                        description = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_description),
-                        dismissCTA = CTA(
-                            label = stringResource(Res.string.cancel),
-                            onClick = callbacks.onDismissDialog,
-                        ),
-                        confirmCTA = CTA(
-                            label = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_confirm),
-                            onClick = callbacks.removeAllSuggestions,
-                        ),
-                    )
-                }
-
-                SuggestionSavingSettingState.DialogState.Hidden -> Unit
+        when (state.dialogState) {
+            SuggestionSavingSettingState.DialogState.AddSuggestion -> {
+                Dialog(
+                    title = stringResource(Res.string.settings_shopping_items_saving_add_suggestion_dialog_title),
+                    description = stringResource(Res.string.settings_shopping_items_saving_add_suggestion_dialog_description),
+                    textInput = state.dialogInput,
+                    onTextInputChange = callbacks.onDialogInputChanged,
+                    label = stringResource(Res.string.settings_shopping_items_saving_add_suggestion_dialog_label),
+                    trailingIcon = {
+                        if (state.dialogInput.isNotEmpty()) {
+                            IconButton(
+                                resource = Res.drawable.ic_close,
+                                onClick = { callbacks.onDialogInputChanged("") },
+                                appearance = IconButtonAppearance(
+                                    variant = IconButtonVariant.IconBased,
+                                    size = IconButtonSize.Medium,
+                                    tintColor = MaterialTheme.colorScheme.primary,
+                                ),
+                            )
+                        }
+                    },
+                    dismissCTA = CTA(
+                        label = stringResource(Res.string.cancel),
+                        onClick = callbacks.onDismissDialog,
+                    ),
+                    confirmCTA = CTA(
+                        label = stringResource(Res.string.settings_shopping_items_saving_add_suggestion_dialog_confirm),
+                        onClick = callbacks.onAddSuggestion,
+                        isEnabled = state.dialogInput.isNotBlank(),
+                    ),
+                )
             }
+
+            SuggestionSavingSettingState.DialogState.RemoveAllSuggestionsConfirmation -> {
+                Dialog(
+                    title = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_title),
+                    description = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_description),
+                    dismissCTA = CTA(
+                        label = stringResource(Res.string.cancel),
+                        onClick = callbacks.onDismissDialog,
+                    ),
+                    confirmCTA = CTA(
+                        label = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_confirm),
+                        onClick = callbacks.removeAllSuggestions,
+                    ),
+                )
+            }
+
+            SuggestionSavingSettingState.DialogState.Hidden -> Unit
         }
     }
 }
@@ -259,8 +313,10 @@ data class SuggestionSavingSettingsScreenCallbacks(
     val onToggleSavingEnabled: (Boolean) -> Unit,
     val onSortingTypeChange: (SuggestionSortingType) -> Unit,
     val onRemoveSuggestion: (Long) -> Unit,
-    val showRemoveAllSuggestionsConfirmationDialog: () -> Unit = {
-    }, // shows a confirmation dialog, which when confirmed calls removeAllSuggestions
+    val showRemoveAllSuggestionsConfirmationDialog: () -> Unit = {},
+    val showAddSuggestionDialog: () -> Unit = {},
+    val onDialogInputChanged: (String) -> Unit = {},
+    val onAddSuggestion: () -> Unit = {},
     val onDismissDialog: () -> Unit = {},
     val removeAllSuggestions: () -> Unit,
 )
@@ -282,6 +338,9 @@ private fun SuggestionSavingSettingsScreenLayoutPreview() {
             onSortingTypeChange = {},
             onRemoveSuggestion = {},
             showRemoveAllSuggestionsConfirmationDialog = {},
+            showAddSuggestionDialog = {},
+            onDialogInputChanged = {},
+            onAddSuggestion = {},
             onDismissDialog = {},
             removeAllSuggestions = {},
         ),

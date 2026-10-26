@@ -299,6 +299,15 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     performHapticFeedback(hapticFeedback)
                                     viewModel.showRemoveAllSuggestionsConfirmationDialog()
                                 },
+                                showAddSuggestionDialog = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.showAddSuggestionDialog()
+                                },
+                                onDialogInputChanged = viewModel::onDialogInputChanged,
+                                onAddSuggestion = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.addSuggestion()
+                                },
                                 onDismissDialog = viewModel::dismissDialog,
                                 removeAllSuggestions = {
                                     performHapticFeedback(hapticFeedback)
