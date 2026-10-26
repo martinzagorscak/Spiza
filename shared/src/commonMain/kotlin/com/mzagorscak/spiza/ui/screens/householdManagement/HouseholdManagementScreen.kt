@@ -53,9 +53,10 @@ import spiza.shared.generated.resources.household_management_only_owner_can_remo
 import spiza.shared.generated.resources.household_management_remove_member_dialog_description
 import spiza.shared.generated.resources.household_management_remove_member_dialog_title_template
 import spiza.shared.generated.resources.household_management_user_not_found_error
+import spiza.shared.generated.resources.ic_add_household
+import spiza.shared.generated.resources.ic_add_user
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_close
-import spiza.shared.generated.resources.ic_plus
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.join_key
 import spiza.shared.generated.resources.remove
@@ -114,7 +115,7 @@ fun HouseholdManagementScreen(
         floatingActionButton = {
             if (state.canUserCreateHousehold) {
                 IconButton(
-                    resource = Res.drawable.ic_plus,
+                    resource = Res.drawable.ic_add_household,
                     onClick = callbacks.onCreateHousehold,
                     appearance = IconButtonAppearance(
                         variant = IconButtonVariant.IconBased,
@@ -147,7 +148,7 @@ fun HouseholdManagementScreen(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         if (household.canOwnerAddNewMember) {
                                             IconButton(
-                                                resource = Res.drawable.ic_plus,
+                                                resource = Res.drawable.ic_add_user,
                                                 onClick = { callbacks.showAddMemberToHouseholdsDialog(household.id) },
                                                 appearance = IconButtonAppearance(
                                                     variant = IconButtonVariant.IconBased,
