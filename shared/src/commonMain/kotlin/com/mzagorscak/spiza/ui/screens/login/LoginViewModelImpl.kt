@@ -28,7 +28,7 @@ internal class LoginViewModelImpl(
                     is AuthResult.Cancelled -> result.message ?: "Sign in failed"
                     is AuthResult.Success -> null
                 }
-            state.update { LoginState(isLoading = false, error = error) }
+            state.update { LoginState(isLoading = error == null, error = error) }
         }
     }
 

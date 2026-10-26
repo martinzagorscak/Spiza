@@ -24,6 +24,7 @@ import com.mzagorscak.spiza.ui.components.Button
 import com.mzagorscak.spiza.ui.components.ButtonAppearance
 import com.mzagorscak.spiza.ui.components.ButtonSize
 import com.mzagorscak.spiza.ui.components.ButtonVariant
+import com.mzagorscak.spiza.ui.components.LoadingIndicator
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -71,22 +72,26 @@ fun LoginScreen(
                     .background(Color.Black),
             )
 
-            Button(
-                label = stringResource(Res.string.login_sign_in_with_google),
-                onClick = callbacks.onSignInWithGoogle,
-                isEnabled = !state.isLoading,
-                appearance = ButtonAppearance(
-                    variant = ButtonVariant.Primary,
-                    size = ButtonSize.Large,
-                ),
-                leadingContent = {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_google),
-                        contentDescription = null,
-                        modifier = Modifier.size(LoginButtonIconSize),
-                    )
-                },
-            )
+            if (state.isLoading) {
+                LoadingIndicator()
+            } else {
+                Button(
+                    label = stringResource(Res.string.login_sign_in_with_google),
+                    onClick = callbacks.onSignInWithGoogle,
+                    isEnabled = state.isLoading.not(),
+                    appearance = ButtonAppearance(
+                        variant = ButtonVariant.Primary,
+                        size = ButtonSize.Large,
+                    ),
+                    leadingContent = {
+                        Image(
+                            painter = painterResource(Res.drawable.ic_google),
+                            contentDescription = null,
+                            modifier = Modifier.size(LoginButtonIconSize),
+                        )
+                    },
+                )
+            }
         }
     }
 }
