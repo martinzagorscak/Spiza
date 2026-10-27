@@ -29,6 +29,17 @@ sealed interface Route : NavKey {
 
     @Serializable
     data object SuggestionsSavingSettings : Route
+
+    @Serializable
+    data object LoyaltyCards : Route
+
+    @Serializable
+    data class LoyaltyCardDetails(
+        val cardId: Long,
+    ) : Route
+
+    @Serializable
+    data object AddLoyaltyCard : Route
 }
 
 // Every new Route must be registered here so the back stack can be saved/restored on all platforms.
@@ -41,5 +52,8 @@ val routeSerializersModule =
             subclass(Route.Settings::class)
             subclass(Route.HouseholdManagement::class)
             subclass(Route.SuggestionsSavingSettings::class)
+            subclass(Route.LoyaltyCards::class)
+            subclass(Route.LoyaltyCardDetails::class)
+            subclass(Route.AddLoyaltyCard::class)
         }
     }

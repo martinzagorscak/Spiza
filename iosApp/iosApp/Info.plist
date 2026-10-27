@@ -4,6 +4,8 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is required to scan loyalty card QR codes and barcodes.</string>
 	<key>CFBundleURLTypes</key>
     <array>
         <dict>

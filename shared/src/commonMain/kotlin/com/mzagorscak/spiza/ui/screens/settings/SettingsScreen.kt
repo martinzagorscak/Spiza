@@ -52,6 +52,7 @@ import spiza.shared.generated.resources.settings_household_management
 import spiza.shared.generated.resources.settings_key_copied
 import spiza.shared.generated.resources.settings_language_croatian
 import spiza.shared.generated.resources.settings_language_english
+import spiza.shared.generated.resources.settings_loyalty_cards
 import spiza.shared.generated.resources.settings_section_appearance
 import spiza.shared.generated.resources.settings_section_general
 import spiza.shared.generated.resources.settings_section_language
@@ -151,6 +152,22 @@ fun SettingsScreen(
                         IconButton(
                             resource = Res.drawable.ic_right_chevron,
                             onClick = callbacks.onShoppingItemsSavingClick,
+                            appearance = IconButtonAppearance(
+                                variant = IconButtonVariant.IconBased,
+                                size = IconButtonSize.Medium,
+                                tintColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                        )
+                    },
+                    showDivider = true,
+                )
+                ListingItem(
+                    label = stringResource(Res.string.settings_loyalty_cards),
+                    onClick = callbacks.onLoyaltyCardsClick,
+                    trailingContent = {
+                        IconButton(
+                            resource = Res.drawable.ic_right_chevron,
+                            onClick = callbacks.onLoyaltyCardsClick,
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
                                 size = IconButtonSize.Medium,
@@ -319,6 +336,7 @@ data class SettingsScreenCallbacks(
     val onLanguageSelected: (AppLanguage) -> Unit,
     val onHouseholdManagementClick: () -> Unit,
     val onShoppingItemsSavingClick: () -> Unit,
+    val onLoyaltyCardsClick: () -> Unit,
     val onSignOutClick: () -> Unit,
 )
 
@@ -338,6 +356,7 @@ private fun SettingsScreenPreview() {
                 onLanguageSelected = {},
                 onHouseholdManagementClick = {},
                 onShoppingItemsSavingClick = {},
+                onLoyaltyCardsClick = {},
                 onSignOutClick = {},
             ),
         )

@@ -9,13 +9,21 @@ import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementVi
 import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementViewModelImpl
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModel
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModelImpl
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardsViewModel
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardsViewModelImpl
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardViewModel
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardViewModelImpl
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsViewModel
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsViewModelImpl
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModelImpl
 import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListViewModel
 import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListViewModelImpl
 import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingViewModel
 import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingViewModelImpl
+import dev.icerock.moko.permissions.PermissionsController
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 
 val viewModelModule = module {
@@ -92,6 +100,24 @@ val viewModelModule = module {
             deleteSuggestionUseCase = get(),
             deleteAllSuggestionsUseCase = get(),
             addOrUpdateSuggestionUseCase = get(),
+        )
+    }
+    viewModel<AddLoyaltyCardViewModel> { (controller: PermissionsController) ->
+        AddLoyaltyCardViewModelImpl(
+            addLoyaltyCardUseCase = get(),
+            permissionRepository = get { parametersOf(controller) },
+        )
+    }
+    viewModel<LoyaltyCardsViewModel> {
+        LoyaltyCardsViewModelImpl(
+            observeLoyaltyCardsUseCase = get(),
+        )
+    }
+    viewModel<LoyaltyCardDetailsViewModel> { (cardId: Long) ->
+        LoyaltyCardDetailsViewModelImpl(
+            cardId = cardId,
+            observeLoyaltyCardByIdUseCase = get(),
+            deleteLoyaltyCardUseCase = get(),
         )
     }
 }

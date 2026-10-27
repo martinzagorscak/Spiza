@@ -4,6 +4,8 @@ import com.mzagorscak.spiza.domain.constraints.ConstraintsManager
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCase
+import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.AddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.AddMemberToHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
@@ -16,6 +18,8 @@ import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
+import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCase
@@ -28,6 +32,8 @@ import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.DeleteHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteHouseholdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.DeleteLoyaltyCardUseCase
+import com.mzagorscak.spiza.domain.usecase.DeleteLoyaltyCardUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetCurrentAppLanguageUseCase
@@ -38,6 +44,8 @@ import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardByIdUseCase
+import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardByIdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetUsersUseCase
 import com.mzagorscak.spiza.domain.usecase.GetUsersUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
@@ -48,6 +56,10 @@ import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardByIdUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardByIdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardsUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
@@ -62,6 +74,8 @@ import com.mzagorscak.spiza.domain.usecase.RefreshHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.RefreshHouseholdJoinKeyUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.RemoveMemberFromHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.RemoveMemberFromHouseholdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCase
+import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
@@ -134,4 +148,15 @@ val domainModule =
         single<AddOrUpdateSuggestionUseCase> { AddOrUpdateSuggestionUseCaseImpl(localDataSource = get()) }
         single<DeleteSuggestionUseCase> { DeleteSuggestionUseCaseImpl(localDataSource = get()) }
         single<DeleteAllSuggestionsUseCase> { DeleteAllSuggestionsUseCaseImpl(localDataSource = get()) }
+
+        // Permission Use Cases
+        single<CheckPermissionUseCase> { CheckPermissionUseCaseImpl(repository = get()) }
+        single<RequestPermissionUseCase> { RequestPermissionUseCaseImpl(repository = get()) }
+
+        // Loyalty Card Use Cases
+        single<ObserveLoyaltyCardsUseCase> { ObserveLoyaltyCardsUseCaseImpl(repository = get()) }
+        single<ObserveLoyaltyCardByIdUseCase> { ObserveLoyaltyCardByIdUseCaseImpl(repository = get()) }
+        single<GetLoyaltyCardByIdUseCase> { GetLoyaltyCardByIdUseCaseImpl(repository = get()) }
+        single<AddLoyaltyCardUseCase> { AddLoyaltyCardUseCaseImpl(repository = get()) }
+        single<DeleteLoyaltyCardUseCase> { DeleteLoyaltyCardUseCaseImpl(repository = get()) }
     }

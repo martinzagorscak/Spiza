@@ -27,6 +27,7 @@
     <string name="settings_section_general">Općenito</string>
     <string name="settings_household_management">Upravljanje kućanstvom</string>
     <string name="settings_shopping_items_saving">Spremanje artikala za kupnju</string>
+    <string name="settings_loyalty_cards">Kartice vjernosti</string>
     <string name="settings_shopping_items_saving_sorting_label">Sortirano po:</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_asc">Abecedno uzlazno</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_desc">Abecedno silazno</string>
@@ -80,4 +81,28 @@
     <string name="household_management_delete_household_dialog_description">Jeste li sigurni da želite obrisati ovo kućanstvo? Ova se radnja ne može poništiti.</string>
     <string name="household_management_remove_member_dialog_title_template">Ukloni %1$s iz %2$s</string>
     <string name="household_management_remove_member_dialog_description">Jeste li sigurni da želite ukloniti ovog člana iz kućanstva?</string>
+    <string name="loyalty_cards_title">Kartice vjernosti</string>
+    <string name="loyalty_cards_add_title">Dodaj karticu vjernosti</string>
+    <string name="loyalty_cards_add_card_name_label">Naziv kartice</string>
+    <string name="loyalty_cards_add_card_name_placeholder">npr. Supermarket kartica</string>
+    <string name="loyalty_cards_add_color_label">Boja kartice</string>
+    <string name="loyalty_cards_add_input_type_label">Način unosa</string>
+    <string name="loyalty_cards_add_input_type_manual">Ručni unos</string>
+    <string name="loyalty_cards_add_input_type_camera">Kamera</string>
+    <string name="loyalty_cards_add_format_label">Format koda</string>
+    <string name="loyalty_cards_add_format_qr">QR kod</string>
+    <string name="loyalty_cards_add_format_barcode">Barkod</string>
+    <string name="loyalty_cards_add_code_label">Kod ili broj kartice</string>
+    <string name="loyalty_cards_add_code_placeholder">Unesite kod kartice ili skenirajte</string>
+    <string name="loyalty_cards_add_preview_label">Pregled kartice</string>
+    <string name="loyalty_cards_add_save_button">Spremi karticu</string>
+    <string name="loyalty_cards_add_camera_permission_title">Potrebna je dozvola za kameru</string>
+    <string name="loyalty_cards_add_camera_permission_description">Dozvola za kameru je trajno odbijena. Omogućite je u postavkama uređaja.</string>
+    <string name="loyalty_cards_add_camera_permission_cta">Otvori postavke</string>
+    <string name="loyalty_cards_empty_title">Nemate dodanih kartica vjernosti</string>
+    <string name="loyalty_cards_empty_description">Pritisnite gumb + za dodavanje prve kartice vjernosti.</string>
+    <string name="loyalty_card_details_title">Detalji kartice vjernosti</string>
+    <string name="loyalty_card_details_delete_dialog_title">Obriši karticu vjernosti</string>
+    <string name="loyalty_card_details_delete_dialog_description">Jeste li sigurni da želite obrisati ovu karticu vjernosti? Ova se radnja ne može poništiti.</string>
+    <string name="loyalty_card_details_delete_button">Obriši karticu</string>
 </resources>

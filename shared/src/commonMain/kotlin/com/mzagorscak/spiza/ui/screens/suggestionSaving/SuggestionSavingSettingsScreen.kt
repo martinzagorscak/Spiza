@@ -1,6 +1,5 @@
 package com.mzagorscak.spiza.ui.screens.suggestionSaving
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,9 +11,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -25,7 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
 import com.mzagorscak.spiza.ui.components.Button
@@ -49,6 +48,7 @@ import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
 import com.mzagorscak.spiza.ui.theme.padding600
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
@@ -114,18 +114,16 @@ fun SuggestionSavingSettingsScreen(
             )
         },
         floatingActionButton = {
-            IconButton(
-                resource = Res.drawable.ic_plus,
+            FloatingActionButton(
                 onClick = callbacks.showAddSuggestionDialog,
-                appearance = IconButtonAppearance(
-                    variant = IconButtonVariant.IconBased,
-                    size = IconButtonSize.Large,
-                    tintColor = MaterialTheme.colorScheme.primary,
-                ),
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
-            )
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_plus),
+                    contentDescription = null,
+                )
+            }
         },
         modifier = modifier.fillMaxSize(),
     ) { paddingValues ->

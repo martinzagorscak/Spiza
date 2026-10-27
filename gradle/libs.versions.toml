@@ -33,6 +33,8 @@ kotlinx-serialization = "1.11.0"
 room = "2.7.0-alpha13"
 sqlite = "2.5.0-alpha13"
 ksp = "2.3.12"
+mokoPermissions = "0.20.1"
+qrkit = "3.1.3"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -77,6 +79,9 @@ kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
+mokoPermissionsCompose = { module = "dev.icerock.moko:permissions-compose", version.ref = "mokoPermissions" }
+mokoPermissionsCamera = { module = "dev.icerock.moko:permissions-camera", version.ref = "mokoPermissions" }
+qrkitCompose = { module = "network.chaintech:qr-kit", version.ref = "qrkit" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

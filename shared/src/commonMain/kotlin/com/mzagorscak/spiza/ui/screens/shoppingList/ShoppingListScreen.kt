@@ -1,6 +1,5 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -8,8 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -22,15 +22,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
-import com.mzagorscak.spiza.ui.components.IconButton
-import com.mzagorscak.spiza.ui.components.IconButtonAppearance
-import com.mzagorscak.spiza.ui.components.IconButtonSize
-import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.LoadingIndicator
 import com.mzagorscak.spiza.ui.components.LoadingIndicatorSize
 import com.mzagorscak.spiza.ui.components.common.CTA
@@ -39,6 +34,7 @@ import com.mzagorscak.spiza.ui.model.PresentableArticleItem
 import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
@@ -113,21 +109,21 @@ fun ShoppingListScreen(
             },
             floatingActionButton = {
                 if (bodyState as? ShoppingListState.Body.Content != null && bodyState.suggestions.isNotEmpty()) {
-                    IconButton(
-                        resource = Res.drawable.ic_plus,
+                    FloatingActionButton(
                         onClick = {
                             scope.launch {
                                 performHapticFeedback(hapticFeedback)
                                 suggestionsDrawerState.open()
                             }
                         },
-                        appearance = IconButtonAppearance(
-                            variant = IconButtonVariant.IconBased,
-                            size = IconButtonSize.Large,
-                            tintColor = MaterialTheme.colorScheme.primary,
-                        ),
-                        modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface),
-                    )
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_plus),
+                            contentDescription = null,
+                        )
+                    }
                 }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },

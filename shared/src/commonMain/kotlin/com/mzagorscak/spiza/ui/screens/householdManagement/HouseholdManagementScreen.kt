@@ -1,6 +1,5 @@
 package com.mzagorscak.spiza.ui.screens.householdManagement
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,7 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -23,7 +23,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
@@ -39,6 +38,7 @@ import com.mzagorscak.spiza.ui.model.PresentableHouseholdMember
 import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
@@ -80,9 +80,11 @@ fun HouseholdManagementScreen(
         HouseholdManagementScreenState.ErrorState.OnlyOwnerCanRemoveOtherMembers -> stringResource(
             Res.string.household_management_only_owner_can_remove_other_members_error,
         )
+
         HouseholdManagementScreenState.ErrorState.OnlyOwnerCanDeleteHousehold -> stringResource(
             Res.string.household_management_only_owner_can_delete_household_error,
         )
+
         HouseholdManagementScreenState.ErrorState.None -> null
     }
     LaunchedEffect(state.errorState) {
@@ -114,16 +116,16 @@ fun HouseholdManagementScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (state.canUserCreateHousehold) {
-                IconButton(
-                    resource = Res.drawable.ic_add_household,
+                FloatingActionButton(
                     onClick = callbacks.onCreateHousehold,
-                    appearance = IconButtonAppearance(
-                        variant = IconButtonVariant.IconBased,
-                        size = IconButtonSize.Large,
-                        tintColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.surface),
-                )
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add_household),
+                        contentDescription = null,
+                    )
+                }
             }
         },
         modifier = modifier.fillMaxSize(),

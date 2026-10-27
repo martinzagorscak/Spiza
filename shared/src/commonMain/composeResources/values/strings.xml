@@ -27,6 +27,7 @@
     <string name="settings_section_general">General</string>
     <string name="settings_household_management">Household management</string>
     <string name="settings_shopping_items_saving">Shopping items saving</string>
+    <string name="settings_loyalty_cards">Loyalty cards</string>
     <string name="settings_shopping_items_saving_sorting_label">Sorted by:</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_asc">Alphabetical ascending</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_desc">Alphabetical descending</string>
@@ -80,4 +81,28 @@
     <string name="household_management_delete_household_dialog_description">Are you sure you want to delete this household? This action cannot be undone.</string>
     <string name="household_management_remove_member_dialog_title_template">Remove %1$s from %2$s</string>
     <string name="household_management_remove_member_dialog_description">Are you sure you want to remove this member from the household?</string>
+    <string name="loyalty_cards_title">Loyalty cards</string>
+    <string name="loyalty_cards_add_title">Add loyalty card</string>
+    <string name="loyalty_cards_add_card_name_label">Card name</string>
+    <string name="loyalty_cards_add_card_name_placeholder">e.g. Supermarket Card</string>
+    <string name="loyalty_cards_add_color_label">Card color</string>
+    <string name="loyalty_cards_add_input_type_label">Input method</string>
+    <string name="loyalty_cards_add_input_type_manual">Manual</string>
+    <string name="loyalty_cards_add_input_type_camera">Camera</string>
+    <string name="loyalty_cards_add_format_label">Code format</string>
+    <string name="loyalty_cards_add_format_qr">QR Code</string>
+    <string name="loyalty_cards_add_format_barcode">Barcode</string>
+    <string name="loyalty_cards_add_code_label">Card code / number</string>
+    <string name="loyalty_cards_add_code_placeholder">Enter card code or scan</string>
+    <string name="loyalty_cards_add_preview_label">Card preview</string>
+    <string name="loyalty_cards_add_save_button">Save loyalty card</string>
+    <string name="loyalty_cards_add_camera_permission_title">Camera Permission Required</string>
+    <string name="loyalty_cards_add_camera_permission_description">Camera permission is permanently denied. Please enable it in your device settings.</string>
+    <string name="loyalty_cards_add_camera_permission_cta">Open Settings</string>
+    <string name="loyalty_cards_empty_title">No loyalty cards yet</string>
+    <string name="loyalty_cards_empty_description">Tap the + button to add your first loyalty card.</string>
+    <string name="loyalty_card_details_title">Loyalty card details</string>
+    <string name="loyalty_card_details_delete_dialog_title">Delete loyalty card</string>
+    <string name="loyalty_card_details_delete_dialog_description">Are you sure you want to delete this loyalty card? This action cannot be undone.</string>
+    <string name="loyalty_card_details_delete_button">Delete card</string>
 </resources>

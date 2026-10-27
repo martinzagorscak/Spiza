@@ -14,6 +14,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.mzagorscak.spiza.permissions.rememberPlatformPermissionsController
 import com.mzagorscak.spiza.ui.components.common.performHapticFeedback
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdCallbacks
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdScreen
@@ -25,6 +26,15 @@ import com.mzagorscak.spiza.ui.screens.householdManagement.HouseholdManagementVi
 import com.mzagorscak.spiza.ui.screens.login.LoginCallbacks
 import com.mzagorscak.spiza.ui.screens.login.LoginScreen
 import com.mzagorscak.spiza.ui.screens.login.LoginViewModel
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardsScreen
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardsScreenCallbacks
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardsViewModel
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardScreen
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardScreenCallbacks
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardViewModel
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsScreen
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsScreenCallbacks
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsViewModel
 import com.mzagorscak.spiza.ui.screens.settings.SettingsScreen
 import com.mzagorscak.spiza.ui.screens.settings.SettingsScreenCallbacks
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
@@ -202,6 +212,10 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     performHapticFeedback(hapticFeedback)
                                     backStack.add(Route.SuggestionsSavingSettings)
                                 },
+                                onLoyaltyCardsClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(Route.LoyaltyCards)
+                                },
                                 onSignOutClick = {
                                     performHapticFeedback(hapticFeedback)
                                     viewModel.onSignOut()
@@ -313,6 +327,80 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     performHapticFeedback(hapticFeedback)
                                     viewModel.removeAllSuggestions()
                                 },
+                            )
+                        },
+                    )
+                }
+                entry<Route.LoyaltyCards> {
+                    val viewModel = koinViewModel<LoyaltyCardsViewModel>()
+                    val state by viewModel.state().collectAsStateWithLifecycle()
+                    LoyaltyCardsScreen(
+                        state = state,
+                        callbacks = remember {
+                            LoyaltyCardsScreenCallbacks(
+                                onBackClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.popIfTop(Route.LoyaltyCards)
+                                },
+                                onAddLoyaltyCardClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(Route.AddLoyaltyCard)
+                                },
+                                onCardClick = { cardId ->
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.add(Route.LoyaltyCardDetails(cardId))
+                                },
+                            )
+                        },
+                    )
+                }
+                entry<Route.LoyaltyCardDetails> { key ->
+                    val viewModel = koinViewModel<LoyaltyCardDetailsViewModel>(parameters = { parametersOf(key.cardId) })
+                    val state by viewModel.state().collectAsStateWithLifecycle()
+                    LoyaltyCardDetailsScreen(
+                        state = state,
+                        callbacks = remember(key) {
+                            LoyaltyCardDetailsScreenCallbacks(
+                                onBackClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.popIfTop(key)
+                                },
+                                onDeleteClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    viewModel.deleteCard()
+                                    backStack.popIfTop(key)
+                                },
+                            )
+                        },
+                    )
+                }
+                entry<Route.AddLoyaltyCard> {
+                    val controller = rememberPlatformPermissionsController()
+                    val viewModel = koinViewModel<AddLoyaltyCardViewModel>(parameters = { parametersOf(controller) })
+                    val state by viewModel.state().collectAsStateWithLifecycle()
+                    LaunchedEffect(controller) {
+                        viewModel.checkPermission()
+                    }
+                    AddLoyaltyCardScreen(
+                        state = state,
+                        callbacks = remember {
+                            AddLoyaltyCardScreenCallbacks(
+                                onBackClick = {
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.popIfTop(Route.AddLoyaltyCard)
+                                },
+                                onCardNameChange = viewModel::onCardNameChange,
+                                onColorSelect = viewModel::onColorSelect,
+                                onInputTypeChange = viewModel::onInputTypeChange,
+                                onCodeChange = viewModel::onCodeChange,
+                                onFormatChange = viewModel::onFormatChange,
+                                onSaveClick = {
+                                    viewModel.onSaveClick()
+                                    performHapticFeedback(hapticFeedback)
+                                    backStack.popIfTop(Route.AddLoyaltyCard)
+                                },
+                                onRequestPermission = viewModel::requestPermission,
+                                onOpenSettings = viewModel::openSettings,
                             )
                         },
                     )

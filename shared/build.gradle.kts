@@ -81,6 +81,9 @@ kotlin {
             implementation(libs.coil.network.ktor)
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.mokoPermissionsCompose)
+            implementation(libs.mokoPermissionsCamera)
+            implementation(libs.qrkitCompose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
