@@ -31,6 +31,7 @@ private const val EMPTY = ""
 fun EditableCheckListItem(
     text: String,
     checked: Boolean,
+    isCheckable: Boolean = true,
     onTextChange: (String) -> Unit,
     onCheckedChange: (Boolean) -> Unit,
     onDelete: () -> Unit,
@@ -47,12 +48,12 @@ fun EditableCheckListItem(
             variant = TextFieldVariant.Borderless,
             singleLine = singleLine,
             placeholder = placeholder,
-            leadingIcon = {
-                Checkbox(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange,
-                )
-            },
+            leadingIcon =
+                if (isCheckable) {
+                    { Checkbox(checked = checked, onCheckedChange = onCheckedChange) }
+                } else {
+                    null
+                },
             trailingIcon = {
                 if (text.isNotEmpty()) {
                     IconButton(

@@ -235,6 +235,7 @@ private fun ShoppingListScreenPreview() {
                 ),
             ),
             bodyState = ShoppingListState.Body.Content(
+                currentHouseholdId = "1",
                 pendingItems = listOf(
                     PresentableArticleItem(id = "1", text = "Milk", isChecked = false),
                     PresentableArticleItem(id = "2", text = "Eggs", isChecked = false),

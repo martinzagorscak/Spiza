@@ -21,6 +21,7 @@ sealed class ShoppingListState {
         data object NoHousehold : Body()
 
         data class Content(
+            val currentHouseholdId: String,
             val pendingItems: List<PresentableArticleItem> = emptyList(),
             val doneItems: List<PresentableArticleItem> = emptyList(),
             val canAddItemToHousehold: Boolean = false,

@@ -296,6 +296,7 @@ internal class ShoppingListViewModelImpl(
                 val doneItems = done.map { it.toPresentable() }
                 body.value =
                     ShoppingListState.Body.Content(
+                        currentHouseholdId = snapshot.current.id,
                         pendingItems = pendingItems,
                         doneItems = doneItems,
                         canAddItemToHousehold = canAddItemToHousehold(snapshot.items.count()),

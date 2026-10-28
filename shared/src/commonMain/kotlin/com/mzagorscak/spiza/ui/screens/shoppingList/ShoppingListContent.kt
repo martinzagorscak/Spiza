@@ -159,7 +159,10 @@ fun ShoppingListContent(
         }
         if (state.canAddItemToHousehold) {
             item(key = ADD_ITEM_KEY) {
-                AddItemRow(onAddItem = callbacks.onAddItem)
+                AddItemRow(
+                    householdId = state.currentHouseholdId,
+                    onAddItem = callbacks.onAddItem,
+                )
             }
         }
 
@@ -225,10 +228,11 @@ private fun ArticleRow(
 
 @Composable
 private fun AddItemRow(
+    householdId: String,
     onAddItem: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var text by remember { mutableStateOf("") }
+    var text by remember(householdId) { mutableStateOf("") }
     EditableCheckListItem(
         text = text,
         checked = false,
@@ -237,6 +241,7 @@ private fun AddItemRow(
                 text = it
             }
         },
+        isCheckable = false,
         onCheckedChange = {},
         onDelete = { text = "" },
         singleLine = false,
