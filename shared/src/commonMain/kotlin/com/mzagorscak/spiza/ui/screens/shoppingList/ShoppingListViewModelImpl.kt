@@ -128,12 +128,12 @@ internal class ShoppingListViewModelImpl(
 
         // if item already exists and is checked, uncheck it instead of adding a new one
         if (existingItem != null && existingItem.isChecked.not()) {
-            return
+            onItemMoved(itemId = existingItem.id, toIndex = loaded.items.count { it.isChecked.not() })
         } else if (existingItem != null && existingItem.isChecked) {
-            onItemCheckedChange(existingItem.id, isChecked = false)
+            onItemCheckedChange(itemId = existingItem.id, isChecked = false)
         } else {
             write {
-                addItem(loaded.current.id, text, loaded.items)
+                addItem(householdId = loaded.current.id, text, currentItems = loaded.items)
                 if (isSuggestionsSavingEnabled.first()) {
                     addOrUpdateSuggestion(name = text)
                 }
