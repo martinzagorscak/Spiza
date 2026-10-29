@@ -63,6 +63,8 @@ fun ShoppingListScreen(
     val scope = rememberCoroutineScope()
     val hapticFeedback = LocalHapticFeedback.current
     val suggestionsDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val areSuggestionsVisible =
+        (bodyState as? ShoppingListState.Body.Content)?.canAddItemToHousehold == true && bodyState.suggestions.isNotEmpty()
     val snackbarHostState = remember { SnackbarHostState() }
     val writeErrorMessage = if (bodyState is ShoppingListState.Body.Content) {
         when (bodyState.contentErrorState) {
@@ -86,7 +88,7 @@ fun ShoppingListScreen(
         drawerState = suggestionsDrawerState,
         drawerContent = {
             ShoppingListSuggestionsDrawer(
-                areSuggestionsEnabled = (bodyState as? ShoppingListState.Body.Content)?.canAddItemToHousehold == true,
+                areSuggestionsEnabled = areSuggestionsVisible,
                 suggestions = (bodyState as? ShoppingListState.Body.Content)?.suggestions ?: emptyList(),
                 onAddItem = { text ->
                     performHapticFeedback(hapticFeedback)
@@ -99,6 +101,7 @@ fun ShoppingListScreen(
                 modifier = Modifier.fillMaxWidth(fraction = OPEN_DRAWER_FRACTION),
             )
         },
+        gesturesEnabled = areSuggestionsVisible,
     ) {
         Scaffold(
             topBar = {
