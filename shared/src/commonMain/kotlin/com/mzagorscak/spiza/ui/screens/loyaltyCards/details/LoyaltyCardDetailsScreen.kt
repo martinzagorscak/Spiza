@@ -29,6 +29,7 @@ import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.LoyaltyCard
 import com.mzagorscak.spiza.ui.components.TopBar
 import com.mzagorscak.spiza.ui.components.common.CTA
+import com.mzagorscak.spiza.ui.deviceSettings.KeepScreenBrightness
 import com.mzagorscak.spiza.ui.theme.padding400
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
@@ -47,6 +48,8 @@ fun LoyaltyCardDetailsScreen(
     modifier: Modifier = Modifier,
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    KeepScreenBrightness()
 
     Scaffold(
         topBar = {
