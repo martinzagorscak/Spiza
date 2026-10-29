@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.ui.components.Button
 import com.mzagorscak.spiza.ui.components.ButtonAppearance
@@ -151,14 +152,14 @@ fun AddLoyaltyCardScreen(
                 ) {
                     FilterChip(
                         label = { Text(stringResource(Res.string.loyalty_cards_add_format_qr)) },
-                        selected = state.isQrFormat,
-                        onClick = { callbacks.onFormatChange(true) },
+                        selected = state.format == LoyaltyCardFormat.QrCode,
+                        onClick = { callbacks.onFormatChange(LoyaltyCardFormat.QrCode) },
                         modifier = Modifier.weight(1f),
                     )
                     FilterChip(
                         label = { Text(stringResource(Res.string.loyalty_cards_add_format_barcode)) },
-                        selected = !state.isQrFormat,
-                        onClick = { callbacks.onFormatChange(false) },
+                        selected = state.format == LoyaltyCardFormat.Barcode,
+                        onClick = { callbacks.onFormatChange(LoyaltyCardFormat.Barcode) },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -301,7 +302,7 @@ data class AddLoyaltyCardScreenCallbacks(
     val onColorSelect: (Color) -> Unit,
     val onInputTypeChange: (AddLoyaltyCardState.InputType) -> Unit,
     val onCodeChange: (String) -> Unit,
-    val onFormatChange: (isQr: Boolean) -> Unit,
+    val onFormatChange: (LoyaltyCardFormat) -> Unit,
     val onSaveClick: () -> Unit,
     val onRequestPermission: () -> Unit,
     val onOpenSettings: () -> Unit,

@@ -3,6 +3,7 @@ package com.mzagorscak.spiza.data.loyaltyCard.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
+import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import kotlin.time.Clock
 
 @Entity(tableName = "loyalty_cards")
@@ -12,7 +13,7 @@ data class LoyaltyCardEntity(
     val name: String,
     val colorArgb: Int,
     val codeText: String,
-    val isQrFormat: Boolean,
+    val format: LoyaltyCardFormat,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
 ) {
     fun toDomainModel(): LoyaltyCard =
@@ -21,7 +22,7 @@ data class LoyaltyCardEntity(
             name = name,
             colorArgb = colorArgb,
             codeText = codeText,
-            isQrFormat = isQrFormat,
+            format = format,
         )
 }
 
@@ -31,5 +32,5 @@ fun LoyaltyCard.toEntity(): LoyaltyCardEntity =
         name = name,
         colorArgb = colorArgb,
         codeText = codeText,
-        isQrFormat = isQrFormat,
+        format = format,
     )

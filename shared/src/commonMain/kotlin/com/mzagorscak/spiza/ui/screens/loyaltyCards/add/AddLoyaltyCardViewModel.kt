@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.ui.screens.loyaltyCards.add
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
+import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
 import com.mzagorscak.spiza.ui.theme.LoyaltyCardColors
@@ -11,7 +12,7 @@ data class AddLoyaltyCardState(
     val cardName: String = "",
     val selectedColor: Color = LoyaltyCardColors.defaultColor,
     val codeText: String = "",
-    val isQrFormat: Boolean = true,
+    val format: LoyaltyCardFormat = LoyaltyCardFormat.QrCode,
     val inputType: InputType = InputType.Manual,
     val permissionStatus: PermissionStatus? = null,
 ) {
@@ -23,7 +24,7 @@ data class AddLoyaltyCardState(
             name = cardName,
             color = selectedColor,
             codeText = codeText,
-            isQrFormat = isQrFormat,
+            format = format,
         )
 
     enum class InputType {
@@ -43,7 +44,7 @@ abstract class AddLoyaltyCardViewModel : ViewModel() {
 
     abstract fun onCodeChange(code: String)
 
-    abstract fun onFormatChange(isQr: Boolean)
+    abstract fun onFormatChange(format: LoyaltyCardFormat)
 
     abstract fun onSaveClick()
 

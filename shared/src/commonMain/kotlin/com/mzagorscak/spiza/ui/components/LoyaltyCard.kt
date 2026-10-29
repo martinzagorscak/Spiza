@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
 import com.mzagorscak.spiza.ui.theme.CardColorRed
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
@@ -77,26 +78,30 @@ fun LoyaltyCard(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.padding(padding400),
                     ) {
-                        if (card.isQrFormat) {
-                            val painter = rememberQrKitPainter(data = card.codeText)
-                            Image(
-                                painter = painter,
-                                contentDescription = null,
-                                modifier = Modifier.size(QRCodeSize),
-                            )
-                        } else {
-                            val painter = rememberBarcodePainter(
-                                content = card.codeText,
-                                format = BarcodeFormat.Code128,
-                                onError = { ColorPainter(Color.LightGray) },
-                            )
-                            Image(
-                                painter = painter,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(BarcodeHeight),
-                            )
+                        when (card.format) {
+                            LoyaltyCardFormat.QrCode -> {
+                                val painter = rememberQrKitPainter(data = card.codeText)
+                                Image(
+                                    painter = painter,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(QRCodeSize),
+                                )
+                            }
+
+                            LoyaltyCardFormat.Barcode -> {
+                                val painter = rememberBarcodePainter(
+                                    content = card.codeText,
+                                    format = BarcodeFormat.Code128,
+                                    onError = { ColorPainter(Color.LightGray) },
+                                )
+                                Image(
+                                    painter = painter,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(BarcodeHeight),
+                                )
+                            }
                         }
                     }
                 }
@@ -118,7 +123,7 @@ private fun LayoutPreview() {
         name = "My Loyalty Card",
         color = CardColorRed,
         codeText = "1234567890",
-        isQrFormat = true,
+        format = LoyaltyCardFormat.QrCode,
     )
 
     LoyaltyCard(card = card)

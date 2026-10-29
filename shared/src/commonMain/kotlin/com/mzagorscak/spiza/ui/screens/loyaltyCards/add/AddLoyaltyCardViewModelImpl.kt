@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
+import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.domain.model.PermissionType
 import com.mzagorscak.spiza.domain.repository.PermissionRepository
@@ -19,10 +20,6 @@ internal class AddLoyaltyCardViewModelImpl(
     private val permissionRepository: PermissionRepository,
 ) : AddLoyaltyCardViewModel() {
     private val state = MutableStateFlow(AddLoyaltyCardState())
-
-    init {
-        initialRequestCameraPermissionIfNecessary()
-    }
 
     override fun state(): StateFlow<AddLoyaltyCardState> = state.asStateFlow()
 
@@ -40,10 +37,13 @@ internal class AddLoyaltyCardViewModelImpl(
 
     override fun onInputTypeChange(inputType: AddLoyaltyCardState.InputType) {
         state.update { it.copy(inputType = inputType) }
+        if (inputType == AddLoyaltyCardState.InputType.Camera) {
+            requestCameraPermissionIfNecessary()
+        }
     }
 
-    override fun onFormatChange(isQr: Boolean) {
-        state.update { it.copy(isQrFormat = isQr) }
+    override fun onFormatChange(format: LoyaltyCardFormat) {
+        state.update { it.copy(format = format) }
     }
 
     override fun onSaveClick() {
@@ -55,7 +55,7 @@ internal class AddLoyaltyCardViewModelImpl(
                     name = currentState.cardName.trim(),
                     colorArgb = currentState.selectedColor.toArgb(),
                     codeText = currentState.codeText.trim(),
-                    isQrFormat = currentState.isQrFormat,
+                    format = currentState.format,
                 ),
             )
         }
@@ -79,7 +79,7 @@ internal class AddLoyaltyCardViewModelImpl(
         permissionRepository.openAppSettings()
     }
 
-    private fun initialRequestCameraPermissionIfNecessary() {
+    private fun requestCameraPermissionIfNecessary() {
         viewModelScope.launch {
             val cameraPermissionStatus = permissionRepository.checkPermission(PermissionType.CAMERA)
             val isNotGranted = cameraPermissionStatus != PermissionStatus.Granted
