@@ -37,6 +37,7 @@ import spiza.shared.generated.resources.loyalty_cards_title
 fun LoyaltyCardsScreen(
     state: LoyaltyCardsState,
     callbacks: LoyaltyCardsScreenCallbacks,
+    sharedTransition: LoyaltyCardSharedTransition,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -96,7 +97,9 @@ fun LoyaltyCardsScreen(
                     ) { card ->
                         LoyaltyCard(
                             card = card,
-                            modifier = Modifier.clickable { callbacks.onCardClick(card.id) },
+                            modifier = sharedTransition
+                                .modifierFor(card.id)
+                                .clickable { callbacks.onCardClick(card.id) },
                         )
                     }
                 }

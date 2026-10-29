@@ -30,6 +30,7 @@ import com.mzagorscak.spiza.ui.components.LoyaltyCard
 import com.mzagorscak.spiza.ui.components.TopBar
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.deviceSettings.KeepScreenBrightness
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardSharedTransition
 import com.mzagorscak.spiza.ui.theme.padding400
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
@@ -45,6 +46,7 @@ import spiza.shared.generated.resources.loyalty_card_details_title
 fun LoyaltyCardDetailsScreen(
     state: LoyaltyCardDetailsState,
     callbacks: LoyaltyCardDetailsScreenCallbacks,
+    sharedTransition: LoyaltyCardSharedTransition,
     modifier: Modifier = Modifier,
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -101,7 +103,9 @@ fun LoyaltyCardDetailsScreen(
                 ) {
                     LoyaltyCard(
                         card = card,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = sharedTransition
+                            .modifierFor(card.id)
+                            .fillMaxWidth(),
                     )
 
                     Button(
