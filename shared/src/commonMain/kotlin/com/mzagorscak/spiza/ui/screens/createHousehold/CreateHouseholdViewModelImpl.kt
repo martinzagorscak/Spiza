@@ -1,15 +1,13 @@
 package com.mzagorscak.spiza.ui.screens.createHousehold
 
-import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
+import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val EMPTY = ""
 
@@ -51,31 +49,19 @@ internal class CreateHouseholdViewModelImpl(
     override fun createHousehold() {
         val current = state.value
         if (current.canSubmit.not()) return
-        viewModelScope.launch {
-            state.update { it.copy(isSubmitting = true, hasError = false) }
-            try {
-                if (current.isEditScenario) {
-                    val householdId = current.id ?: return@launch
-                    updateHousehold(householdId, current.name, current.description)
-                } else {
-                    createHousehold(current.name, current.description)
-                }
-                state.update { it.copy(isSubmitting = false, isCreated = true) }
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (error: Exception) {
-                crashLogger.recordException(
-                    Throwable(
-                        message = if (current.isEditScenario) {
-                            "Updating household failed; ${error.message}"
-                        } else {
-                            "Creating household failed; ${error.message}"
-                        },
-                        cause = error,
-                    ),
-                )
-                state.update { it.copy(isSubmitting = false, hasError = true) }
+        state.update { it.copy(isSubmitting = true, hasError = false) }
+        launchSafely(
+            crashLogger = crashLogger,
+            context = if (current.isEditScenario) "Updating household failed" else "Creating household failed",
+            onError = { state.update { it.copy(isSubmitting = false, hasError = true) } },
+        ) {
+            if (current.isEditScenario) {
+                val householdId = current.id ?: return@launchSafely
+                updateHousehold(householdId, current.name, current.description)
+            } else {
+                createHousehold(current.name, current.description)
             }
+            state.update { it.copy(isSubmitting = false, isCreated = true) }
         }
     }
 }

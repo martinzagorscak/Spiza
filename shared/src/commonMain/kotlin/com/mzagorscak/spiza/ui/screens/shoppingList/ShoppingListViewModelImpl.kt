@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.ui.screens.shoppingList
 
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.catchAndRecord
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
@@ -23,14 +24,13 @@ import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
 import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import com.mzagorscak.spiza.ui.model.toPresentable
-import kotlinx.coroutines.CancellationException
+import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -39,7 +39,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val INITIAL_COUNT = 0
@@ -118,7 +117,9 @@ internal class ShoppingListViewModelImpl(
     }
 
     private fun persistSelection(householdId: String) {
-        viewModelScope.launch { setSelectedHouseholdId(householdId) }
+        launchSafely(crashLogger = crashLogger, context = "Shopping list household selection failed") {
+            setSelectedHouseholdId(householdId)
+        }
     }
 
     override fun onAddItem(text: String) {
@@ -178,8 +179,8 @@ internal class ShoppingListViewModelImpl(
     override fun dismissDialog() = dialogStatePublisher.update { ShoppingListState.DialogState.Hidden }
 
     override fun clearCheckedItems() {
-        viewModelScope.launch {
-            val loaded = latest ?: return@launch
+        write {
+            val loaded = latest ?: return@write
             areCheckedItemsCollapsedState.update { true }
             delay(CHECKED_ITEMS_COLLAPSE_DELAY_MS.milliseconds)
             clearCheckedItems(householdId = loaded.current.id)
@@ -201,18 +202,10 @@ internal class ShoppingListViewModelImpl(
 
     // Firestore applies local writes to the listeners immediately, so a failure here means the server rejected it.
     private fun write(block: suspend () -> Unit) {
-        viewModelScope.launch {
-            try {
-                block()
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (error: Exception) {
-                crashLogger.recordException(
-                    Throwable(
-                        message = "Shopping list write failed; ${error.message}",
-                        cause = error,
-                    ),
-                )
+        launchSafely(
+            crashLogger = crashLogger,
+            context = "Shopping list write failed",
+            onError = {
                 body.update {
                     if (it is ShoppingListState.Body.Content) {
                         it.copy(
@@ -222,8 +215,8 @@ internal class ShoppingListViewModelImpl(
                         it
                     }
                 }
-            }
-        }
+            },
+        ) { block() }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -247,13 +240,7 @@ internal class ShoppingListViewModelImpl(
                     }
                 }
             }.onStart<Snapshot> { emit(Snapshot.Loading) }
-                .catch { throwable ->
-                    crashLogger.recordException(
-                        Throwable(
-                            message = "Shopping list stream failed; ${throwable.message}",
-                            cause = throwable,
-                        ),
-                    )
+                .catchAndRecord(crashLogger = crashLogger, context = "Shopping list stream failed") {
                     emit(Snapshot.Failed)
                 }
         }
