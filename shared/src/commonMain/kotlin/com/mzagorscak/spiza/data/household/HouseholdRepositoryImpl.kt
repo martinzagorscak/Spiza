@@ -2,6 +2,9 @@ package com.mzagorscak.spiza.data.household
 
 import com.mzagorscak.spiza.auth.AuthService
 import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.ExpectedErrors
+import com.mzagorscak.spiza.crash.catchAndRecord
+import com.mzagorscak.spiza.crash.recordError
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManager
@@ -10,6 +13,7 @@ import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import com.mzagorscak.spiza.domain.repository.UserRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +32,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 // Firestore completes writes only once the server acknowledged them, which never happens while offline.
 private const val CREATE_TIMEOUT_MS = 10_000L
+private const val UPDATE_TIMEOUT_MS = 10_000L
 private const val ITEMS_RETRY_COUNT = 3
 private const val OBSERVATION_RETRY_DELAY_MS = 1_000L
 
@@ -69,7 +74,13 @@ internal class HouseholdRepositoryImpl(
                 merge(
                     refreshHouseholdJoinKeyPublisher
                         .onStart { emit(Unit) }
-                        .flatMapLatest { dataSource.getHouseholdJoinKey(user.uid) },
+                        .flatMapLatest {
+                            dataSource
+                                .getHouseholdJoinKey(user.uid)
+                                .catchAndRecord(crashLogger = crashLogger, context = "Fetching household join key failed") {
+                                    emit(null)
+                                }
+                        },
                     newlyCreatedHouseholdJoinKeyPublisher,
                 )
             }
@@ -87,7 +98,7 @@ internal class HouseholdRepositoryImpl(
         userJoinKey: String,
     ): Boolean {
         authService.currentUser?.uid
-            ?: recordNonAuthenticatedError(message = "User tried to add member with key $userJoinKey to household with id $householdId")
+            ?: recordNonAuthenticatedError(message = "User tried to add a member to household $householdId")
                 .let { return false }
 
         // Constraint verification
@@ -133,7 +144,7 @@ internal class HouseholdRepositoryImpl(
                     .map { households ->
                         cachedHouseholds.update { households.associateBy { it.id } }
                         val memberIdsToFetch = households.flatMap { it.joinedMembers }.distinct().toSet() - cachedUserProfiles.value.keys
-                        val freshUsers = userRepository.getUsers(memberIdsToFetch.toList())
+                        val freshUsers = fetchUsers(memberIdsToFetch.toList())
                         val allProfiles = cachedUserProfiles.value + freshUsers.associateBy { it.id }
                         val households = households.map { dto -> dto.toDomain(allProfiles) }.sortedBy { it.name.lowercase() }
                         cachedUserProfiles.update { allProfiles }
@@ -166,14 +177,14 @@ internal class HouseholdRepositoryImpl(
         description: String,
     ): String? {
         val ownerId = authService.currentUser?.uid
-            ?: recordNonAuthenticatedError(message = "User tried to create household $name")
+            ?: recordNonAuthenticatedError(message = "User tried to create a household")
                 .let { return null }
 
         // Constraint verification
         val householdCount = cachedHouseholds.value.count()
         if (constraintsManager.canUserCreateOrJoinHousehold(householdCount = householdCount).not()) {
             crashLogger.logWarning(
-                message = "User $ownerId tried to create household $name but has already joined the maximum number of households",
+                message = "User $ownerId tried to create a household but has already joined the maximum number of households",
             )
             return null
         }
@@ -195,7 +206,10 @@ internal class HouseholdRepositoryImpl(
             ?: recordNonAuthenticatedError(message = "User tried to update household $householdId")
                 .let { return }
 
-        dataSource.updateHousehold(householdId, name, description)
+        // Like create, the update only completes once the server acknowledged it, which never happens offline.
+        // Firestore already applied it locally and syncs it later, so a timeout is not a failure.
+        withTimeoutOrNull(UPDATE_TIMEOUT_MS.milliseconds) { dataSource.updateHousehold(householdId, name, description) }
+            ?: crashLogger.logWarning(message = "Updating household $householdId timed out, it will sync when online")
     }
 
     override suspend fun addItem(
@@ -243,6 +257,17 @@ internal class HouseholdRepositoryImpl(
     ) = dataSource.deleteItem(householdId, itemId)
 
     override suspend fun clearCheckedItems(householdId: String) = dataSource.clearCheckedItems(householdId)
+
+    // A failed profile lookup must not fail the households stream; the members are fetched again on the next snapshot.
+    private suspend fun fetchUsers(userIds: List<String>): List<UserProfile> =
+        try {
+            userRepository.getUsers(userIds)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            crashLogger.recordError(context = "Fetching household members failed", error = error, expected = ExpectedErrors.streams)
+            emptyList()
+        }
 
     private fun recordNonAuthenticatedError(message: String) =
         crashLogger.recordException(Throwable(message = "Non-authenticated user error: $message"))

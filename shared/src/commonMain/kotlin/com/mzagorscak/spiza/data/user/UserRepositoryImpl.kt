@@ -5,10 +5,13 @@ import com.mzagorscak.spiza.auth.AuthResult
 import com.mzagorscak.spiza.auth.AuthService
 import com.mzagorscak.spiza.auth.AuthUser
 import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.recordError
 import com.mzagorscak.spiza.data.user.model.UserProfileDto
 import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.domain.repository.UserRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
@@ -20,9 +23,10 @@ internal class UserRepositoryImpl(
     override val profile: Flow<UserProfile?> =
         authService.authState
             .map { it?.toProfile() }
+            .distinctUntilChanged()
             .onEach { userProfile ->
                 if (userProfile != null) {
-                    userDataSource.saveUserProfile(userProfile.toDto())
+                    saveProfile(userProfile)
                 }
             }
 
@@ -43,6 +47,18 @@ internal class UserRepositoryImpl(
         }
 
     override suspend fun signOut() = authService.signOut()
+
+    // The profile document only makes the user visible to household members, so failing to save it
+    // (e.g. offline on first launch) must never break the auth state that navigation depends on.
+    private suspend fun saveProfile(userProfile: UserProfile) {
+        try {
+            userDataSource.saveUserProfile(userProfile.toDto())
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            crashLogger.recordError(context = "Saving user profile failed", error = error)
+        }
+    }
 }
 
 private fun AuthUser.toProfile() = UserProfile(id = uid, name = displayName, email = email, photoUrl = photoUrl)
