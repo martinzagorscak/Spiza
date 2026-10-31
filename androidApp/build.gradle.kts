@@ -47,9 +47,11 @@ android {
             buildConfigField("boolean", "IS_DEBUGGABLE", "true")
         }
 
-        create("minifiedDebug") {
+        // Release-like build (minified, non-debuggable) signed with the debug key so QA can install it directly.
+        create("qa") {
             initWith(getByName("debug"))
             matchingFallbacks += listOf("debug")
+            versionNameSuffix = "-qa"
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
