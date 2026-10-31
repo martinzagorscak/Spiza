@@ -71,7 +71,7 @@ internal class CreateHouseholdViewModelImpl(
                         } else {
                             "Creating household failed; ${error.message}"
                         },
-                        cause = error.cause,
+                        cause = error,
                     ),
                 )
                 state.update { it.copy(isSubmitting = false, hasError = true) }

@@ -210,7 +210,7 @@ internal class ShoppingListViewModelImpl(
                 crashLogger.recordException(
                     Throwable(
                         message = "Shopping list write failed; ${error.message}",
-                        cause = error.cause,
+                        cause = error,
                     ),
                 )
                 body.update {
@@ -251,7 +251,7 @@ internal class ShoppingListViewModelImpl(
                     crashLogger.recordException(
                         Throwable(
                             message = "Shopping list stream failed; ${throwable.message}",
-                            cause = throwable.cause,
+                            cause = throwable,
                         ),
                     )
                     emit(Snapshot.Failed)

@@ -3,8 +3,7 @@
 ## Layers and dependency direction
 - `ui` may depend on `domain`. `data` may depend on `domain`. `domain` depends on nothing project-internal except its own packages
   (plus `kotlinx.coroutines`). No Compose, Firebase, Room, Koin or platform types in `domain/`.
-- ViewModels talk to **use cases only** — never to repositories, data sources or DAOs directly.
-  (Existing exception: `AddLoyaltyCardViewModelImpl` takes `PermissionRepository` because it needs a `PermissionsController` parameter. Do not copy this pattern unless the same constraint applies.)
+- ViewModels talk to **use cases only** — never to repositories, data sources or DAOs directly. No exceptions.
 - `CrashLogger` may be injected into ViewModels and repositories.
 
 ## Use cases
@@ -14,6 +13,10 @@
   `Can<X>UseCase` are constraint checks.
 - Business rules (trimming, dedup, ordering, limits) belong in use cases / `ConstraintsManager`, not in ViewModels or composables.
 - Register every use case in `domain/di/DomainModule.kt` under the matching `// <Feature> Use Cases` comment, as `single<Interface> { Impl(repository = get()) }`.
+- If the repository needs a screen-scoped runtime object (e.g. `PermissionsController` for `PermissionRepository`), the repository is a
+  `factory` with a parameter in `DataModule`, and its use cases are `factory` too, forwarding the parameters without knowing their type:
+  `factory<CheckPermissionUseCase> { params -> CheckPermissionUseCaseImpl(repository = get { params }) }`.
+  The ViewModel module resolves them with `get { parametersOf(controller) }`. Never make such use cases `single` — they would capture one screen's object forever.
 
 ## Repositories and data sources
 - Interface in `domain/repository/<X>Repository.kt`, implementation `internal class <X>RepositoryImpl` in `data/<feature>/`.

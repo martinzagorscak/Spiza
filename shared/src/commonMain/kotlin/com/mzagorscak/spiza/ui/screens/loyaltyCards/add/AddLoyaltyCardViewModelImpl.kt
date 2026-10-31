@@ -7,8 +7,10 @@ import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.domain.model.PermissionType
-import com.mzagorscak.spiza.domain.repository.PermissionRepository
 import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCase
+import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
+import com.mzagorscak.spiza.domain.usecase.OpenAppSettingsUseCase
+import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +19,9 @@ import kotlinx.coroutines.launch
 
 internal class AddLoyaltyCardViewModelImpl(
     private val addLoyaltyCardUseCase: AddLoyaltyCardUseCase,
-    private val permissionRepository: PermissionRepository,
+    private val checkPermissionUseCase: CheckPermissionUseCase,
+    private val requestPermissionUseCase: RequestPermissionUseCase,
+    private val openAppSettingsUseCase: OpenAppSettingsUseCase,
 ) : AddLoyaltyCardViewModel() {
     private val state = MutableStateFlow(AddLoyaltyCardState())
 
@@ -63,25 +67,25 @@ internal class AddLoyaltyCardViewModelImpl(
 
     override fun checkPermission() {
         viewModelScope.launch {
-            val status = permissionRepository.checkPermission(PermissionType.CAMERA)
+            val status = checkPermissionUseCase(PermissionType.CAMERA)
             state.update { it.copy(permissionStatus = status) }
         }
     }
 
     override fun requestPermission() {
         viewModelScope.launch {
-            val status = permissionRepository.requestPermission(PermissionType.CAMERA)
+            val status = requestPermissionUseCase(PermissionType.CAMERA)
             state.update { it.copy(permissionStatus = status) }
         }
     }
 
     override fun openSettings() {
-        permissionRepository.openAppSettings()
+        openAppSettingsUseCase()
     }
 
     private fun requestCameraPermissionIfNecessary() {
         viewModelScope.launch {
-            val cameraPermissionStatus = permissionRepository.checkPermission(PermissionType.CAMERA)
+            val cameraPermissionStatus = checkPermissionUseCase(PermissionType.CAMERA)
             val isNotGranted = cameraPermissionStatus != PermissionStatus.Granted
             val isNotPermanentlyDenied = cameraPermissionStatus != PermissionStatus.DeniedAlways
             state.update { it.copy(permissionStatus = cameraPermissionStatus) }

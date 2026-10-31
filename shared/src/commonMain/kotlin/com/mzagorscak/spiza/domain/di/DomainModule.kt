@@ -70,6 +70,8 @@ import com.mzagorscak.spiza.domain.usecase.ObserveThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveThemeModeUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveUserProfileUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.OpenAppSettingsUseCase
+import com.mzagorscak.spiza.domain.usecase.OpenAppSettingsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.RefreshHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.RefreshHouseholdJoinKeyUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.RemoveMemberFromHouseholdUseCase
@@ -150,8 +152,11 @@ val domainModule =
         single<DeleteAllSuggestionsUseCase> { DeleteAllSuggestionsUseCaseImpl(localDataSource = get()) }
 
         // Permission Use Cases
-        single<CheckPermissionUseCase> { CheckPermissionUseCaseImpl(repository = get()) }
-        single<RequestPermissionUseCase> { RequestPermissionUseCaseImpl(repository = get()) }
+        // PermissionRepository is bound to a screen's PermissionsController, so these are factories that forward
+        // their parameters to it: resolve them with `get { parametersOf(controller) }`.
+        factory<CheckPermissionUseCase> { params -> CheckPermissionUseCaseImpl(repository = get { params }) }
+        factory<RequestPermissionUseCase> { params -> RequestPermissionUseCaseImpl(repository = get { params }) }
+        factory<OpenAppSettingsUseCase> { params -> OpenAppSettingsUseCaseImpl(repository = get { params }) }
 
         // Loyalty Card Use Cases
         single<ObserveLoyaltyCardsUseCase> { ObserveLoyaltyCardsUseCaseImpl(repository = get()) }

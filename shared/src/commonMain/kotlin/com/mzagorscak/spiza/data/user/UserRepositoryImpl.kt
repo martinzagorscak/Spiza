@@ -36,7 +36,7 @@ internal class UserRepositoryImpl(
                 crashLogger.recordException(
                     Throwable(
                         message = "Sign-in failed; ${result.error.message}",
-                        cause = result.error.cause,
+                        cause = result.error,
                     ),
                 )
             }

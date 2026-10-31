@@ -23,3 +23,13 @@ class RequestPermissionUseCaseImpl(
 ) : RequestPermissionUseCase {
     override suspend operator fun invoke(permission: PermissionType): PermissionStatus = repository.requestPermission(permission)
 }
+
+interface OpenAppSettingsUseCase {
+    operator fun invoke()
+}
+
+class OpenAppSettingsUseCaseImpl(
+    private val repository: PermissionRepository,
+) : OpenAppSettingsUseCase {
+    override operator fun invoke() = repository.openAppSettings()
+}
