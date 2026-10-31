@@ -70,17 +70,16 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
             }
 
             let userId = firstDoc.documentID
-            let householdRef = self.households.document(householdId)
 
-            householdRef.updateData([
-                fields.JOINED_MEMBERS: FieldValue.arrayUnion([userId])
-            ]) { error in
+            // Adding the member and consuming their join key is one atomic write, so it never half-succeeds.
+            let batch = Firestore.firestore().batch()
+            batch.updateData([fields.JOINED_MEMBERS: FieldValue.arrayUnion([userId])], forDocument: self.households.document(householdId))
+            batch.deleteDocument(self.joinKeys.document(userId))
+            batch.commit { error in
                 if let error = error {
                     onComplete(false, error.localizedDescription)
                 } else {
-                    self.deleteHouseholdJoinKey(userId: userId) { deleteError in
-                        onComplete(KotlinBoolean(bool: deleteError == nil), deleteError)
-                    }
+                    onComplete(KotlinBoolean(bool: true), nil)
                 }
             }
         }
@@ -94,8 +93,19 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
             ], completion: completion(onComplete))
     }
 
+    // Firestore does not delete subcollections, so the items go in the same batch as the household.
     func deleteHousehold(householdId: String, onComplete: @escaping (String?) -> Void) {
-        households.document(householdId).delete(completion: completion(onComplete))
+        items(householdId).getDocuments { snapshot, error in
+            if let error = error {
+                onComplete(error.localizedDescription)
+                return
+            }
+
+            let batch = Firestore.firestore().batch()
+            snapshot?.documents.forEach { batch.deleteDocument($0.reference) }
+            batch.deleteDocument(self.households.document(householdId))
+            batch.commit(completion: self.completion(onComplete))
+        }
     }
 
     func observeHouseholds(

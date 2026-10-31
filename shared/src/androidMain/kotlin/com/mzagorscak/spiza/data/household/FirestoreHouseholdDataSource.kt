@@ -59,10 +59,14 @@ class FirestoreHouseholdDataSource(
         }
 
         val userId = joinKeySnapshot.documents.first().id
-        val householdRef = households.document(householdId)
 
-        householdRef.update(HouseholdFields.JOINED_MEMBERS, arrayUnion(userId)).await()
-        deleteHouseholdJoinKey(userId) // Delete the join key after it's used
+        // Adding the member and consuming their join key is one atomic write, so it never half-succeeds.
+        firestore
+            .batch()
+            .update(households.document(householdId), HouseholdFields.JOINED_MEMBERS, arrayUnion(userId))
+            .delete(householdJoinKeys.document(userId))
+            .commit()
+            .await()
         return true
     }
 
@@ -78,8 +82,16 @@ class FirestoreHouseholdDataSource(
             ).await()
     }
 
+    // Firestore does not delete subcollections, so the items go in the same batch as the household
+    // (a batch allows 500 writes, far above ITEMS_PER_HOUSEHOLD_CONSTRAINT).
     override suspend fun deleteHousehold(householdId: String) {
-        households.document(householdId).delete().await()
+        val batch = firestore.batch()
+        items(householdId)
+            .get()
+            .await()
+            .documents
+            .forEach { batch.delete(it.reference) }
+        batch.delete(households.document(householdId)).commit().await()
     }
 
     override fun observeHouseholds(userId: String): Flow<List<HouseholdDto>> =
@@ -191,12 +203,16 @@ class FirestoreHouseholdDataSource(
     }
 
     override suspend fun clearCheckedItems(householdId: String) {
-        items(householdId)
-            .whereEqualTo(HouseholdFields.IS_CHECKED, true)
-            .get()
-            .await()
-            .documents
-            .forEach { it.reference.delete() }
+        val checkedItems =
+            items(householdId)
+                .whereEqualTo(HouseholdFields.IS_CHECKED, true)
+                .get()
+                .await()
+                .documents
+        if (checkedItems.isEmpty()) return
+        val batch = firestore.batch()
+        checkedItems.forEach { batch.delete(it.reference) }
+        batch.commit().await()
     }
 }
 
