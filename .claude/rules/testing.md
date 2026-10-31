@@ -10,12 +10,16 @@ paths:
   (e.g. `domain/usecase/HouseholdItemsUseCasesTest.kt`). Platform-only code tests go in `androidHostTest` / `iosTest`.
 - Framework: `kotlin.test` (`@Test`, `assertEquals`, `assertTrue`, `assertFailsWith`...). No JUnit-only APIs in commonTest.
 - Naming: `fun methodOrBehaviour_expectedResult_whenCondition()` (see `ConstraintsManagerTest`). One behaviour per test.
-- **No mocking library** in the project. Use hand-written fakes in `commonTest/.../fakes/` (`FakeHouseholdRepository`, `FakeCrashLogger`,
-  `FakeAuthService`...). Fakes record calls (`val addedItems = mutableListOf<...>()`) and can be configured to throw
-  (`var failNextWrite: Throwable? = null`). Reuse existing fakes before creating new ones.
-- Coroutines/Flow/ViewModel tests need `kotlinx-coroutines-test` (`runTest`, `StandardTestDispatcher`, `Dispatchers.setMain`).
-  It is **not** a dependency yet — ask the user before adding it to `libs.versions.toml` + `commonTest.dependencies`.
-  ViewModel tests must `Dispatchers.setMain(testDispatcher)` in `@BeforeTest` and `resetMain()` in `@AfterTest` (viewModelScope uses Main).
+- **No mocking library** in the project. Use the hand-written fakes in `commonTest/.../fakes/` and extend them before creating new ones:
+  `FakeCrashLogger` (records `exceptions` / `warnings`), `FakeAuthService`, `FakeUserRepository`, `FakeUserDataSource`,
+  `FakeHouseholdRepository`, `FakeHouseholdDataSource`, `FakeSettingsRepository`, `FakeSuggestionLocalDataSource`, and builders in `TestData.kt`
+  (`TEST_USER`, `TEST_PROFILE`, `household()`, `householdDto()`, `item()`). Fakes record calls and can be told to fail
+  (`writeFailure`, `householdsFailure`, `getUsersFailure`, `saveFailure`) or never complete (`neverAcknowledgeWrites`, like Firestore offline).
+- Coroutines: `kotlinx-coroutines-test` is available in commonTest. Wrap tests in `runTest { }` (virtual time, so timeouts and delays are instant).
+  ViewModel tests call `Dispatchers.setMain(UnconfinedTestDispatcher())` in `@BeforeTest` and `Dispatchers.resetMain()` in `@AfterTest`, then
+  build the ViewModel with the real `*UseCaseImpl` classes on top of the fakes (see `ShoppingListViewModelImplTest`).
+- Error paths are first-class: for every guarded write or stream, test the resulting state and what `FakeCrashLogger` recorded
+  (expected reasons → `warnings`, bugs → `exceptions` with the original error as `cause`).
 - Prioritise: use cases (business rules), `ConstraintsManager`, ordering/mapping helpers, repository logic with fake data sources,
   ViewModel state transitions and error paths. Do not unit-test composables or Koin wiring.
 - Every bug fix ships with a regression test that fails before the fix.

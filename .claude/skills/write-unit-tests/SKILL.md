@@ -10,41 +10,22 @@ Rules: `.claude/rules/testing.md`. For larger scopes delegate to the `test-write
 
 ## Steps
 1. Read the target and list behaviours: happy path · edge cases (blank/whitespace, case-insensitive duplicates, empty lists, limit N-1/N/N+1, null) · error paths (data source throws, stream fails, unauthenticated, timeout).
-2. Fakes: look in `shared/src/commonTest/kotlin/com/mzagorscak/spiza/fakes/`; create missing ones there. Template:
-   ```kotlin
-   class FakeLoyaltyCardRepository : LoyaltyCardRepository {
-       val cards = MutableStateFlow<List<LoyaltyCard>>(emptyList())
-       var failNextWrite: Throwable? = null
-       override fun observeAll() = cards
-       override suspend fun addCard(card: LoyaltyCard) {
-           failNextWrite?.let { failNextWrite = null; throw it }
-           cards.update { it + card }
-       }
-       // ...
-   }
-   class FakeCrashLogger : CrashLogger {
-       val exceptions = mutableListOf<Throwable>(); val warnings = mutableListOf<String>()
-       override fun recordException(throwable: Throwable) { exceptions += throwable }
-       override fun logWarning(message: String) { warnings += message }
-   }
-   ```
-3. Suspend / Flow / ViewModel tests require `kotlinx-coroutines-test`. If missing from `gradle/libs.versions.toml`, ask the user, then add:
-   - `[libraries] kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "<coroutines version matching the project>" }`
-   - `commonTest.dependencies { implementation(libs.kotlinx.coroutines.test) }` in `shared/build.gradle.kts`
+2. Fakes: use and extend the ones in `shared/src/commonTest/kotlin/com/mzagorscak/spiza/fakes/` (listed in `.claude/rules/testing.md`).
+   Only create a new fake for an interface that has none; keep it a plain class that records calls and can be configured to fail.
+3. `kotlinx-coroutines-test` is already a commonTest dependency (`runTest`, `UnconfinedTestDispatcher`, `setMain`/`resetMain`).
 4. ViewModel test skeleton:
    ```kotlin
    @OptIn(ExperimentalCoroutinesApi::class)
    class XViewModelImplTest {
-       private val dispatcher = StandardTestDispatcher()
-       @BeforeTest fun setUp() = Dispatchers.setMain(dispatcher)
+       @BeforeTest fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
        @AfterTest fun tearDown() = Dispatchers.resetMain()
 
-       @Test fun onSave_setsWriteError_whenRepositoryThrows() = runTest(dispatcher) {
+       @Test fun onSave_setsWriteError_whenRepositoryThrows() = runTest {
            val repo = FakeXRepository().apply { failNextWrite = IllegalStateException("boom") }
            val logger = FakeCrashLogger()
            val vm = XViewModelImpl(saveX = SaveXUseCaseImpl(repo), crashLogger = logger)
-           backgroundScope.launch { vm.state().collect {} } // keep WhileSubscribed flows active
-           vm.onSave(); advanceUntilIdle()
+           backgroundScope.launch { vm.state().collect {} } // only needed for stateIn(WhileSubscribed) states
+           vm.onSave()
            assertEquals(ErrorState.WriteError, vm.state().value.errorState)
            assertEquals(1, logger.exceptions.size)
        }

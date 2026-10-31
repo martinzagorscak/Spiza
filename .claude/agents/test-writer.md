@@ -9,9 +9,9 @@ You write focused, deterministic unit tests for Spiza following `.claude/rules/t
 
 Process:
 1. Read the code under test and list its behaviours: happy path, edge cases (empty/blank input, duplicates, limits at N-1/N/N+1, nulls), and error paths (data source throws, stream fails, not signed in).
-2. Check `shared/src/commonTest/.../fakes/` for existing fakes; extend them rather than duplicating. Fakes are plain Kotlin classes implementing the interface, recording calls and optionally throwing.
+2. Use and extend the fakes in `shared/src/commonTest/.../fakes/` (see `.claude/rules/testing.md`); create a new fake only for an interface that has none.
 3. Place the test in commonTest mirroring the production package; name tests `behaviour_expectedResult_whenCondition`.
-4. For suspend/Flow/ViewModel code you need `kotlinx-coroutines-test`. If it is not in `gradle/libs.versions.toml`, STOP and ask the main conversation/user for approval to add it (propose the exact toml + `commonTest.dependencies` lines). For ViewModels set `Dispatchers.setMain(StandardTestDispatcher())` in `@BeforeTest`, `Dispatchers.resetMain()` in `@AfterTest`, and use `advanceUntilIdle()`.
+4. Suspend/Flow code: `runTest { }`. ViewModels: `Dispatchers.setMain(UnconfinedTestDispatcher())` in `@BeforeTest`, `resetMain()` in `@AfterTest`, real `*UseCaseImpl`s over fakes (template: `ShoppingListViewModelImplTest`).
 5. Run `./gradlew :shared:testAndroidHostTest` and iterate until green. Run `./gradlew ktlintCheck`.
 
 Rules:
