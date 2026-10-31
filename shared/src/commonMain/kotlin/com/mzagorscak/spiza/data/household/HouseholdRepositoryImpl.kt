@@ -36,6 +36,10 @@ private const val UPDATE_TIMEOUT_MS = 10_000L
 private const val ITEMS_RETRY_COUNT = 3
 private const val OBSERVATION_RETRY_DELAY_MS = 1_000L
 
+// Join keys are generated as lowercase UUIDs and used as document ids, so anything else can not be a valid key
+// (and an invalid path such as "" or "a/b" would make Firestore throw, or crash on iOS).
+private val JOIN_KEY_PATTERN = Regex("^[a-z0-9-]{1,64}$")
+
 internal class HouseholdRepositoryImpl(
     private val dataSource: HouseholdDataSource,
     private val authService: AuthService,
@@ -111,7 +115,10 @@ internal class HouseholdRepositoryImpl(
             }
         }
 
-        return dataSource.addMemberToHousehold(householdId, userJoinKey)
+        val joinKey = userJoinKey.trim().lowercase()
+        if (JOIN_KEY_PATTERN.matches(joinKey).not()) return false
+
+        return dataSource.addMemberToHousehold(householdId, joinKey)
     }
 
     override suspend fun removeMemberFromHousehold(

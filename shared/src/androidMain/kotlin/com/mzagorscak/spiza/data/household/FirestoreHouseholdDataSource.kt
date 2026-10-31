@@ -6,7 +6,6 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FieldValue.arrayUnion
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mzagorscak.spiza.crash.CrashLogger
-import com.mzagorscak.spiza.data.household.HouseholdFields.JOIN_KEY
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import kotlinx.coroutines.channels.awaitClose
@@ -34,29 +33,41 @@ class FirestoreHouseholdDataSource(
             transform(document) ?: null.also { crashLogger.logWarning(message = "Skipped malformed $kind document ${document.id}") }
         }
 
+    private fun ownJoinKeys(userId: String) = householdJoinKeys.whereEqualTo(HouseholdFields.USER_ID, userId)
+
+    // A user has at most one join key: creating a new one replaces the previous ones in the same batch.
     override suspend fun createHouseholdJoinKey(userId: String): String {
         val generatedKey = generateJoinKey()
-        householdJoinKeys
-            .document(userId)
-            .set(
-                mapOf(JOIN_KEY to generatedKey),
-            ).await()
+        val previousKeys = ownJoinKeys(userId).get().await().documents
+        val batch = firestore.batch()
+        previousKeys.forEach { batch.delete(it.reference) }
+        batch
+            .set(householdJoinKeys.document(generatedKey), mapOf(HouseholdFields.USER_ID to userId))
+            .commit()
+            .await()
         return generatedKey
     }
 
     private fun generateJoinKey(): String = UUID.randomUUID().toString()
 
     override suspend fun deleteHouseholdJoinKey(userId: String) {
-        householdJoinKeys.document(userId).delete().await()
+        val keys = ownJoinKeys(userId).get().await().documents
+        if (keys.isEmpty()) return
+        val batch = firestore.batch()
+        keys.forEach { batch.delete(it.reference) }
+        batch.commit().await()
     }
 
     override fun getHouseholdJoinKey(userId: String): Flow<String?> =
         flow {
-            val joinKey = householdJoinKeys
-                .document(userId)
-                .get()
-                .await()
-                .getString(JOIN_KEY)
+            val joinKey =
+                ownJoinKeys(userId)
+                    .limit(1)
+                    .get()
+                    .await()
+                    .documents
+                    .firstOrNull()
+                    ?.id
             emit(joinKey)
         }
 
@@ -64,18 +75,14 @@ class FirestoreHouseholdDataSource(
         householdId: String,
         userJoinKey: String,
     ): Boolean {
-        val joinKeySnapshot = householdJoinKeys.whereEqualTo(JOIN_KEY, userJoinKey).get().await()
-        if (joinKeySnapshot.isEmpty) {
-            return false
-        }
-
-        val userId = joinKeySnapshot.documents.first().id
+        val joinKeyDocument = householdJoinKeys.document(userJoinKey).get().await()
+        val userId = joinKeyDocument.getString(HouseholdFields.USER_ID) ?: return false
 
         // Adding the member and consuming their join key is one atomic write, so it never half-succeeds.
         firestore
             .batch()
             .update(households.document(householdId), HouseholdFields.JOINED_MEMBERS, arrayUnion(userId))
-            .delete(householdJoinKeys.document(userId))
+            .delete(joinKeyDocument.reference)
             .commit()
             .await()
         return true

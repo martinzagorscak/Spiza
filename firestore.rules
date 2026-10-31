@@ -29,6 +29,7 @@ service cloud.firestore {
     }
 
     // The owner may change anything except ownership, and must stay a member.
+    // Known limitation: the rules can not verify that an added member used a join key; the app consumes the key in the same batch.
     function ownerUpdate() {
       return isOwner(resource.data)
           && request.resource.data.ownerId == resource.data.ownerId
@@ -86,23 +87,21 @@ service cloud.firestore {
       allow read: if isSignedIn();
     }
 
-    // Known weakness: any signed-in user can list all join keys and delete any key.
-    // Fixing it requires a data model change in the app, not just a rules change.
-    match /joinKeys/{userId} {
+    // Join keys are document ids: joinKeys/{joinKey} -> { userId }. A key is an unguessable UUID, so knowing it is
+    // what authorizes reading or consuming it; keys can be fetched by id but only a user's own keys can be listed.
+    match /joinKeys/{joinKey} {
+      // Users may only create keys for themselves. There is no update: a new key is a new document.
       allow create: if isSignedIn()
-                    && userId == request.auth.uid
-                    && request.resource.data.keys().hasOnly(['joinKey'])
-                    && request.resource.data.joinKey is string;
+                    && request.resource.data.keys().hasOnly(['userId'])
+                    && request.resource.data.userId == request.auth.uid;
 
-      allow update: if isSignedIn()
-                    && userId == request.auth.uid
-                    && request.resource.data.keys().hasOnly(['joinKey'])
-                    && request.resource.data.joinKey is string;
+      // The household owner looks the key up by id to find the user to add.
+      allow get: if isSignedIn();
 
-      // Read must allow queries: the owner finds a user by querying joinKey == <key>.
-      allow read: if isSignedIn();
+      // Users may only query their own keys (to show or replace them).
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
 
-      // Delete must allow other users: the owner deletes the member's key after adding them.
+      // Deleted by the owner when adding the member, or by the user when replacing it; both know the key.
       allow delete: if isSignedIn();
     }
   }

@@ -73,9 +73,10 @@ interface HouseholdDataSource {
 }
 
 object HouseholdFields {
+    /** `joinKeys/{joinKey}` -> `{ userId }`: the key is the document id, so it can be fetched by id but never listed. */
     const val COLLECTION_JOIN_KEYS = "joinKeys"
     const val COLLECTION_HOUSEHOLDS = "households"
-    const val JOIN_KEY = "joinKey"
+    const val USER_ID = "userId"
     const val ITEMS = "items"
     const val NAME = "name"
     const val DESCRIPTION = "description"

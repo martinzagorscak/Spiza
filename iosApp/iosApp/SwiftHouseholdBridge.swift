@@ -22,33 +22,52 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         households.document(householdId).collection(HouseholdFields.shared.ITEMS)
     }
 
+    private func ownJoinKeys(_ userId: String) -> Query {
+        joinKeys.whereField(HouseholdFields.shared.USER_ID, isEqualTo: userId)
+    }
+
+    // Join keys are document ids (joinKeys/{joinKey} -> { userId }). A user has at most one key:
+    // creating a new one replaces the previous ones in the same batch.
     func createHouseholdJoinKey(userId: String, onComplete: @escaping (String?, BridgeError?) -> Void) {
-        let fields = HouseholdFields.shared
         let generatedKey = UUID().uuidString.lowercased()
-        joinKeys.document(userId).setData([
-            fields.JOIN_KEY: generatedKey
-        ]) { error in
+        ownJoinKeys(userId).getDocuments { snapshot, error in
             if let error = error {
                 onComplete(nil, error.toBridgeError())
-            } else {
-                onComplete(generatedKey, nil)
+                return
+            }
+
+            let batch = Firestore.firestore().batch()
+            snapshot?.documents.forEach { batch.deleteDocument($0.reference) }
+            batch.setData([HouseholdFields.shared.USER_ID: userId], forDocument: self.joinKeys.document(generatedKey))
+            batch.commit { error in
+                if let error = error {
+                    onComplete(nil, error.toBridgeError())
+                } else {
+                    onComplete(generatedKey, nil)
+                }
             }
         }
     }
 
     func deleteHouseholdJoinKey(userId: String, onComplete: @escaping (BridgeError?) -> Void) {
-        joinKeys.document(userId).delete(completion: completion(onComplete))
+        ownJoinKeys(userId).getDocuments { snapshot, error in
+            if let error = error {
+                onComplete(error.toBridgeError())
+                return
+            }
+
+            let batch = Firestore.firestore().batch()
+            snapshot?.documents.forEach { batch.deleteDocument($0.reference) }
+            batch.commit(completion: self.completion(onComplete))
+        }
     }
 
     func getHouseholdJoinKey(userId: String, onComplete: @escaping (String?, BridgeError?) -> Void) {
-        let fields = HouseholdFields.shared
-        joinKeys.document(userId).getDocument { snapshot, error in
+        ownJoinKeys(userId).limit(to: 1).getDocuments { snapshot, error in
             if let error = error {
                 onComplete(nil, error.toBridgeError())
-            } else if let snapshot = snapshot, snapshot.exists, let data = snapshot.data(), let joinKey = data[fields.JOIN_KEY] as? String {
-                onComplete(joinKey, nil)
             } else {
-                onComplete(nil, nil)
+                onComplete(snapshot?.documents.first?.documentID, nil)
             }
         }
     }
@@ -58,23 +77,22 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         onComplete: @escaping (KotlinBoolean, BridgeError?) -> Void,
     ) {
         let fields = HouseholdFields.shared
-        joinKeys.whereField(fields.JOIN_KEY, isEqualTo: userJoinKey).getDocuments { snapshot, error in
+        let joinKeyRef = joinKeys.document(userJoinKey)
+        joinKeyRef.getDocument { snapshot, error in
             if let error = error {
                 onComplete(false, error.toBridgeError())
                 return
             }
 
-            guard let documents = snapshot?.documents, let firstDoc = documents.first else {
+            guard let userId = snapshot?.data()?[fields.USER_ID] as? String else {
                 onComplete(false, nil)
                 return
             }
 
-            let userId = firstDoc.documentID
-
             // Adding the member and consuming their join key is one atomic write, so it never half-succeeds.
             let batch = Firestore.firestore().batch()
             batch.updateData([fields.JOINED_MEMBERS: FieldValue.arrayUnion([userId])], forDocument: self.households.document(householdId))
-            batch.deleteDocument(self.joinKeys.document(userId))
+            batch.deleteDocument(joinKeyRef)
             batch.commit { error in
                 if let error = error {
                     onComplete(false, error.toBridgeError())
