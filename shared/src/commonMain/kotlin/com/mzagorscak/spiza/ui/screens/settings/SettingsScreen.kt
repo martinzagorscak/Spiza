@@ -15,6 +15,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -43,6 +44,7 @@ import com.mzagorscak.spiza.ui.theme.padding400
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_refresh
 import spiza.shared.generated.resources.ic_right_chevron
@@ -73,6 +75,13 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = stringResource(Res.string.error_generic)
+    LaunchedEffect(state.hasError) {
+        if (state.hasError) {
+            snackbarHostState.showSnackbar(errorMessage)
+            callbacks.onErrorShown()
+        }
+    }
     Scaffold(
         topBar = {
             TopBar(
@@ -338,6 +347,7 @@ data class SettingsScreenCallbacks(
     val onShoppingItemsSavingClick: () -> Unit,
     val onLoyaltyCardsClick: () -> Unit,
     val onSignOutClick: () -> Unit,
+    val onErrorShown: () -> Unit,
 )
 
 @Preview
@@ -358,6 +368,7 @@ private fun SettingsScreenPreview() {
                 onShoppingItemsSavingClick = {},
                 onLoyaltyCardsClick = {},
                 onSignOutClick = {},
+                onErrorShown = {},
             ),
         )
     }

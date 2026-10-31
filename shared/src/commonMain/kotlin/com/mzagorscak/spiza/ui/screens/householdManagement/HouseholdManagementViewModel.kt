@@ -38,6 +38,7 @@ data class HouseholdManagementScreenState(
         UserNotFound,
         OnlyOwnerCanRemoveOtherMembers,
         OnlyOwnerCanDeleteHousehold,
+        Generic,
     }
 }
 

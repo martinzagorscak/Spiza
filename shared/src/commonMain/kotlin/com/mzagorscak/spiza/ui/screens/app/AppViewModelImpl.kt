@@ -1,6 +1,8 @@
 package com.mzagorscak.spiza.ui.screens.app
 
 import androidx.lifecycle.viewModelScope
+import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.catchAndRecord
 import com.mzagorscak.spiza.domain.usecase.GetCurrentAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
@@ -19,6 +21,7 @@ internal class AppViewModelImpl(
     getCurrentThemeMode: GetCurrentThemeModeUseCase,
     getCurrentAppLanguage: GetCurrentAppLanguageUseCase,
     getCurrentUserProfile: GetCurrentUserProfileUseCase,
+    crashLogger: CrashLogger,
 ) : AppViewModel() {
     private val state =
         combine(
@@ -27,15 +30,16 @@ internal class AppViewModelImpl(
             observeUserProfile(),
         ) { theme, language, profile ->
             AppState(themeMode = theme, language = language, isSignedIn = profile != null)
-        }.stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            AppState(
-                themeMode = getCurrentThemeMode(),
-                language = getCurrentAppLanguage(),
-                isSignedIn = getCurrentUserProfile() != null,
-            ),
-        )
+        }.catchAndRecord(crashLogger = crashLogger, context = "App state stream failed")
+            .stateIn(
+                viewModelScope,
+                SharingStarted.Eagerly,
+                AppState(
+                    themeMode = getCurrentThemeMode(),
+                    language = getCurrentAppLanguage(),
+                    isSignedIn = getCurrentUserProfile() != null,
+                ),
+            )
 
     override fun state(): StateFlow<AppState> = state
 }

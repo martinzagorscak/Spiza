@@ -43,6 +43,7 @@ import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.delete
+import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.household_management_add_member_dialog_confirm_label
 import spiza.shared.generated.resources.household_management_add_member_dialog_description
 import spiza.shared.generated.resources.household_management_add_member_dialog_title
@@ -85,6 +86,7 @@ fun HouseholdManagementScreen(
             Res.string.household_management_only_owner_can_delete_household_error,
         )
 
+        HouseholdManagementScreenState.ErrorState.Generic -> stringResource(Res.string.error_generic)
         HouseholdManagementScreenState.ErrorState.None -> null
     }
     LaunchedEffect(state.errorState) {

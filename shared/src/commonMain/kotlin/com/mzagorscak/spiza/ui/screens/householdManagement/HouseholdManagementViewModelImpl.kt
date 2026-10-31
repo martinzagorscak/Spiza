@@ -1,6 +1,8 @@
 package com.mzagorscak.spiza.ui.screens.householdManagement
 
 import androidx.lifecycle.viewModelScope
+import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.catchAndRecord
 import com.mzagorscak.spiza.domain.usecase.AddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanAddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCase
@@ -11,13 +13,13 @@ import com.mzagorscak.spiza.domain.usecase.RemoveMemberFromHouseholdUseCase
 import com.mzagorscak.spiza.ui.model.PresentableHousehold
 import com.mzagorscak.spiza.ui.model.PresentableHouseholdMember
 import com.mzagorscak.spiza.ui.model.toPresentable
+import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 private const val EMPTY = ""
 
@@ -29,6 +31,7 @@ internal class HouseholdManagementViewModelImpl(
     private val deleteHouseholdUseCase: DeleteHouseholdUseCase,
     private val canUserCreateHousehold: CanUserCreateHouseholdUseCase,
     private val canAddMemberToHousehold: CanAddMemberToHouseholdUseCase,
+    private val crashLogger: CrashLogger,
 ) : HouseholdManagementViewModel() {
     private val state = MutableStateFlow(HouseholdManagementScreenState())
     private val currentUserId = getCurrentUserProfileUseCase()?.id
@@ -53,6 +56,8 @@ internal class HouseholdManagementViewModelImpl(
                     dialogState = dialogState,
                 )
             }
+        }.catchAndRecord(crashLogger = crashLogger, context = "Household management stream failed") {
+            updateErrorState(HouseholdManagementScreenState.ErrorState.Generic)
         }.launchIn(viewModelScope)
     }
 
@@ -66,8 +71,8 @@ internal class HouseholdManagementViewModelImpl(
         }
 
     override fun addMemberToHousehold(householdId: String) {
-        viewModelScope.launch {
-            if (joinKeyInputPublisher.value.isEmpty()) return@launch
+        launchAction(context = "Adding household member failed") {
+            if (joinKeyInputPublisher.value.isEmpty()) return@launchAction
             val isSuccess = addMemberToHousehold(
                 householdId = householdId,
                 userJoinKey = joinKeyInputPublisher.value,
@@ -99,7 +104,7 @@ internal class HouseholdManagementViewModelImpl(
         memberId: String,
         householdOwnerId: String,
     ) {
-        viewModelScope.launch {
+        launchAction(context = "Removing household member failed") {
             val isSuccess = removeMemberFromHouseholdUseCase(
                 householdId = householdId,
                 memberId = memberId,
@@ -127,7 +132,7 @@ internal class HouseholdManagementViewModelImpl(
         householdId: String,
         householdOwnerId: String,
     ) {
-        viewModelScope.launch {
+        launchAction(context = "Deleting household failed") {
             val isSuccess = deleteHouseholdUseCase(householdId, currentUserId == householdOwnerId)
             if (isSuccess.not()) {
                 updateErrorState(HouseholdManagementScreenState.ErrorState.OnlyOwnerCanDeleteHousehold)
@@ -151,5 +156,16 @@ internal class HouseholdManagementViewModelImpl(
 
     override fun onErrorShown() {
         state.update { it.copy(errorState = HouseholdManagementScreenState.ErrorState.None) }
+    }
+
+    private fun launchAction(
+        context: String,
+        block: suspend () -> Unit,
+    ) {
+        launchSafely(
+            crashLogger = crashLogger,
+            context = context,
+            onError = { updateErrorState(HouseholdManagementScreenState.ErrorState.Generic) },
+        ) { block() }
     }
 }

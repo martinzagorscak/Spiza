@@ -1,6 +1,8 @@
 package com.mzagorscak.spiza.ui.screens.suggestionSaving
 
 import androidx.lifecycle.viewModelScope
+import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.catchAndRecord
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteAllSuggestionsUseCase
@@ -9,6 +11,7 @@ import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCas
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.SetSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.ui.model.toPresentable
+import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +20,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 private const val EMPTY = ""
 
@@ -29,6 +31,7 @@ internal class SuggestionSavingSettingViewModelImpl(
     private val deleteSuggestionUseCase: DeleteSuggestionUseCase,
     private val deleteAllSuggestionsUseCase: DeleteAllSuggestionsUseCase,
     private val addOrUpdateSuggestionUseCase: AddOrUpdateSuggestionUseCase,
+    private val crashLogger: CrashLogger,
 ) : SuggestionSavingSettingViewModel() {
     private val state = MutableStateFlow(SuggestionSavingSettingState())
     private val sortingType = MutableStateFlow(SuggestionSortingType.ALPHABETICAL_ASC)
@@ -55,13 +58,14 @@ internal class SuggestionSavingSettingViewModelImpl(
                     dialogInput = dialogInput,
                 )
             }
-        }.launchIn(viewModelScope)
+        }.catchAndRecord(crashLogger = crashLogger, context = "Suggestion saving stream failed")
+            .launchIn(viewModelScope)
     }
 
     override fun state(): StateFlow<SuggestionSavingSettingState> = state.asStateFlow()
 
     override fun onToggleSavingEnabled(enabled: Boolean) {
-        viewModelScope.launch {
+        launchSafely(crashLogger = crashLogger, context = "Toggling suggestion saving failed") {
             setSuggestionsSavingEnabled(enabled = enabled)
         }
     }
@@ -71,7 +75,9 @@ internal class SuggestionSavingSettingViewModelImpl(
     }
 
     override fun removeSuggestion(suggestionId: Long) {
-        viewModelScope.launch { deleteSuggestionUseCase(id = suggestionId) }
+        launchSafely(crashLogger = crashLogger, context = "Deleting suggestion failed") {
+            deleteSuggestionUseCase(id = suggestionId)
+        }
     }
 
     override fun showRemoveAllSuggestionsConfirmationDialog() {
@@ -95,7 +101,7 @@ internal class SuggestionSavingSettingViewModelImpl(
             dismissDialog()
             return
         }
-        viewModelScope.launch {
+        launchSafely(crashLogger = crashLogger, context = "Adding suggestion failed") {
             addOrUpdateSuggestionUseCase(name = name)
         }
         dismissDialog()
@@ -107,7 +113,9 @@ internal class SuggestionSavingSettingViewModelImpl(
     }
 
     override fun removeAllSuggestions() {
-        viewModelScope.launch { deleteAllSuggestionsUseCase() }
+        launchSafely(crashLogger = crashLogger, context = "Deleting all suggestions failed") {
+            deleteAllSuggestionsUseCase()
+        }
         dismissDialog()
     }
 }

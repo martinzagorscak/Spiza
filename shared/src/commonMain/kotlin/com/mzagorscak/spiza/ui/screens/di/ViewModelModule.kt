@@ -35,9 +35,10 @@ val viewModelModule = module {
             getCurrentThemeMode = get(),
             getCurrentAppLanguage = get(),
             getCurrentUserProfile = get(),
+            crashLogger = get(),
         )
     }
-    viewModel<LoginViewModel> { LoginViewModelImpl(signIn = get()) }
+    viewModel<LoginViewModel> { LoginViewModelImpl(signIn = get(), crashLogger = get()) }
     viewModel<CreateHouseholdViewModel> { (scenario: HouseholdScenario) ->
         CreateHouseholdViewModelImpl(
             scenario = scenario,
@@ -79,6 +80,7 @@ val viewModelModule = module {
             setThemeMode = get(),
             setAppLanguage = get(),
             signOut = get(),
+            crashLogger = get(),
         )
     }
     viewModel<HouseholdManagementViewModel> {
@@ -90,6 +92,7 @@ val viewModelModule = module {
             deleteHouseholdUseCase = get(),
             canUserCreateHousehold = get(),
             canAddMemberToHousehold = get(),
+            crashLogger = get(),
         )
     }
     viewModel<SuggestionSavingSettingViewModel> {
@@ -100,6 +103,7 @@ val viewModelModule = module {
             deleteSuggestionUseCase = get(),
             deleteAllSuggestionsUseCase = get(),
             addOrUpdateSuggestionUseCase = get(),
+            crashLogger = get(),
         )
     }
     viewModel<AddLoyaltyCardViewModel> { (controller: PermissionsController) ->
@@ -108,11 +112,13 @@ val viewModelModule = module {
             checkPermissionUseCase = get { parametersOf(controller) },
             requestPermissionUseCase = get { parametersOf(controller) },
             openAppSettingsUseCase = get { parametersOf(controller) },
+            crashLogger = get(),
         )
     }
     viewModel<LoyaltyCardsViewModel> {
         LoyaltyCardsViewModelImpl(
             observeLoyaltyCardsUseCase = get(),
+            crashLogger = get(),
         )
     }
     viewModel<LoyaltyCardDetailsViewModel> { (cardId: Long) ->
@@ -120,6 +126,7 @@ val viewModelModule = module {
             cardId = cardId,
             observeLoyaltyCardByIdUseCase = get(),
             deleteLoyaltyCardUseCase = get(),
+            crashLogger = get(),
         )
     }
 }

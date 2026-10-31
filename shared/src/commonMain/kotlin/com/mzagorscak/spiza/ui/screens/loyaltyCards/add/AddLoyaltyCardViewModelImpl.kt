@@ -2,7 +2,7 @@ package com.mzagorscak.spiza.ui.screens.loyaltyCards.add
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.lifecycle.viewModelScope
+import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
@@ -11,17 +11,18 @@ import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCase
 import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
 import com.mzagorscak.spiza.domain.usecase.OpenAppSettingsUseCase
 import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCase
+import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 internal class AddLoyaltyCardViewModelImpl(
     private val addLoyaltyCardUseCase: AddLoyaltyCardUseCase,
     private val checkPermissionUseCase: CheckPermissionUseCase,
     private val requestPermissionUseCase: RequestPermissionUseCase,
     private val openAppSettingsUseCase: OpenAppSettingsUseCase,
+    private val crashLogger: CrashLogger,
 ) : AddLoyaltyCardViewModel() {
     private val state = MutableStateFlow(AddLoyaltyCardState())
 
@@ -53,7 +54,7 @@ internal class AddLoyaltyCardViewModelImpl(
     override fun onSaveClick() {
         val currentState = state.value
         if (currentState.isSaveEnabled.not()) return
-        viewModelScope.launch {
+        launchSafely(crashLogger = crashLogger, context = "Saving loyalty card failed") {
             addLoyaltyCardUseCase(
                 LoyaltyCard(
                     name = currentState.cardName.trim(),
@@ -66,14 +67,14 @@ internal class AddLoyaltyCardViewModelImpl(
     }
 
     override fun checkPermission() {
-        viewModelScope.launch {
+        launchSafely(crashLogger = crashLogger, context = "Checking camera permission failed") {
             val status = checkPermissionUseCase(PermissionType.CAMERA)
             state.update { it.copy(permissionStatus = status) }
         }
     }
 
     override fun requestPermission() {
-        viewModelScope.launch {
+        launchSafely(crashLogger = crashLogger, context = "Requesting camera permission failed") {
             val status = requestPermissionUseCase(PermissionType.CAMERA)
             state.update { it.copy(permissionStatus = status) }
         }
@@ -84,7 +85,7 @@ internal class AddLoyaltyCardViewModelImpl(
     }
 
     private fun requestCameraPermissionIfNecessary() {
-        viewModelScope.launch {
+        launchSafely(crashLogger = crashLogger, context = "Checking camera permission failed") {
             val cameraPermissionStatus = checkPermissionUseCase(PermissionType.CAMERA)
             val isNotGranted = cameraPermissionStatus != PermissionStatus.Granted
             val isNotPermanentlyDenied = cameraPermissionStatus != PermissionStatus.DeniedAlways

@@ -224,6 +224,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                                         performHapticFeedback(hapticFeedback)
                                         viewModel.onSignOut()
                                     },
+                                    onErrorShown = viewModel::onErrorShown,
                                 )
                             },
                         )

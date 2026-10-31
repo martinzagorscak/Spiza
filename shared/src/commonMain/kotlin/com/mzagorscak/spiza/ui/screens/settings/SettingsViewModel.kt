@@ -12,6 +12,7 @@ data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.System,
     val language: AppLanguage = AppLanguage.Default,
     val isSigningOut: Boolean = false,
+    val hasError: Boolean = false,
 ) {
     companion object {
         val PlaceholderProfile = PresentableUserProfile(
@@ -35,4 +36,6 @@ abstract class SettingsViewModel : ViewModel() {
     abstract fun onLanguageSelected(language: AppLanguage)
 
     abstract fun onSignOut()
+
+    abstract fun onErrorShown()
 }

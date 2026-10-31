@@ -1,6 +1,8 @@
 package com.mzagorscak.spiza.ui.screens.settings
 
 import androidx.lifecycle.viewModelScope
+import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.catchAndRecord
 import com.mzagorscak.spiza.domain.model.AppLanguage
 import com.mzagorscak.spiza.domain.model.ThemeMode
 import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCase
@@ -14,6 +16,7 @@ import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.SetThemeModeUseCase
 import com.mzagorscak.spiza.domain.usecase.SignOutUseCase
 import com.mzagorscak.spiza.ui.model.toPresentable
+import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +24,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class SettingsViewModelImpl(
@@ -35,6 +37,7 @@ internal class SettingsViewModelImpl(
     private val setThemeMode: SetThemeModeUseCase,
     private val setAppLanguage: SetAppLanguageUseCase,
     private val signOut: SignOutUseCase,
+    private val crashLogger: CrashLogger,
 ) : SettingsViewModel() {
     private val state = MutableStateFlow(SettingsState())
 
@@ -54,37 +57,53 @@ internal class SettingsViewModelImpl(
                     language = appLanguage,
                 )
             }
-        }.launchIn(viewModelScope)
+        }.catchAndRecord(crashLogger = crashLogger, context = "Settings state stream failed")
+            .launchIn(viewModelScope)
     }
 
     override fun state(): StateFlow<SettingsState> = state.asStateFlow()
 
     override fun createJoinKey() {
-        viewModelScope.launch { createHouseholdJoinKey() }
+        launchAction(context = "Settings join key creation failed") { createHouseholdJoinKey() }
     }
 
     override fun refreshJoinKey() {
-        viewModelScope.launch { refreshHouseholdJoinKey() }
+        launchAction(context = "Settings join key refresh failed") { refreshHouseholdJoinKey() }
     }
 
     override fun onThemeModeSelected(mode: ThemeMode) {
-        viewModelScope.launch { setThemeMode(mode) }
+        launchAction(context = "Settings theme change failed") { setThemeMode(mode) }
     }
 
     override fun onLanguageSelected(language: AppLanguage) {
-        viewModelScope.launch { setAppLanguage(language) }
+        launchAction(context = "Settings language change failed") { setAppLanguage(language) }
     }
 
     // Navigation reacts to the auth state change, so there is nothing to do on success.
     override fun onSignOut() {
         if (state.value.isSigningOut) return
-        viewModelScope.launch {
-            state.update { it.copy(isSigningOut = true) }
+        state.update { it.copy(isSigningOut = true) }
+        launchAction(context = "Settings sign-out failed") {
             try {
                 signOut()
             } finally {
                 state.update { it.copy(isSigningOut = false) }
             }
         }
+    }
+
+    override fun onErrorShown() {
+        state.update { it.copy(hasError = false) }
+    }
+
+    private fun launchAction(
+        context: String,
+        block: suspend () -> Unit,
+    ) {
+        launchSafely(
+            crashLogger = crashLogger,
+            context = context,
+            onError = { state.update { it.copy(hasError = true) } },
+        ) { block() }
     }
 }

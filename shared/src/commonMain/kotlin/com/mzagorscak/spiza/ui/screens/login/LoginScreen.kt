@@ -31,6 +31,7 @@ import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_google
 import spiza.shared.generated.resources.local_farm_stand
+import spiza.shared.generated.resources.login_error
 import spiza.shared.generated.resources.login_sign_in_with_google
 
 private val LoginButtonIconSize = 20.dp
@@ -42,10 +43,10 @@ fun LoginScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val hasLoginError = state.error != null
-    LaunchedEffect(hasLoginError) {
-        if (hasLoginError) {
-            snackbarHostState.showSnackbar(state.error)
+    val loginErrorMessage = stringResource(Res.string.login_error)
+    LaunchedEffect(state.hasError) {
+        if (state.hasError) {
+            snackbarHostState.showSnackbar(loginErrorMessage)
             callbacks.onLoginErrorShown()
         }
     }

@@ -8,6 +8,7 @@
     <string name="retry">Pokušaj ponovno</string>
     <string name="delete">Obriši</string>
     <string name="remove">Ukloni</string>
+    <string name="error_generic">Nešto je pošlo po zlu. Pokušaj ponovno.</string>
 
     <!--  Screen specifics  -->
     <string name="settings_title">Postavke</string>
@@ -46,6 +47,7 @@
     <string name="settings_shopping_items_saving_add_suggestion_dialog_confirm">Dodaj</string>
     <string name="settings_sign_out">Odjava</string>
     <string name="login_sign_in_with_google">Prijava putem Googlea</string>
+    <string name="login_error">Prijava nije uspjela. Pokušaj ponovno.</string>
     <string name="shopping_list_default_title">Kućanstvo</string>
     <string name="checklist_item_placeholder">Artikl</string>
     <string name="shopping_list_create_household">Stvori kućanstvo</string>
