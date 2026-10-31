@@ -13,8 +13,8 @@ class IosAuthService(
 ) : AuthService {
     override val authState: Flow<AuthUser?> =
         callbackFlow {
-            bridge.startObservingAuthState { trySend(it) }
-            awaitClose { bridge.stopObservingAuthState() }
+            val handle = bridge.observeAuthState { trySend(it) }
+            awaitClose { handle.remove() }
         }
 
     override val currentUser: AuthUser? get() = bridge.currentUser()

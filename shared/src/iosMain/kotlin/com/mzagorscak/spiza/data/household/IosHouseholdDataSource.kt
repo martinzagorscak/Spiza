@@ -1,7 +1,10 @@
 package com.mzagorscak.spiza.data.household
 
+import com.mzagorscak.spiza.crash.DataException
+import com.mzagorscak.spiza.data.BridgeError
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
+import com.mzagorscak.spiza.data.toDataException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -19,7 +22,7 @@ class IosHouseholdDataSource(
                 if (key != null) {
                     continuation.resume(key)
                 } else {
-                    continuation.resumeWithException(IllegalStateException(error ?: "Creating join key failed"))
+                    continuation.resumeWithException(error.orUnknown("Creating join key failed"))
                 }
             }
         }
@@ -30,7 +33,7 @@ class IosHouseholdDataSource(
                 if (error == null) {
                     continuation.resume(Unit)
                 } else {
-                    continuation.resumeWithException(IllegalStateException(error))
+                    continuation.resumeWithException(error.toDataException())
                 }
             }
         }
@@ -43,7 +46,7 @@ class IosHouseholdDataSource(
                         if (error == null) {
                             continuation.resume(key)
                         } else {
-                            continuation.resumeWithException(IllegalStateException(error))
+                            continuation.resumeWithException(error.toDataException())
                         }
                     }
                 }
@@ -59,7 +62,7 @@ class IosHouseholdDataSource(
                 if (error == null) {
                     continuation.resume(isUserFound)
                 } else {
-                    continuation.resumeWithException(IllegalStateException(error))
+                    continuation.resumeWithException(error.toDataException())
                 }
             }
         }
@@ -77,7 +80,7 @@ class IosHouseholdDataSource(
                 bridge.observeHouseholds(
                     userId = userId,
                     onChange = { trySend(it) },
-                    onError = { close(IllegalStateException(it)) },
+                    onError = { close(it.toDataException()) },
                 )
             awaitClose { handle.remove() }
         }
@@ -88,7 +91,7 @@ class IosHouseholdDataSource(
                 bridge.observeItems(
                     householdId = householdId,
                     onChange = { trySend(it) },
-                    onError = { close(IllegalStateException(it)) },
+                    onError = { close(it.toDataException()) },
                 )
             awaitClose { handle.remove() }
         }
@@ -103,7 +106,7 @@ class IosHouseholdDataSource(
                 if (id != null) {
                     continuation.resume(id)
                 } else {
-                    continuation.resumeWithException(IllegalStateException(error ?: "Creating household failed"))
+                    continuation.resumeWithException(error.orUnknown("Creating household failed"))
                 }
             }
         }
@@ -145,15 +148,18 @@ class IosHouseholdDataSource(
 
     override suspend fun clearCheckedItems(householdId: String) = write { bridge.clearCheckedItems(householdId, it) }
 
-    private suspend fun write(block: (onComplete: (String?) -> Unit) -> Unit) {
+    private suspend fun write(block: (onComplete: (BridgeError?) -> Unit) -> Unit) {
         suspendCancellableCoroutine { continuation ->
             block { error ->
                 if (error == null) {
                     continuation.resume(Unit)
                 } else {
-                    continuation.resumeWithException(IllegalStateException(error))
+                    continuation.resumeWithException(error.toDataException())
                 }
             }
         }
     }
 }
+
+private fun BridgeError?.orUnknown(message: String): DataException =
+    this?.toDataException() ?: DataException(reason = DataException.Reason.Unknown, message = message)

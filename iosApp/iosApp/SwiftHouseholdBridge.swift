@@ -22,29 +22,29 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         households.document(householdId).collection(HouseholdFields.shared.ITEMS)
     }
 
-    func createHouseholdJoinKey(userId: String, onComplete: @escaping (String?, String?) -> Void) {
+    func createHouseholdJoinKey(userId: String, onComplete: @escaping (String?, BridgeError?) -> Void) {
         let fields = HouseholdFields.shared
         let generatedKey = UUID().uuidString.lowercased()
         joinKeys.document(userId).setData([
             fields.JOIN_KEY: generatedKey
         ]) { error in
             if let error = error {
-                onComplete(nil, error.localizedDescription)
+                onComplete(nil, error.toBridgeError())
             } else {
                 onComplete(generatedKey, nil)
             }
         }
     }
 
-    func deleteHouseholdJoinKey(userId: String, onComplete: @escaping (String?) -> Void) {
+    func deleteHouseholdJoinKey(userId: String, onComplete: @escaping (BridgeError?) -> Void) {
         joinKeys.document(userId).delete(completion: completion(onComplete))
     }
 
-    func getHouseholdJoinKey(userId: String, onComplete: @escaping (String?, String?) -> Void) {
+    func getHouseholdJoinKey(userId: String, onComplete: @escaping (String?, BridgeError?) -> Void) {
         let fields = HouseholdFields.shared
         joinKeys.document(userId).getDocument { snapshot, error in
             if let error = error {
-                onComplete(nil, error.localizedDescription)
+                onComplete(nil, error.toBridgeError())
             } else if let snapshot = snapshot, snapshot.exists, let data = snapshot.data(), let joinKey = data[fields.JOIN_KEY] as? String {
                 onComplete(joinKey, nil)
             } else {
@@ -55,12 +55,12 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
 
     func addMemberToHousehold(
         householdId: String, userJoinKey: String,
-        onComplete: @escaping (KotlinBoolean, String?) -> Void,
+        onComplete: @escaping (KotlinBoolean, BridgeError?) -> Void,
     ) {
         let fields = HouseholdFields.shared
         joinKeys.whereField(fields.JOIN_KEY, isEqualTo: userJoinKey).getDocuments { snapshot, error in
             if let error = error {
-                onComplete(false, error.localizedDescription)
+                onComplete(false, error.toBridgeError())
                 return
             }
 
@@ -77,7 +77,7 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
             batch.deleteDocument(self.joinKeys.document(userId))
             batch.commit { error in
                 if let error = error {
-                    onComplete(false, error.localizedDescription)
+                    onComplete(false, error.toBridgeError())
                 } else {
                     onComplete(KotlinBoolean(bool: true), nil)
                 }
@@ -85,7 +85,7 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         }
     }
 
-    func removeMemberFromHousehold(householdId: String, memberId: String, onComplete: @escaping (String?) -> Void) {
+    func removeMemberFromHousehold(householdId: String, memberId: String, onComplete: @escaping (BridgeError?) -> Void) {
         let fields = HouseholdFields.shared
         households.document(householdId).updateData(
             [
@@ -94,10 +94,10 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
     }
 
     // Firestore does not delete subcollections, so the items go in the same batch as the household.
-    func deleteHousehold(householdId: String, onComplete: @escaping (String?) -> Void) {
+    func deleteHousehold(householdId: String, onComplete: @escaping (BridgeError?) -> Void) {
         items(householdId).getDocuments { snapshot, error in
             if let error = error {
-                onComplete(error.localizedDescription)
+                onComplete(error.toBridgeError())
                 return
             }
 
@@ -111,14 +111,14 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
     func observeHouseholds(
         userId: String,
         onChange: @escaping ([HouseholdDto]) -> Void,
-        onError: @escaping (String) -> Void
+        onError: @escaping (BridgeError) -> Void
     ) -> IosListenerHandle {
         let registration =
             households
             .whereField(HouseholdFields.shared.JOINED_MEMBERS, arrayContains: userId)
             .addSnapshotListener { snapshot, error in
                 if let error = error {
-                    onError(error.localizedDescription)
+                    onError(error.toBridgeError())
                 } else if let snapshot = snapshot {
                     onChange(snapshot.documents.compactMap { $0.toHouseholdDto() })
                 }
@@ -129,11 +129,11 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
     func observeItems(
         householdId: String,
         onChange: @escaping ([ArticleItemDto]) -> Void,
-        onError: @escaping (String) -> Void
+        onError: @escaping (BridgeError) -> Void
     ) -> IosListenerHandle {
         let registration = items(householdId).addSnapshotListener { snapshot, error in
             if let error = error {
-                onError(error.localizedDescription)
+                onError(error.toBridgeError())
             } else if let snapshot = snapshot {
                 onChange(snapshot.documents.compactMap { $0.toArticleItemDto() })
             }
@@ -145,7 +145,7 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         ownerId: String,
         name: String,
         description: String,
-        onComplete: @escaping (String?, String?) -> Void
+        onComplete: @escaping (String?, BridgeError?) -> Void
     ) {
         let fields = HouseholdFields.shared
         let document = households.document()
@@ -156,7 +156,7 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
             fields.JOINED_MEMBERS: [ownerId],
         ]) { error in
             if let error = error {
-                onComplete(nil, error.localizedDescription)
+                onComplete(nil, error.toBridgeError())
             } else {
                 onComplete(document.documentID, nil)
             }
@@ -167,7 +167,7 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         householdId: String,
         name: String,
         description: String,
-        onComplete: @escaping (String?) -> Void
+        onComplete: @escaping (BridgeError?) -> Void
     ) {
         let fields = HouseholdFields.shared
         households.document(householdId).updateData([
@@ -176,7 +176,7 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         ], completion: completion(onComplete))
     }
 
-    func addItem(householdId: String, text: String, position: Double, onComplete: @escaping (String?) -> Void) {
+    func addItem(householdId: String, text: String, position: Double, onComplete: @escaping (BridgeError?) -> Void) {
         let fields = HouseholdFields.shared
         items(householdId).document().setData(
             [
@@ -186,31 +186,31 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
             ], completion: completion(onComplete))
     }
 
-    func updateItemText(householdId: String, itemId: String, text: String, onComplete: @escaping (String?) -> Void) {
+    func updateItemText(householdId: String, itemId: String, text: String, onComplete: @escaping (BridgeError?) -> Void) {
         items(householdId).document(itemId)
             .updateData([HouseholdFields.shared.TEXT: text], completion: completion(onComplete))
     }
 
-    func setItemChecked(householdId: String, itemId: String, isChecked: Bool, onComplete: @escaping (String?) -> Void) {
+    func setItemChecked(householdId: String, itemId: String, isChecked: Bool, onComplete: @escaping (BridgeError?) -> Void) {
         items(householdId).document(itemId)
             .updateData([HouseholdFields.shared.IS_CHECKED: isChecked], completion: completion(onComplete))
     }
 
-    func moveItem(householdId: String, itemId: String, position: Double, onComplete: @escaping (String?) -> Void) {
+    func moveItem(householdId: String, itemId: String, position: Double, onComplete: @escaping (BridgeError?) -> Void) {
         items(householdId).document(itemId)
             .updateData([HouseholdFields.shared.POSITION: position], completion: completion(onComplete))
     }
 
-    func deleteItem(householdId: String, itemId: String, onComplete: @escaping (String?) -> Void) {
+    func deleteItem(householdId: String, itemId: String, onComplete: @escaping (BridgeError?) -> Void) {
         items(householdId).document(itemId).delete(completion: completion(onComplete))
     }
 
-    func clearCheckedItems(householdId: String, onComplete: @escaping (String?) -> Void) {
+    func clearCheckedItems(householdId: String, onComplete: @escaping (BridgeError?) -> Void) {
         items(householdId)
             .whereField(HouseholdFields.shared.IS_CHECKED, isEqualTo: true)
             .getDocuments { snapshot, error in
                 if let error = error {
-                    onComplete(error.localizedDescription)
+                    onComplete(error.toBridgeError())
                     return
                 }
 
@@ -226,8 +226,8 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
     }
 
 
-    private func completion(_ onComplete: @escaping (String?) -> Void) -> (Error?) -> Void {
-        { error in onComplete(error?.localizedDescription) }
+    private func completion(_ onComplete: @escaping (BridgeError?) -> Void) -> (Error?) -> Void {
+        { error in onComplete(error?.toBridgeError()) }
     }
 }
 
@@ -255,5 +255,25 @@ extension QueryDocumentSnapshot {
             isChecked: data[fields.IS_CHECKED] as? Bool ?? false,
             position: position
         )
+    }
+}
+
+extension Error {
+    /// Maps a Firebase error to a BridgeError whose reason is a Kotlin DataException.Reason name.
+    /// Firestore uses gRPC status codes: 4 deadlineExceeded, 5 notFound, 7 permissionDenied, 14 unavailable, 16 unauthenticated.
+    func toBridgeError() -> BridgeError {
+        let nsError = self as NSError
+        let reason: String
+        switch (nsError.domain, nsError.code) {
+        case ("FIRFirestoreErrorDomain", 4), ("FIRFirestoreErrorDomain", 14), (NSURLErrorDomain, _):
+            reason = "Offline"
+        case ("FIRFirestoreErrorDomain", 7), ("FIRFirestoreErrorDomain", 16):
+            reason = "PermissionDenied"
+        case ("FIRFirestoreErrorDomain", 5):
+            reason = "NotFound"
+        default:
+            reason = "Unknown"
+        }
+        return BridgeError(reason: reason, message: localizedDescription)
     }
 }

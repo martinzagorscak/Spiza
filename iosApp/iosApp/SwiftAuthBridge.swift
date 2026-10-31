@@ -7,8 +7,19 @@ import GoogleSignIn
 import Shared
 import UIKit
 
+private final class AuthListenerHandle: NSObject, IosListenerHandle {
+    private let handle: AuthStateDidChangeListenerHandle
+
+    init(_ handle: AuthStateDidChangeListenerHandle) {
+        self.handle = handle
+    }
+
+    func remove() {
+        Auth.auth().removeStateDidChangeListener(handle)
+    }
+}
+
 final class SwiftAuthBridge: NSObject, IosAuthBridge {
-    private var listenerHandle: AuthStateDidChangeListenerHandle?
 
     func currentUser() -> AuthUser? {
         Auth.auth().currentUser?.toAuthUser()
@@ -35,15 +46,11 @@ final class SwiftAuthBridge: NSObject, IosAuthBridge {
         }
     }
 
-    func startObservingAuthState(onChange: @escaping (AuthUser?) -> Void) {
-        listenerHandle = Auth.auth().addStateDidChangeListener { _, user in
+    func observeAuthState(onChange: @escaping (AuthUser?) -> Void) -> IosListenerHandle {
+        let handle = Auth.auth().addStateDidChangeListener { _, user in
             onChange(user?.toAuthUser())
         }
-    }
-
-    func stopObservingAuthState() {
-        if let handle = listenerHandle { Auth.auth().removeStateDidChangeListener(handle) }
-        listenerHandle = nil
+        return AuthListenerHandle(handle)
     }
 
     @MainActor

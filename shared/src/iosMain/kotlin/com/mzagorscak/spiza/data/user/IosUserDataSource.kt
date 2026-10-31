@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.data.user
 
+import com.mzagorscak.spiza.data.toDataException
 import com.mzagorscak.spiza.data.user.model.UserProfileDto
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -14,7 +15,7 @@ class IosUserDataSource(
                 if (error == null) {
                     continuation.resume(Unit)
                 } else {
-                    continuation.resumeWithException(IllegalStateException(error))
+                    continuation.resumeWithException(error.toDataException())
                 }
             }
         }
@@ -26,7 +27,7 @@ class IosUserDataSource(
                 if (error == null) {
                     continuation.resume(users)
                 } else {
-                    continuation.resumeWithException(IllegalStateException(error))
+                    continuation.resumeWithException(error.toDataException())
                 }
             }
         }
