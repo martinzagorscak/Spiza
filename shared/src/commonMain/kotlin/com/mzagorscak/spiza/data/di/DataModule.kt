@@ -47,6 +47,6 @@ val dataModule =
         single<LoyaltyCardDao> { get<SpizaDatabase>().loyaltyCardDao() }
         single<LoyaltyCardRepository> { LoyaltyCardRepositoryImpl(loyaltyCardDao = get()) }
         factory<PermissionRepository> { (permissionsController: PermissionsController) ->
-            PermissionRepositoryImpl(permissionsController = permissionsController)
+            PermissionRepositoryImpl(permissionsController = permissionsController, crashLogger = get())
         }
     }

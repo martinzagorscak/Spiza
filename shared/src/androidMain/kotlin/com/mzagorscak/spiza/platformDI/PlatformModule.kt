@@ -22,12 +22,13 @@ actual fun platformModule(): Module =
     module {
         single<CrashLogger> { AndroidCrashLogger() }
         single<UserDataSource> { FirestoreUserDataSource() }
-        single<HouseholdDataSource> { FirestoreHouseholdDataSource() }
+        single<HouseholdDataSource> { FirestoreHouseholdDataSource(crashLogger = get()) }
         single<AuthService> {
             AndroidAuthService(
                 context = androidContext(),
                 activityProvider = get(),
                 webClientId = get(named(WEB_CLIENT_ID)),
+                crashLogger = get(),
             )
         }
         single<SpizaDatabase> {

@@ -5,6 +5,7 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
@@ -12,6 +13,8 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.recordError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +25,7 @@ class AndroidAuthService(
     context: Context,
     private val activityProvider: CurrentActivityProvider,
     private val webClientId: String,
+    private val crashLogger: CrashLogger,
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance(),
 ) : AuthService {
     private val credentialManager = CredentialManager.create(context)
@@ -44,7 +48,12 @@ class AndroidAuthService(
 
     override suspend fun signOut() {
         firebaseAuth.signOut()
-        credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        // The user is already signed out of Firebase; a stale Google credential only affects the next account picker.
+        try {
+            credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        } catch (e: ClearCredentialException) {
+            crashLogger.recordError(context = "Clearing Google credential state failed", error = e)
+        }
     }
 
     private suspend fun signInWithGoogle(): AuthResult {

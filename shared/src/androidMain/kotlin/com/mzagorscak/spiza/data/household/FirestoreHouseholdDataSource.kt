@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FieldValue.arrayUnion
 import com.google.firebase.firestore.FirebaseFirestore
+import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.data.household.HouseholdFields.JOIN_KEY
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
@@ -16,12 +17,22 @@ import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 class FirestoreHouseholdDataSource(
+    private val crashLogger: CrashLogger,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) : HouseholdDataSource {
     private val households: CollectionReference get() = firestore.collection(HouseholdFields.COLLECTION_HOUSEHOLDS)
     private val householdJoinKeys: CollectionReference get() = firestore.collection(HouseholdFields.COLLECTION_JOIN_KEYS)
 
     private fun items(householdId: String) = households.document(householdId).collection(HouseholdFields.ITEMS)
+
+    // A document missing required fields is skipped instead of failing the whole snapshot, but logged so it is noticed.
+    private fun <T : Any> List<DocumentSnapshot>.mapValid(
+        kind: String,
+        transform: (DocumentSnapshot) -> T?,
+    ): List<T> =
+        mapNotNull { document ->
+            transform(document) ?: null.also { crashLogger.logWarning(message = "Skipped malformed $kind document ${document.id}") }
+        }
 
     override suspend fun createHouseholdJoinKey(userId: String): String {
         val generatedKey = generateJoinKey()
@@ -103,7 +114,7 @@ class FirestoreHouseholdDataSource(
                         if (error != null) {
                             close(error)
                         } else if (snapshot != null) {
-                            trySend(snapshot.documents.mapNotNull { it.toHouseholdDto() })
+                            trySend(snapshot.documents.mapValid(kind = "household") { it.toHouseholdDto() })
                         }
                     }
             awaitClose { registration.remove() }
@@ -116,7 +127,7 @@ class FirestoreHouseholdDataSource(
                     if (error != null) {
                         close(error)
                     } else if (snapshot != null) {
-                        trySend(snapshot.documents.mapNotNull { it.toArticleItemDto() })
+                        trySend(snapshot.documents.mapValid(kind = "item") { it.toArticleItemDto() })
                     }
                 }
             awaitClose { registration.remove() }
