@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew ktlintCheck*)",
+      "Bash(./gradlew ktlintFormat*)",
+      "Bash(./gradlew :shared:testAndroidHostTest*)",
+      "Bash(./gradlew :shared:iosSimulatorArm64Test*)",
+      "Bash(./gradlew :androidApp:assembleDebug*)",
+      "Bash(./gradlew tasks*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)",
+      "Bash(git blame*)"
+    ],
+    "ask": [
+      "Bash(git commit*)",
+      "Bash(git add*)",
+      "Bash(git checkout*)",
+      "Bash(git switch*)",
+      "Bash(git stash*)",
+      "Bash(git reset*)",
+      "Edit(gradle/libs.versions.toml)",
+      "Edit(**/build.gradle.kts)",
+      "Edit(settings.gradle.kts)",
+      "Edit(gradle.properties)"
+    ],
+    "deny": [
+      "Bash(git push*)",
+      "Bash(git push --force*)",
+      "Bash(git rebase*)",
+      "Bash(rm -rf*)",
+      "Read(**/*.jks)",
+      "Read(**/*.keystore)",
+      "Read(./local.properties)",
+      "Edit(**/google-services.json)",
+      "Edit(**/GoogleService-Info.plist)",
+      "Edit(./local.properties)",
+      "Edit(.idea/**)"
+    ]
+  }
+}
