@@ -58,6 +58,15 @@ Navigation is wired in `AppNavigation.kt` — that is where `koinViewModel()`, `
 
 Detailed rules live in `.claude/rules/` and are loaded automatically. Read them before writing code in an area you have not touched yet.
 
+## Firestore data & security rules
+
+- `firestore.rules` (repo root) is the **source of truth** for the security rules deployed to Firebase; `firebase.json` points to it.
+  The user deploys it by pasting it into Firebase console > Firestore > Rules (or `firebase deploy --only firestore:rules`).
+- Collections: `households/{id}` (+ `items/{id}` subcollection), `users/{uid}`, `joinKeys/{userId}`. Field names live in `HouseholdFields` / `UserFields` and are shared with Swift.
+- Any change to collections, fields, document shape or who may write them **must update `firestore.rules` in the same change**, keep Android and Swift
+  identical, and end with a note to the user that the rules need to be deployed (old app versions keep using the deployed rules).
+- Rules reject unknown fields (`keys().hasOnly`) — adding a field without updating the rules makes every write fail with permission denied.
+
 ## Workflows (skills)
 
 - `/new-feature` — implement a feature end-to-end through all layers
@@ -81,5 +90,6 @@ Detailed rules live in `.claude/rules/` and are loaded automatically. Read them 
 - Every user-visible string goes into **both** `values/strings.xml` and `values-hr/strings.xml`.
 - Every new `Route` must be registered in `routeSerializersModule` (Route.kt).
 - Every new UseCase/Repository/ViewModel must be registered in the matching Koin module.
+- Firestore schema or permission changes ⇒ update `firestore.rules` (see above).
 - Room schema is `version = 1` with `exportSchema = false`: any entity change needs a version bump **and** a migration — see `/room-change`.
 - Keep changes minimal and in the existing style; do not refactor unrelated code in the same change.

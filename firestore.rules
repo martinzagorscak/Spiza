@@ -1,0 +1,109 @@
+rules_version = '2';
+
+// Source of truth for the Cloud Firestore security rules of Spiza.
+// Deploy: paste into Firebase console > Firestore > Rules (or `firebase deploy --only firestore:rules`).
+// Any change to collections, fields or who may write them must update this file in the same change.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(household) {
+      return isSignedIn() && request.auth.uid in household.joinedMembers;
+    }
+
+    function isOwner(household) {
+      return isSignedIn() && request.auth.uid == household.ownerId;
+    }
+
+    // A household document may only contain these fields, with these types.
+    function validHousehold(data) {
+      return data.keys().hasOnly(['name', 'description', 'ownerId', 'joinedMembers'])
+          && data.name is string
+          && data.description is string
+          && data.ownerId is string
+          && data.joinedMembers is list;
+    }
+
+    // The owner may change anything except ownership, and must stay a member.
+    function ownerUpdate() {
+      return isOwner(resource.data)
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.auth.uid in request.resource.data.joinedMembers
+          && validHousehold(request.resource.data);
+    }
+
+    // A non-owner member may only change joinedMembers, and only by removing themselves.
+    function memberLeaves() {
+      return isMember(resource.data)
+          && !isOwner(resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['joinedMembers'])
+          && request.resource.data.joinedMembers.toSet()
+               == resource.data.joinedMembers.toSet().difference([request.auth.uid].toSet());
+    }
+
+    match /households/{householdId} {
+      // The creator must be the owner and the only member.
+      allow create: if isSignedIn()
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.joinedMembers == [request.auth.uid]
+                    && validHousehold(request.resource.data);
+
+      allow read: if isMember(resource.data);
+      allow update: if ownerUpdate() || memberLeaves();
+      allow delete: if isOwner(resource.data);
+
+      // Items are readable and writable by any member of the parent household.
+      // get() reads the parent before the request, so a batch that deletes items and then the household is allowed.
+      match /items/{itemId} {
+        function household() {
+          return get(/databases/$(database)/documents/households/$(householdId)).data;
+        }
+
+        // An item document may only contain these fields, with these types.
+        function validItem(data) {
+          return data.keys().hasOnly(['text', 'isChecked', 'position'])
+              && data.text is string
+              && data.isChecked is bool
+              && data.position is number;
+        }
+
+        allow read, delete: if isMember(household());
+        allow create, update: if isMember(household()) && validItem(request.resource.data);
+      }
+    }
+
+    match /users/{userId} {
+      // Users may only create their own profile document.
+      allow create: if isSignedIn()
+                    && userId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['name', 'email', 'photoUrl']);
+
+      // Needed to show household members' names and photos.
+      allow read: if isSignedIn();
+    }
+
+    // Known weakness: any signed-in user can list all join keys and delete any key.
+    // Fixing it requires a data model change in the app, not just a rules change.
+    match /joinKeys/{userId} {
+      allow create: if isSignedIn()
+                    && userId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['joinKey'])
+                    && request.resource.data.joinKey is string;
+
+      allow update: if isSignedIn()
+                    && userId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['joinKey'])
+                    && request.resource.data.joinKey is string;
+
+      // Read must allow queries: the owner finds a user by querying joinKey == <key>.
+      allow read: if isSignedIn();
+
+      // Delete must allow other users: the owner deletes the member's key after adding them.
+      allow delete: if isSignedIn();
+    }
+  }
+}

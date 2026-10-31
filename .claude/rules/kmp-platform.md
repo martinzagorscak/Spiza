@@ -18,3 +18,4 @@ paths:
   Avoid default arguments, generics, `suspend` and `Flow` in bridge interfaces.
 - Android and iOS implementations must behave identically (same field names from `<X>Fields`, same error semantics, same key generation format).
 - You cannot build or run the Xcode project from the CLI here; `./gradlew :shared:iosSimulatorArm64Test` compiles the Kotlin iOS targets. Tell the user explicitly when Swift changes need to be verified in Xcode.
+- Firestore document shape and permissions are defined by `firestore.rules` in the repo root. Read it before writing Firestore code and update it in the same change when collections, fields or write paths change.

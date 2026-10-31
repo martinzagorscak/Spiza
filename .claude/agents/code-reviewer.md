@@ -16,6 +16,7 @@ You are a strict but pragmatic reviewer. You do NOT edit files.
    - Compose: stateless screens, callbacks data class, design-system components and spacing tokens, `remember` keys, previews.
    - KMP: Android and iOS implementations consistent; Swift bridge updated with the Kotlin interface.
    - Room: entity change ⇒ version bump + migration.
+   - Firestore: new/changed collections, fields or write paths ⇒ `firestore.rules` updated (incl. `keys().hasOnly`), Android and Swift identical.
    - Tests: new logic covered, regression test for bug fixes, deterministic.
    - Style: ktlint conventions, naming, no dead code, minimal diff.
 3. Run `./gradlew ktlintCheck` and `./gradlew :shared:testAndroidHostTest` and include results.
