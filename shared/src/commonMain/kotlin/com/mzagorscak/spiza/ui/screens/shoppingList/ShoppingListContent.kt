@@ -3,12 +3,14 @@ package com.mzagorscak.spiza.ui.screens.shoppingList
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
@@ -22,9 +24,12 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
 import com.mzagorscak.spiza.ui.components.Draggable
 import com.mzagorscak.spiza.ui.components.EditableCheckListItem
 import com.mzagorscak.spiza.ui.components.FallbackState
@@ -55,6 +60,9 @@ private const val EMPTY_KEY = "empty"
 private const val ADD_ITEM_KEY = "add-item"
 private const val DONE_HEADER_KEY = "done-header"
 private const val DONE_ITEM_TEMPLATE_KEY = "done-item"
+
+private val AutoScrollEdgeSize = 64.dp
+private val AutoScrollStep = 8.dp
 
 @Composable
 fun ShoppingListContent(
@@ -96,6 +104,18 @@ fun ShoppingListContent(
         }
     }
 
+    DragAutoScrollEffect(
+        draggedKey = draggedKey,
+        listState = listState,
+        pending = pending,
+        dragOffset = { dragOffset },
+        onScrolled = { key, consumed ->
+            // Keeps the dragged item under the finger while the list moves beneath it.
+            dragOffset += consumed
+            dragOffset += moveDraggedItem(key = key, dragOffset = dragOffset, listState = listState, pending = pending)
+        },
+    )
+
     LazyColumn(
         state = listState,
         contentPadding = PaddingValues(bottom = padding1600),
@@ -123,23 +143,7 @@ fun ShoppingListContent(
                 },
                 onDrag = { dy ->
                     dragOffset += dy
-                    val infos = listState.layoutInfo.visibleItemsInfo
-                    val current = infos.firstOrNull { it.key == item.id }
-                    if (current != null) {
-                        val center = current.offset + current.size / 2f + dragOffset
-                        if (center < current.offset || center > current.offset + current.size) {
-                            val target = infos.firstOrNull {
-                                it.key != item.id &&
-                                    it.index < pending.size &&
-                                    center >= it.offset &&
-                                    center <= it.offset + it.size
-                            }
-                            if (target != null) {
-                                pending.add(target.index, pending.removeAt(current.index))
-                                dragOffset += current.offset - target.offset
-                            }
-                        }
-                    }
+                    dragOffset += moveDraggedItem(key = item.id, dragOffset = dragOffset, listState = listState, pending = pending)
                 },
                 onDragEnd = {
                     val index = pending.indexOfFirst { it.id == item.id }
@@ -185,6 +189,68 @@ fun ShoppingListContent(
             items(items = state.doneItems, key = { "$DONE_ITEM_TEMPLATE_KEY-${it.id}" }) { item ->
                 ArticleRow(item = item, callbacks = callbacks, modifier = Modifier.animateItem())
             }
+        }
+    }
+}
+
+/**
+ * Moves the dragged item [key] in [pending] once its center crosses into a neighbouring item.
+ * Returns the change of the drag offset that keeps the item under the finger in its new slot.
+ */
+private fun moveDraggedItem(
+    key: String,
+    dragOffset: Float,
+    listState: LazyListState,
+    pending: MutableList<PresentableArticleItem>,
+): Float {
+    val infos = listState.layoutInfo.visibleItemsInfo
+    val current = infos.firstOrNull { it.key == key } ?: return 0f
+    val center = current.offset + current.size / 2f + dragOffset
+    val target = infos.firstOrNull {
+        it.key != key &&
+            it.index < pending.size &&
+            center >= it.offset &&
+            center <= it.offset + it.size
+    } ?: return 0f
+    // LazyColumn keeps its scroll position anchored to the key of the first visible item, so moving that item
+    // would make the whole list jump with it. Anchoring to the index keeps the list in place.
+    listState.requestScrollToItem(
+        index = listState.firstVisibleItemIndex,
+        scrollOffset = listState.firstVisibleItemScrollOffset,
+    )
+    pending.add(target.index, pending.removeAt(current.index))
+    return (current.offset - target.offset).toFloat()
+}
+
+/**
+ * Scrolls the list by a fixed step every frame while the dragged item is held near its top or bottom edge.
+ * [onScrolled] receives the scrolled distance in pixels.
+ */
+@Composable
+private fun DragAutoScrollEffect(
+    draggedKey: String?,
+    listState: LazyListState,
+    pending: List<PresentableArticleItem>,
+    dragOffset: () -> Float,
+    onScrolled: (key: String, consumed: Float) -> Unit,
+) {
+    val density = LocalDensity.current
+    LaunchedEffect(draggedKey) {
+        val key = draggedKey ?: return@LaunchedEffect
+        val edgePx = with(density) { AutoScrollEdgeSize.toPx() }
+        val stepPx = with(density) { AutoScrollStep.toPx() }
+        while (true) {
+            withFrameNanos { }
+            val layoutInfo = listState.layoutInfo
+            val current = layoutInfo.visibleItemsInfo.firstOrNull { it.key == key } ?: continue
+            val top = current.offset + dragOffset()
+            // Stops at the first and last pending item, so the dragged item is never scrolled out of the viewport.
+            val step = when {
+                current.index > 0 && top < layoutInfo.viewportStartOffset + edgePx -> -stepPx
+                current.index < pending.lastIndex && top + current.size > layoutInfo.viewportEndOffset - edgePx -> stepPx
+                else -> continue
+            }
+            onScrolled(key, listState.scrollBy(step))
         }
     }
 }
