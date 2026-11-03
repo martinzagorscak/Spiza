@@ -18,13 +18,11 @@ internal class SuggestionRepositoryImpl(
 
     override suspend fun addOrUpdate(
         name: String,
+        normalizedName: String,
         timestamp: Long,
     ) {
-        val trimmedName = name.trim()
-        if (trimmedName.isBlank()) return
-        val normalizedName = trimmedName.lowercase()
         suggestionDao.upsert(
-            name = trimmedName,
+            name = name,
             normalizedName = normalizedName,
             lastUsedAt = timestamp,
         )

@@ -7,8 +7,10 @@ import kotlinx.coroutines.flow.Flow
 interface SuggestionRepository {
     fun observeAll(sortingType: SuggestionSortingType = SuggestionSortingType.ALPHABETICAL_ASC): Flow<List<ShoppingItemSuggestion>>
 
+    /** [normalizedName] identifies the suggestion: adding one that already exists bumps its use count. */
     suspend fun addOrUpdate(
         name: String,
+        normalizedName: String,
         timestamp: Long,
     )
 

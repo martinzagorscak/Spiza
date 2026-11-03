@@ -9,17 +9,32 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class FakeSuggestionRepository : SuggestionRepository {
     val suggestions = MutableStateFlow<List<ShoppingItemSuggestion>>(emptyList())
     val savedNames = mutableListOf<String>()
+    val savedNormalizedNames = mutableListOf<String>()
+    val savedTimestamps = mutableListOf<Long>()
+    val deletedIds = mutableListOf<Long>()
+    var lastSortingType: SuggestionSortingType? = null
+    var deleteAllCount = 0
 
-    override fun observeAll(sortingType: SuggestionSortingType): Flow<List<ShoppingItemSuggestion>> = suggestions
+    override fun observeAll(sortingType: SuggestionSortingType): Flow<List<ShoppingItemSuggestion>> {
+        lastSortingType = sortingType
+        return suggestions
+    }
 
     override suspend fun addOrUpdate(
         name: String,
+        normalizedName: String,
         timestamp: Long,
     ) {
         savedNames += name
+        savedNormalizedNames += normalizedName
+        savedTimestamps += timestamp
     }
 
-    override suspend fun delete(id: Long) = Unit
+    override suspend fun delete(id: Long) {
+        deletedIds += id
+    }
 
-    override suspend fun deleteAll() = Unit
+    override suspend fun deleteAll() {
+        deleteAllCount++
+    }
 }

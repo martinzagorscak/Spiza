@@ -31,7 +31,14 @@ class AddOrUpdateSuggestionUseCaseImpl(
         name: String,
         timestamp: Long,
     ) {
-        repository.addOrUpdate(name, timestamp)
+        val trimmedName = name.trim()
+        if (trimmedName.isBlank()) return
+        // Case-insensitive dedup: "Milk" and "milk" are the same suggestion.
+        repository.addOrUpdate(
+            name = trimmedName,
+            normalizedName = trimmedName.lowercase(),
+            timestamp = timestamp,
+        )
     }
 }
 
