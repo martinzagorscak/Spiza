@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.keepScreenOn
 import com.mzagorscak.spiza.ui.components.Button
 import com.mzagorscak.spiza.ui.components.ButtonAppearance
 import com.mzagorscak.spiza.ui.components.ButtonSize
@@ -83,7 +84,9 @@ fun LoyaltyCardDetailsScreen(
                 },
             )
         },
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .keepScreenOn(),
     ) { paddingValues ->
         Box(
             contentAlignment = Alignment.Center,

@@ -1,6 +1,5 @@
 package com.mzagorscak.spiza.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,11 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
+import com.mzagorscak.spiza.ui.components.barcode.Barcode
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
 import com.mzagorscak.spiza.ui.theme.CardColorRed
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
@@ -31,15 +31,13 @@ import com.mzagorscak.spiza.ui.theme.padding400
 import com.mzagorscak.spiza.ui.theme.roundedShape300
 import com.mzagorscak.spiza.ui.theme.roundedShape400
 import org.jetbrains.compose.resources.stringResource
-import qrgenerator.barcodepainter.BarcodeFormat
-import qrgenerator.barcodepainter.rememberBarcodePainter
-import qrgenerator.qrkitpainter.rememberQrKitPainter
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.loyalty_cards_add_card_name_placeholder
 
 private const val LUMINANCE_THRESHOLD = 0.5f
 private const val SINGLE_LINE = 1
-private val QRCodeSize = 160.dp
+private const val DISPLAY_CODE_MAX_LINES = 2
+private val SquareCodeSize = 160.dp
 private val BarcodeHeight = 90.dp
 
 @Composable
@@ -78,43 +76,36 @@ fun LoyaltyCard(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.padding(padding400),
                     ) {
-                        when (card.format) {
-                            LoyaltyCardFormat.QrCode -> {
-                                val painter = rememberQrKitPainter(data = card.codeText)
-                                Image(
-                                    painter = painter,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(QRCodeSize),
-                                )
-                            }
-
-                            LoyaltyCardFormat.Barcode -> {
-                                val painter = rememberBarcodePainter(
-                                    content = card.codeText,
-                                    format = BarcodeFormat.Code128,
-                                    onError = { ColorPainter(Color.LightGray) },
-                                )
-                                Image(
-                                    painter = painter,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(BarcodeHeight),
-                                )
-                            }
-                        }
+                        Barcode(
+                            content = card.codeText,
+                            format = card.format,
+                            modifier = if (card.format.isSquare) {
+                                Modifier.size(SquareCodeSize)
+                            } else {
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(BarcodeHeight)
+                            },
+                        )
                     }
                 }
 
                 Text(
-                    text = card.codeText,
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = card.displayCode,
+                    style = MaterialTheme.typography.titleMedium,
                     color = textColor,
+                    textAlign = TextAlign.Center,
+                    maxLines = DISPLAY_CODE_MAX_LINES,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
     }
 }
+
+// PDF417 is two-dimensional but wide, so it is laid out like a linear barcode.
+private val LoyaltyCardFormat.isSquare: Boolean
+    get() = this == LoyaltyCardFormat.QrCode || this == LoyaltyCardFormat.Aztec
 
 @Composable
 private fun LayoutPreview() {

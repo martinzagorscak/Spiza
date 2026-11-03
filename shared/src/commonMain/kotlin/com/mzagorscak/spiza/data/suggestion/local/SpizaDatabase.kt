@@ -13,7 +13,7 @@ import com.mzagorscak.spiza.data.suggestion.model.SuggestionEntity
         SuggestionEntity::class,
         LoyaltyCardEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @ConstructedBy(SpizaDatabaseConstructor::class)

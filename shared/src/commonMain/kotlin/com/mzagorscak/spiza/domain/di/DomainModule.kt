@@ -36,6 +36,8 @@ import com.mzagorscak.spiza.domain.usecase.DeleteLoyaltyCardUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteLoyaltyCardUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCase
+import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetCurrentAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentAppLanguageUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetCurrentThemeModeUseCase
@@ -50,6 +52,8 @@ import com.mzagorscak.spiza.domain.usecase.GetUsersUseCase
 import com.mzagorscak.spiza.domain.usecase.GetUsersUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.NormalizeScannedLoyaltyCardCodeUseCase
+import com.mzagorscak.spiza.domain.usecase.NormalizeScannedLoyaltyCardCodeUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
@@ -96,6 +100,8 @@ import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ValidateLoyaltyCardCodeUseCase
+import com.mzagorscak.spiza.domain.usecase.ValidateLoyaltyCardCodeUseCaseImpl
 import org.koin.dsl.module
 
 val domainModule =
@@ -164,4 +170,7 @@ val domainModule =
         single<GetLoyaltyCardByIdUseCase> { GetLoyaltyCardByIdUseCaseImpl(repository = get()) }
         single<AddLoyaltyCardUseCase> { AddLoyaltyCardUseCaseImpl(repository = get()) }
         single<DeleteLoyaltyCardUseCase> { DeleteLoyaltyCardUseCaseImpl(repository = get()) }
+        single<ValidateLoyaltyCardCodeUseCase> { ValidateLoyaltyCardCodeUseCaseImpl() }
+        single<DetectLoyaltyCardFormatUseCase> { DetectLoyaltyCardFormatUseCaseImpl() }
+        single<NormalizeScannedLoyaltyCardCodeUseCase> { NormalizeScannedLoyaltyCardCodeUseCaseImpl() }
     }

@@ -56,6 +56,11 @@ kotlin {
             implementation(libs.googleid)
             implementation(libs.ktor.client.android)
             implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.camera.camera2)
+            implementation(libs.androidx.camera.lifecycle)
+            implementation(libs.androidx.camera.view)
+            implementation(libs.mlkit.barcodeScanning)
+            implementation(libs.zxing.core)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -83,7 +88,6 @@ kotlin {
             implementation(libs.androidx.sqlite.bundled)
             implementation(libs.mokoPermissionsCompose)
             implementation(libs.mokoPermissionsCamera)
-            implementation(libs.qrkitCompose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

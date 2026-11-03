@@ -4,13 +4,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
+import com.mzagorscak.spiza.domain.model.LoyaltyCardCode
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.domain.model.PermissionType
 import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCase
 import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
+import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCase
+import com.mzagorscak.spiza.domain.usecase.NormalizeScannedLoyaltyCardCodeUseCase
 import com.mzagorscak.spiza.domain.usecase.OpenAppSettingsUseCase
 import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCase
+import com.mzagorscak.spiza.domain.usecase.ValidateLoyaltyCardCodeUseCase
 import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,12 +23,18 @@ import kotlinx.coroutines.flow.update
 
 internal class AddLoyaltyCardViewModelImpl(
     private val addLoyaltyCardUseCase: AddLoyaltyCardUseCase,
+    private val validateLoyaltyCardCodeUseCase: ValidateLoyaltyCardCodeUseCase,
+    private val detectLoyaltyCardFormatUseCase: DetectLoyaltyCardFormatUseCase,
+    private val normalizeScannedLoyaltyCardCodeUseCase: NormalizeScannedLoyaltyCardCodeUseCase,
     private val checkPermissionUseCase: CheckPermissionUseCase,
     private val requestPermissionUseCase: RequestPermissionUseCase,
     private val openAppSettingsUseCase: OpenAppSettingsUseCase,
     private val crashLogger: CrashLogger,
 ) : AddLoyaltyCardViewModel() {
     private val state = MutableStateFlow(AddLoyaltyCardState())
+
+    // A code is accepted only after two identical reads in a row: a single frame can be misread (e.g. a partly visible barcode).
+    private var pendingScan: ScannedCode? = null
 
     override fun state(): StateFlow<AddLoyaltyCardState> = state.asStateFlow()
 
@@ -37,29 +47,91 @@ internal class AddLoyaltyCardViewModelImpl(
     }
 
     override fun onCodeChange(code: String) {
-        state.update { it.copy(codeText = code) }
-    }
-
-    override fun onInputTypeChange(inputType: AddLoyaltyCardState.InputType) {
-        state.update { it.copy(inputType = inputType) }
-        if (inputType == AddLoyaltyCardState.InputType.Camera) {
-            requestCameraPermissionIfNecessary()
+        state.update { current ->
+            val trimmed = code.trim()
+            val format = when {
+                current.isFormatSelectedManually || trimmed.isEmpty() -> current.format
+                else -> detectLoyaltyCardFormatUseCase(trimmed)
+            }
+            current.copy(
+                codeText = code,
+                format = format,
+                isCodeValid = isValid(value = trimmed, format = format),
+                // Once edited by hand the code is no longer the exact scanned content.
+                scanStatus = AddLoyaltyCardState.ScanStatus.Scanning,
+            )
         }
     }
 
     override fun onFormatChange(format: LoyaltyCardFormat) {
-        state.update { it.copy(format = format) }
+        state.update { current ->
+            current.copy(
+                format = format,
+                isFormatSelectedManually = true,
+                isCodeValid = isValid(value = current.codeText.trim(), format = format),
+            )
+        }
+    }
+
+    override fun onCodeScanned(code: ScannedCode) {
+        if (state.value.scanStatus == AddLoyaltyCardState.ScanStatus.Scanned) return
+        if (code != pendingScan) {
+            pendingScan = code
+            return
+        }
+        pendingScan = null
+
+        val format = code.format
+        val normalized = format?.let { normalizeScannedLoyaltyCardCodeUseCase(LoyaltyCardCode(value = code.value, format = it)) }
+        if (normalized == null || validateLoyaltyCardCodeUseCase(normalized).not()) {
+            if (state.value.scanStatus != AddLoyaltyCardState.ScanStatus.Unsupported) {
+                crashLogger.logWarning("Scanned loyalty card code is not supported (format: ${format ?: "unknown"})")
+            }
+            state.update { it.copy(scanStatus = AddLoyaltyCardState.ScanStatus.Unsupported) }
+            return
+        }
+        state.update {
+            it.copy(
+                codeText = normalized.value,
+                format = normalized.format,
+                isFormatSelectedManually = true,
+                isCodeValid = true,
+                scanStatus = AddLoyaltyCardState.ScanStatus.Scanned,
+            )
+        }
+    }
+
+    override fun onScanAgainClick() {
+        pendingScan = null
+        state.update { it.resetCode() }
+    }
+
+    override fun onInputTypeChange(inputType: AddLoyaltyCardState.InputType) {
+        if (inputType == state.value.inputType) return
+        // A scanned code is kept when switching to manual entry so it can be corrected; the camera always starts fresh.
+        state.update { current ->
+            when (inputType) {
+                AddLoyaltyCardState.InputType.Camera -> current.resetCode().copy(inputType = inputType)
+                AddLoyaltyCardState.InputType.Manual -> current.copy(inputType = inputType)
+            }
+        }
+        if (inputType == AddLoyaltyCardState.InputType.Camera) {
+            pendingScan = null
+            requestCameraPermissionIfNecessary()
+        }
     }
 
     override fun onSaveClick() {
         val currentState = state.value
         if (currentState.isSaveEnabled.not()) return
+        val isScanned = currentState.scanStatus == AddLoyaltyCardState.ScanStatus.Scanned
         launchSafely(crashLogger = crashLogger, context = "Saving loyalty card failed") {
             addLoyaltyCardUseCase(
                 LoyaltyCard(
                     name = currentState.cardName.trim(),
                     colorArgb = currentState.selectedColor.toArgb(),
-                    codeText = currentState.codeText.trim(),
+                    // Scanned content may legitimately end in control characters (e.g. a GS1 separator), so it is never trimmed.
+                    codeText = if (isScanned) currentState.codeText else currentState.codeText.trim(),
                     format = currentState.format,
                 ),
             )
@@ -67,6 +139,10 @@ internal class AddLoyaltyCardViewModelImpl(
     }
 
     override fun checkPermission() {
+        if (state.value.inputType == AddLoyaltyCardState.InputType.Camera) {
+            requestCameraPermissionIfNecessary()
+            return
+        }
         launchSafely(crashLogger = crashLogger, context = "Checking camera permission failed") {
             val status = checkPermissionUseCase(PermissionType.CAMERA)
             state.update { it.copy(permissionStatus = status) }
@@ -83,6 +159,19 @@ internal class AddLoyaltyCardViewModelImpl(
     override fun openSettings() {
         openAppSettingsUseCase()
     }
+
+    private fun isValid(
+        value: String,
+        format: LoyaltyCardFormat,
+    ): Boolean = validateLoyaltyCardCodeUseCase(LoyaltyCardCode(value = value, format = format))
+
+    private fun AddLoyaltyCardState.resetCode(): AddLoyaltyCardState =
+        copy(
+            codeText = "",
+            isCodeValid = false,
+            isFormatSelectedManually = false,
+            scanStatus = AddLoyaltyCardState.ScanStatus.Scanning,
+        )
 
     private fun requestCameraPermissionIfNecessary() {
         launchSafely(crashLogger = crashLogger, context = "Checking camera permission failed") {

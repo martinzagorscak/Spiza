@@ -35,7 +35,9 @@ room = "2.7.0-alpha13"
 sqlite = "2.5.0-alpha13"
 ksp = "2.3.12"
 mokoPermissions = "0.20.1"
-qrkit = "3.1.3"
+camerax = "1.4.2"
+mlkitBarcodeScanning = "17.3.0"
+zxing = "3.5.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -83,7 +85,11 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 mokoPermissionsCompose = { module = "dev.icerock.moko:permissions-compose", version.ref = "mokoPermissions" }
 mokoPermissionsCamera = { module = "dev.icerock.moko:permissions-camera", version.ref = "mokoPermissions" }
-qrkitCompose = { module = "network.chaintech:qr-kit", version.ref = "qrkit" }
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
+mlkit-barcodeScanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkitBarcodeScanning" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

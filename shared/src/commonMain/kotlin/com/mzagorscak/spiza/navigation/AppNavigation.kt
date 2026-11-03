@@ -38,6 +38,7 @@ import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardsScreenCallbacks
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardsViewModel
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardScreen
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardScreenCallbacks
+import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardState
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardViewModel
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsScreen
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsScreenCallbacks
@@ -398,6 +399,10 @@ fun AppNavigation(isSignedIn: Boolean) {
                         LaunchedEffect(controller) {
                             viewModel.checkPermission()
                         }
+                        // The camera keeps running until a code is confirmed, so the user needs a signal that it is done.
+                        LaunchedEffect(state.scanStatus) {
+                            if (state.scanStatus == AddLoyaltyCardState.ScanStatus.Scanned) performHapticFeedback(hapticFeedback)
+                        }
                         AddLoyaltyCardScreen(
                             state = state,
                             callbacks = remember {
@@ -411,6 +416,11 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     onInputTypeChange = viewModel::onInputTypeChange,
                                     onCodeChange = viewModel::onCodeChange,
                                     onFormatChange = viewModel::onFormatChange,
+                                    onCodeScanned = viewModel::onCodeScanned,
+                                    onScanAgainClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.onScanAgainClick()
+                                    },
                                     onSaveClick = {
                                         viewModel.onSaveClick()
                                         performHapticFeedback(hapticFeedback)

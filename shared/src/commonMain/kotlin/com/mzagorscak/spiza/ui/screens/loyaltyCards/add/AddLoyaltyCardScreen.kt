@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,19 +17,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
-import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.ui.components.Button
 import com.mzagorscak.spiza.ui.components.ButtonAppearance
 import com.mzagorscak.spiza.ui.components.ButtonSize
 import com.mzagorscak.spiza.ui.components.ButtonVariant
 import com.mzagorscak.spiza.ui.components.ColorPicker
 import com.mzagorscak.spiza.ui.components.ColorPickerItem
-import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
@@ -40,37 +35,21 @@ import com.mzagorscak.spiza.ui.components.TextField
 import com.mzagorscak.spiza.ui.components.TextFieldAppearance
 import com.mzagorscak.spiza.ui.components.TextFieldVariant
 import com.mzagorscak.spiza.ui.components.TopBar
-import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.theme.LoyaltyCardColors
 import com.mzagorscak.spiza.ui.theme.padding200
-import com.mzagorscak.spiza.ui.theme.padding300
 import com.mzagorscak.spiza.ui.theme.padding400
-import com.mzagorscak.spiza.ui.theme.roundedShape300
 import org.jetbrains.compose.resources.stringResource
-import qrscanner.CameraLens
-import qrscanner.OverlayShape
-import qrscanner.QrCodeScanner
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_back
-import spiza.shared.generated.resources.loyalty_cards_add_camera_permission_cta
-import spiza.shared.generated.resources.loyalty_cards_add_camera_permission_description
-import spiza.shared.generated.resources.loyalty_cards_add_camera_permission_title
 import spiza.shared.generated.resources.loyalty_cards_add_card_name_label
 import spiza.shared.generated.resources.loyalty_cards_add_card_name_placeholder
-import spiza.shared.generated.resources.loyalty_cards_add_code_label
-import spiza.shared.generated.resources.loyalty_cards_add_code_placeholder
 import spiza.shared.generated.resources.loyalty_cards_add_color_label
-import spiza.shared.generated.resources.loyalty_cards_add_format_barcode
-import spiza.shared.generated.resources.loyalty_cards_add_format_label
-import spiza.shared.generated.resources.loyalty_cards_add_format_qr
 import spiza.shared.generated.resources.loyalty_cards_add_input_type_camera
 import spiza.shared.generated.resources.loyalty_cards_add_input_type_label
 import spiza.shared.generated.resources.loyalty_cards_add_input_type_manual
 import spiza.shared.generated.resources.loyalty_cards_add_preview_label
 import spiza.shared.generated.resources.loyalty_cards_add_save_button
 import spiza.shared.generated.resources.loyalty_cards_add_title
-
-private val CameraInputSectionHeight = 240.dp
 
 @Composable
 fun AddLoyaltyCardScreen(
@@ -142,31 +121,6 @@ fun AddLoyaltyCardScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(padding200)) {
                 Text(
-                    text = stringResource(Res.string.loyalty_cards_add_format_label),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(padding200),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    FilterChip(
-                        label = { Text(stringResource(Res.string.loyalty_cards_add_format_qr)) },
-                        selected = state.format == LoyaltyCardFormat.QrCode,
-                        onClick = { callbacks.onFormatChange(LoyaltyCardFormat.QrCode) },
-                        modifier = Modifier.weight(1f),
-                    )
-                    FilterChip(
-                        label = { Text(stringResource(Res.string.loyalty_cards_add_format_barcode)) },
-                        selected = state.format == LoyaltyCardFormat.Barcode,
-                        onClick = { callbacks.onFormatChange(LoyaltyCardFormat.Barcode) },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(padding200)) {
-                Text(
                     text = stringResource(Res.string.loyalty_cards_add_input_type_label),
                     style = MaterialTheme.typography.titleMedium,
                 )
@@ -176,43 +130,23 @@ fun AddLoyaltyCardScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     FilterChip(
-                        label = { Text(stringResource(Res.string.loyalty_cards_add_input_type_manual)) },
-                        selected = state.inputType == AddLoyaltyCardState.InputType.Manual,
-                        onClick = { callbacks.onInputTypeChange(AddLoyaltyCardState.InputType.Manual) },
-                        modifier = Modifier.weight(1f),
-                    )
-                    FilterChip(
                         label = { Text(stringResource(Res.string.loyalty_cards_add_input_type_camera)) },
                         selected = state.inputType == AddLoyaltyCardState.InputType.Camera,
                         onClick = { callbacks.onInputTypeChange(AddLoyaltyCardState.InputType.Camera) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    FilterChip(
+                        label = { Text(stringResource(Res.string.loyalty_cards_add_input_type_manual)) },
+                        selected = state.inputType == AddLoyaltyCardState.InputType.Manual,
+                        onClick = { callbacks.onInputTypeChange(AddLoyaltyCardState.InputType.Manual) },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
 
             when (state.inputType) {
-                AddLoyaltyCardState.InputType.Manual -> {
-                    TextField(
-                        text = state.codeText,
-                        onTextChange = callbacks.onCodeChange,
-                        isError = false,
-                        appearance = TextFieldAppearance(
-                            variant = TextFieldVariant.Outlined,
-                            singleLine = true,
-                            label = stringResource(Res.string.loyalty_cards_add_code_label),
-                            placeholder = stringResource(Res.string.loyalty_cards_add_code_placeholder),
-                        ),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                AddLoyaltyCardState.InputType.Camera -> {
-                    CameraInputSection(
-                        state = state,
-                        callbacks = callbacks,
-                    )
-                }
+                AddLoyaltyCardState.InputType.Manual -> ManualCodeInput(state = state, callbacks = callbacks)
+                AddLoyaltyCardState.InputType.Camera -> CameraCodeInput(state = state, callbacks = callbacks)
             }
 
             if (state.cardName.isNotBlank() || state.codeText.isNotBlank()) {
@@ -239,63 +173,6 @@ fun AddLoyaltyCardScreen(
     }
 }
 
-@Composable
-private fun CameraInputSection(
-    state: AddLoyaltyCardState,
-    callbacks: AddLoyaltyCardScreenCallbacks,
-    modifier: Modifier = Modifier,
-) {
-    if (state.permissionStatus !is PermissionStatus.Granted) {
-        FallbackState(
-            title = stringResource(Res.string.loyalty_cards_add_camera_permission_title),
-            description = stringResource(Res.string.loyalty_cards_add_camera_permission_description),
-            cta = CTA(
-                label = stringResource(Res.string.loyalty_cards_add_camera_permission_cta),
-                onClick = callbacks.onOpenSettings,
-            ),
-            modifier = modifier.fillMaxWidth(),
-        )
-    } else {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(padding300),
-            modifier = modifier.fillMaxWidth(),
-        ) {
-            PlatformScannerContainer {
-                QrCodeScanner(
-                    flashlightOn = false,
-                    cameraLens = CameraLens.Back,
-                    onCompletion = callbacks.onCodeChange,
-                    overlayShape = OverlayShape.Square,
-                    overlayColor = Color.Black.copy(alpha = 0.5f),
-                    overlayBorderColor = MaterialTheme.colorScheme.primary,
-                    zoomLevel = 1f,
-                    maxZoomLevel = 5f,
-                    customOverlay = null,
-                    permissionDeniedView = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(CameraInputSectionHeight)
-                        .clip(roundedShape300),
-                )
-            }
-
-            TextField(
-                text = state.codeText,
-                onTextChange = callbacks.onCodeChange,
-                isError = false,
-                appearance = TextFieldAppearance(
-                    variant = TextFieldVariant.Outlined,
-                    singleLine = true,
-                    label = stringResource(Res.string.loyalty_cards_add_code_label),
-                    placeholder = stringResource(Res.string.loyalty_cards_add_code_placeholder),
-                ),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
-}
-
 data class AddLoyaltyCardScreenCallbacks(
     val onBackClick: () -> Unit,
     val onCardNameChange: (String) -> Unit,
@@ -303,6 +180,8 @@ data class AddLoyaltyCardScreenCallbacks(
     val onInputTypeChange: (AddLoyaltyCardState.InputType) -> Unit,
     val onCodeChange: (String) -> Unit,
     val onFormatChange: (LoyaltyCardFormat) -> Unit,
+    val onCodeScanned: (ScannedCode) -> Unit,
+    val onScanAgainClick: () -> Unit,
     val onSaveClick: () -> Unit,
     val onRequestPermission: () -> Unit,
     val onOpenSettings: () -> Unit,

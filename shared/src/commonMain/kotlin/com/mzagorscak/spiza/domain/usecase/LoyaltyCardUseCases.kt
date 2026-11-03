@@ -1,6 +1,9 @@
 package com.mzagorscak.spiza.domain.usecase
 
+import com.mzagorscak.spiza.domain.loyaltyCard.LoyaltyCardCodes
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
+import com.mzagorscak.spiza.domain.model.LoyaltyCardCode
+import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.repository.LoyaltyCardRepository
 import kotlinx.coroutines.flow.Flow
 
@@ -52,4 +55,28 @@ class DeleteLoyaltyCardUseCaseImpl(
     private val repository: LoyaltyCardRepository,
 ) : DeleteLoyaltyCardUseCase {
     override suspend operator fun invoke(id: Long) = repository.deleteCard(id)
+}
+
+interface ValidateLoyaltyCardCodeUseCase {
+    operator fun invoke(code: LoyaltyCardCode): Boolean
+}
+
+class ValidateLoyaltyCardCodeUseCaseImpl : ValidateLoyaltyCardCodeUseCase {
+    override operator fun invoke(code: LoyaltyCardCode): Boolean = LoyaltyCardCodes.isValid(code)
+}
+
+interface DetectLoyaltyCardFormatUseCase {
+    operator fun invoke(value: String): LoyaltyCardFormat
+}
+
+class DetectLoyaltyCardFormatUseCaseImpl : DetectLoyaltyCardFormatUseCase {
+    override operator fun invoke(value: String): LoyaltyCardFormat = LoyaltyCardCodes.detectFormat(value)
+}
+
+interface NormalizeScannedLoyaltyCardCodeUseCase {
+    operator fun invoke(code: LoyaltyCardCode): LoyaltyCardCode
+}
+
+class NormalizeScannedLoyaltyCardCodeUseCaseImpl : NormalizeScannedLoyaltyCardCodeUseCase {
+    override operator fun invoke(code: LoyaltyCardCode): LoyaltyCardCode = LoyaltyCardCodes.normalizeScanned(code)
 }
