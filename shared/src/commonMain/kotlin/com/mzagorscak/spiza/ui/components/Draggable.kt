@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -22,11 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import org.jetbrains.compose.resources.painterResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_grip_dots
+
+private val DraggableIconSize = 32.dp
 
 @Composable
 fun Draggable(
@@ -50,6 +54,7 @@ fun Draggable(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
+                .size(DraggableIconSize)
                 .draggable(
                     state = rememberDraggableState(onDelta = onDrag),
                     orientation = Orientation.Vertical,
