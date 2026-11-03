@@ -21,7 +21,7 @@ import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import com.mzagorscak.spiza.fakes.FakeHouseholdRepository
 import com.mzagorscak.spiza.fakes.FakeSettingsRepository
-import com.mzagorscak.spiza.fakes.FakeSuggestionLocalDataSource
+import com.mzagorscak.spiza.fakes.FakeSuggestionRepository
 import com.mzagorscak.spiza.fakes.FakeUserRepository
 import com.mzagorscak.spiza.fakes.item
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +41,7 @@ import kotlin.test.assertTrue
 class ShoppingListViewModelImplTest {
     private val households = FakeHouseholdRepository()
     private val settings = FakeSettingsRepository()
-    private val suggestions = FakeSuggestionLocalDataSource()
+    private val suggestions = FakeSuggestionRepository()
     private val logger = FakeCrashLogger()
 
     @BeforeTest

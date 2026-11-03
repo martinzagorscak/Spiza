@@ -1,8 +1,8 @@
 package com.mzagorscak.spiza.domain.usecase
 
-import com.mzagorscak.spiza.data.suggestion.local.SuggestionLocalDataSource
-import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
+import com.mzagorscak.spiza.domain.model.SuggestionSortingType
+import com.mzagorscak.spiza.domain.repository.SuggestionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Clock
 
@@ -11,10 +11,10 @@ interface ObserveSuggestionsUseCase {
 }
 
 class ObserveSuggestionsUseCaseImpl(
-    private val localDataSource: SuggestionLocalDataSource,
+    private val repository: SuggestionRepository,
 ) : ObserveSuggestionsUseCase {
     override operator fun invoke(sortingType: SuggestionSortingType): Flow<List<ShoppingItemSuggestion>> =
-        localDataSource.observeAll(sortingType)
+        repository.observeAll(sortingType)
 }
 
 interface AddOrUpdateSuggestionUseCase {
@@ -25,13 +25,13 @@ interface AddOrUpdateSuggestionUseCase {
 }
 
 class AddOrUpdateSuggestionUseCaseImpl(
-    private val localDataSource: SuggestionLocalDataSource,
+    private val repository: SuggestionRepository,
 ) : AddOrUpdateSuggestionUseCase {
     override suspend operator fun invoke(
         name: String,
         timestamp: Long,
     ) {
-        localDataSource.addOrUpdate(name, timestamp)
+        repository.addOrUpdate(name, timestamp)
     }
 }
 
@@ -40,10 +40,10 @@ interface DeleteSuggestionUseCase {
 }
 
 class DeleteSuggestionUseCaseImpl(
-    private val localDataSource: SuggestionLocalDataSource,
+    private val repository: SuggestionRepository,
 ) : DeleteSuggestionUseCase {
     override suspend operator fun invoke(id: Long) {
-        localDataSource.delete(id)
+        repository.delete(id)
     }
 }
 
@@ -52,9 +52,9 @@ interface DeleteAllSuggestionsUseCase {
 }
 
 class DeleteAllSuggestionsUseCaseImpl(
-    private val localDataSource: SuggestionLocalDataSource,
+    private val repository: SuggestionRepository,
 ) : DeleteAllSuggestionsUseCase {
     override suspend operator fun invoke() {
-        localDataSource.deleteAll()
+        repository.deleteAll()
     }
 }

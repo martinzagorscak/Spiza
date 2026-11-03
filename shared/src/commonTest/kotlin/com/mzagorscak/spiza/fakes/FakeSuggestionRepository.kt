@@ -1,12 +1,12 @@
 package com.mzagorscak.spiza.fakes
 
-import com.mzagorscak.spiza.data.suggestion.local.SuggestionLocalDataSource
-import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
+import com.mzagorscak.spiza.domain.model.SuggestionSortingType
+import com.mzagorscak.spiza.domain.repository.SuggestionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class FakeSuggestionLocalDataSource : SuggestionLocalDataSource {
+class FakeSuggestionRepository : SuggestionRepository {
     val suggestions = MutableStateFlow<List<ShoppingItemSuggestion>>(emptyList())
     val savedNames = mutableListOf<String>()
 

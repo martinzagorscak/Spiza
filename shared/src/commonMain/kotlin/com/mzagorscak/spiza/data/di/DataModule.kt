@@ -8,14 +8,14 @@ import com.mzagorscak.spiza.data.repository.PermissionRepositoryImpl
 import com.mzagorscak.spiza.data.settings.SettingsDataSource
 import com.mzagorscak.spiza.data.settings.SettingsDataSourceImpl
 import com.mzagorscak.spiza.data.settings.SettingsRepositoryImpl
+import com.mzagorscak.spiza.data.suggestion.SuggestionRepositoryImpl
 import com.mzagorscak.spiza.data.suggestion.local.SuggestionDao
-import com.mzagorscak.spiza.data.suggestion.local.SuggestionLocalDataSource
-import com.mzagorscak.spiza.data.suggestion.local.SuggestionLocalDataSourceImpl
 import com.mzagorscak.spiza.data.user.UserRepositoryImpl
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import com.mzagorscak.spiza.domain.repository.LoyaltyCardRepository
 import com.mzagorscak.spiza.domain.repository.PermissionRepository
 import com.mzagorscak.spiza.domain.repository.SettingsRepository
+import com.mzagorscak.spiza.domain.repository.SuggestionRepository
 import com.mzagorscak.spiza.domain.repository.UserRepository
 import com.russhwolf.settings.Settings
 import dev.icerock.moko.permissions.PermissionsController
@@ -43,7 +43,7 @@ val dataModule =
             )
         }
         single<SuggestionDao> { get<SpizaDatabase>().suggestionDao() }
-        single<SuggestionLocalDataSource> { SuggestionLocalDataSourceImpl(suggestionDao = get()) }
+        single<SuggestionRepository> { SuggestionRepositoryImpl(suggestionDao = get()) }
         single<LoyaltyCardDao> { get<SpizaDatabase>().loyaltyCardDao() }
         single<LoyaltyCardRepository> { LoyaltyCardRepositoryImpl(loyaltyCardDao = get()) }
         factory<PermissionRepository> { (permissionsController: PermissionsController) ->

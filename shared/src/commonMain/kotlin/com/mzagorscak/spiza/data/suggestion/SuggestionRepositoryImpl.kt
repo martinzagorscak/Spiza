@@ -1,27 +1,16 @@
-package com.mzagorscak.spiza.data.suggestion.local
+package com.mzagorscak.spiza.data.suggestion
 
+import com.mzagorscak.spiza.data.suggestion.local.SuggestionDao
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionEntity
-import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
+import com.mzagorscak.spiza.domain.model.SuggestionSortingType
+import com.mzagorscak.spiza.domain.repository.SuggestionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-interface SuggestionLocalDataSource {
-    fun observeAll(sortingType: SuggestionSortingType = SuggestionSortingType.ALPHABETICAL_ASC): Flow<List<ShoppingItemSuggestion>>
-
-    suspend fun addOrUpdate(
-        name: String,
-        timestamp: Long,
-    )
-
-    suspend fun delete(id: Long)
-
-    suspend fun deleteAll()
-}
-
-internal class SuggestionLocalDataSourceImpl(
+internal class SuggestionRepositoryImpl(
     private val suggestionDao: SuggestionDao,
-) : SuggestionLocalDataSource {
+) : SuggestionRepository {
     override fun observeAll(sortingType: SuggestionSortingType): Flow<List<ShoppingItemSuggestion>> =
         suggestionDao.getAll(sortingType).map { suggestionEntities ->
             suggestionEntities.map { it.toDomainModel() }

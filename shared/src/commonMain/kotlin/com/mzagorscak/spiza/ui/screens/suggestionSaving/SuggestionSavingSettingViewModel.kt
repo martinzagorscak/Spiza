@@ -1,7 +1,7 @@
 package com.mzagorscak.spiza.ui.screens.suggestionSaving
 
 import androidx.lifecycle.ViewModel
-import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
+import com.mzagorscak.spiza.domain.model.SuggestionSortingType
 import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
 import kotlinx.coroutines.flow.StateFlow
 

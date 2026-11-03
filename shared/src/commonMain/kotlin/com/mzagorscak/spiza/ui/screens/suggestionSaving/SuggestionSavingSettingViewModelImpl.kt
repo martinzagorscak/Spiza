@@ -3,7 +3,7 @@ package com.mzagorscak.spiza.ui.screens.suggestionSaving
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.catchAndRecord
-import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
+import com.mzagorscak.spiza.domain.model.SuggestionSortingType
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteAllSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase

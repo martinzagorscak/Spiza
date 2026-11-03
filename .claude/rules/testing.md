@@ -12,7 +12,7 @@ paths:
 - Naming: `fun methodOrBehaviour_expectedResult_whenCondition()` (see `ConstraintsManagerTest`). One behaviour per test.
 - **No mocking library** in the project. Use the hand-written fakes in `commonTest/.../fakes/` and extend them before creating new ones:
   `FakeCrashLogger` (records `exceptions` / `warnings`), `FakeAuthService`, `FakeUserRepository`, `FakeUserDataSource`,
-  `FakeHouseholdRepository`, `FakeHouseholdDataSource`, `FakeSettingsRepository`, `FakeSuggestionLocalDataSource`, and builders in `TestData.kt`
+  `FakeHouseholdRepository`, `FakeHouseholdDataSource`, `FakeSettingsRepository`, `FakeSuggestionRepository`, and builders in `TestData.kt`
   (`TEST_USER`, `TEST_PROFILE`, `household()`, `householdDto()`, `item()`). Fakes record calls and can be told to fail
   (`writeFailure`, `householdsFailure`, `getUsersFailure`, `saveFailure`) or never complete (`neverAcknowledgeWrites`, like Firestore offline).
 - Coroutines: `kotlinx-coroutines-test` is available in commonTest. Wrap tests in `runTest { }` (virtual time, so timeouts and delays are instant).

@@ -6,7 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionEntity
-import com.mzagorscak.spiza.data.suggestion.model.SuggestionSortingType
+import com.mzagorscak.spiza.domain.model.SuggestionSortingType
 import kotlinx.coroutines.flow.Flow
 
 @Dao

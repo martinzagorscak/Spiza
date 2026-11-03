@@ -154,10 +154,10 @@ val domainModule =
         single<CanAddMemberToHouseholdUseCase> { CanAddMemberToHouseholdUseCaseImpl(constraintsManager = get()) }
 
         // Suggestion Use Cases
-        single<ObserveSuggestionsUseCase> { ObserveSuggestionsUseCaseImpl(localDataSource = get()) }
-        single<AddOrUpdateSuggestionUseCase> { AddOrUpdateSuggestionUseCaseImpl(localDataSource = get()) }
-        single<DeleteSuggestionUseCase> { DeleteSuggestionUseCaseImpl(localDataSource = get()) }
-        single<DeleteAllSuggestionsUseCase> { DeleteAllSuggestionsUseCaseImpl(localDataSource = get()) }
+        single<ObserveSuggestionsUseCase> { ObserveSuggestionsUseCaseImpl(repository = get()) }
+        single<AddOrUpdateSuggestionUseCase> { AddOrUpdateSuggestionUseCaseImpl(repository = get()) }
+        single<DeleteSuggestionUseCase> { DeleteSuggestionUseCaseImpl(repository = get()) }
+        single<DeleteAllSuggestionsUseCase> { DeleteAllSuggestionsUseCaseImpl(repository = get()) }
 
         // Permission Use Cases
         // PermissionRepository is bound to a screen's PermissionsController, so these are factories that forward

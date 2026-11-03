@@ -1,4 +1,4 @@
-package com.mzagorscak.spiza.data.suggestion.model
+package com.mzagorscak.spiza.domain.model
 
 enum class SuggestionSortingType {
     ALPHABETICAL_ASC,
