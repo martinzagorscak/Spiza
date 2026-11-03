@@ -6,9 +6,9 @@ import com.mzagorscak.spiza.crash.AndroidCrashLogger
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.data.household.FirestoreHouseholdDataSource
 import com.mzagorscak.spiza.data.household.HouseholdDataSource
-import com.mzagorscak.spiza.data.suggestion.local.SpizaDatabase
-import com.mzagorscak.spiza.data.suggestion.local.getAndroidSpizaDatabaseBuilder
-import com.mzagorscak.spiza.data.suggestion.local.getSpizaDatabase
+import com.mzagorscak.spiza.data.local.SpizaDatabase
+import com.mzagorscak.spiza.data.local.getAndroidSpizaDatabaseBuilder
+import com.mzagorscak.spiza.data.local.getSpizaDatabase
 import com.mzagorscak.spiza.data.user.FirestoreUserDataSource
 import com.mzagorscak.spiza.data.user.UserDataSource
 import org.koin.android.ext.koin.androidContext

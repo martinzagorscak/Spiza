@@ -1,4 +1,4 @@
-package com.mzagorscak.spiza.data.suggestion.local
+package com.mzagorscak.spiza.data.local
 
 import android.content.Context
 import androidx.room.Room

@@ -29,6 +29,7 @@ shared/src/
     auth/              AuthService interface
     crash/             CrashLogger interface (Crashlytics on both platforms)
     data/<feature>/    RepositoryImpl, DataSource interfaces, local (Room DAO), model (DTO/Entity + mappers)
+    data/local/        SpizaDatabase (shared Room DB for all features), builder, migrations
     data/di/           dataModule (Koin)
     domain/model/      pure domain models (no Compose, no Firebase, no Room)
     domain/repository/ repository interfaces
@@ -91,5 +92,5 @@ Detailed rules live in `.claude/rules/` and are loaded automatically. Read them 
 - Every new `Route` must be registered in `routeSerializersModule` (Route.kt).
 - Every new UseCase/Repository/ViewModel must be registered in the matching Koin module.
 - Firestore schema or permission changes ⇒ update `firestore.rules` (see above).
-- Room schema is `version = 2` with `exportSchema = false`: any entity change needs a version bump **and** a migration in `SpizaDatabaseMigrations.kt` — see `/room-change`.
+- Room schema (`data/local/SpizaDatabase.kt`) is `version = 2` with `exportSchema = false`: any entity change needs a version bump **and** a migration in `SpizaDatabaseMigrations.kt` — see `/room-change`.
 - Keep changes minimal and in the existing style; do not refactor unrelated code in the same change.

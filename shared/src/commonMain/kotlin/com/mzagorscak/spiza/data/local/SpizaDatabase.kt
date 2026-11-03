@@ -1,4 +1,4 @@
-package com.mzagorscak.spiza.data.suggestion.local
+package com.mzagorscak.spiza.data.local
 
 import androidx.room.ConstructedBy
 import androidx.room.Database
@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import com.mzagorscak.spiza.data.loyaltyCard.local.LoyaltyCardDao
 import com.mzagorscak.spiza.data.loyaltyCard.model.LoyaltyCardEntity
+import com.mzagorscak.spiza.data.suggestion.local.SuggestionDao
 import com.mzagorscak.spiza.data.suggestion.model.SuggestionEntity
 
 @Database(

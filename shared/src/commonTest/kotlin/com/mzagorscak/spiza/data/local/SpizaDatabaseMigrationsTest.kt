@@ -1,4 +1,4 @@
-package com.mzagorscak.spiza.data.suggestion.local
+package com.mzagorscak.spiza.data.local
 
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import kotlin.test.Test

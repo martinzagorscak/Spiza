@@ -1,13 +1,13 @@
 package com.mzagorscak.spiza.data.di
 
 import com.mzagorscak.spiza.data.household.HouseholdRepositoryImpl
+import com.mzagorscak.spiza.data.local.SpizaDatabase
 import com.mzagorscak.spiza.data.loyaltyCard.LoyaltyCardRepositoryImpl
 import com.mzagorscak.spiza.data.loyaltyCard.local.LoyaltyCardDao
 import com.mzagorscak.spiza.data.repository.PermissionRepositoryImpl
 import com.mzagorscak.spiza.data.settings.SettingsDataSource
 import com.mzagorscak.spiza.data.settings.SettingsDataSourceImpl
 import com.mzagorscak.spiza.data.settings.SettingsRepositoryImpl
-import com.mzagorscak.spiza.data.suggestion.local.SpizaDatabase
 import com.mzagorscak.spiza.data.suggestion.local.SuggestionDao
 import com.mzagorscak.spiza.data.suggestion.local.SuggestionLocalDataSource
 import com.mzagorscak.spiza.data.suggestion.local.SuggestionLocalDataSourceImpl

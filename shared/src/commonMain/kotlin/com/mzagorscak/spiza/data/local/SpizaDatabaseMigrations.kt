@@ -1,4 +1,4 @@
-package com.mzagorscak.spiza.data.suggestion.local
+package com.mzagorscak.spiza.data.local
 
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection

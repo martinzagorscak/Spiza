@@ -7,9 +7,9 @@ import com.mzagorscak.spiza.crash.IosCrashLogger
 import com.mzagorscak.spiza.crash.IosCrashLoggerBridge
 import com.mzagorscak.spiza.data.household.HouseholdDataSource
 import com.mzagorscak.spiza.data.household.IosHouseholdDataSource
-import com.mzagorscak.spiza.data.suggestion.local.SpizaDatabase
-import com.mzagorscak.spiza.data.suggestion.local.getIosSpizaDatabaseBuilder
-import com.mzagorscak.spiza.data.suggestion.local.getSpizaDatabase
+import com.mzagorscak.spiza.data.local.SpizaDatabase
+import com.mzagorscak.spiza.data.local.getIosSpizaDatabaseBuilder
+import com.mzagorscak.spiza.data.local.getSpizaDatabase
 import com.mzagorscak.spiza.data.user.IosUserDataSource
 import com.mzagorscak.spiza.data.user.UserDataSource
 import org.koin.core.module.Module
