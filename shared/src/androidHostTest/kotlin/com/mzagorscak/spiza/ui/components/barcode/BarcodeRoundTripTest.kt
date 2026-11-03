@@ -142,6 +142,47 @@ class BarcodeRoundTripTest {
     }
 
     @Test
+    fun everyFormat_hasARoundTripSample() {
+        // Fails when a format is added without teaching the encoder (and this test) about it.
+        val samples = mapOf(
+            LoyaltyCardFormat.Ean13 to ("4006381333931" to BarcodeFormat.EAN_13),
+            LoyaltyCardFormat.Ean8 to ("96385074" to BarcodeFormat.EAN_8),
+            LoyaltyCardFormat.UpcA to ("036000291452" to BarcodeFormat.UPC_A),
+            LoyaltyCardFormat.UpcE to ("01234565" to BarcodeFormat.UPC_E),
+            LoyaltyCardFormat.Code128 to ("CARD-128" to BarcodeFormat.CODE_128),
+            LoyaltyCardFormat.Code39 to ("CARD-39" to BarcodeFormat.CODE_39),
+            LoyaltyCardFormat.Code93 to ("CARD-93" to BarcodeFormat.CODE_93),
+            LoyaltyCardFormat.Itf to ("0123456789" to BarcodeFormat.ITF),
+            LoyaltyCardFormat.Codabar to ("A40156B" to BarcodeFormat.CODABAR),
+            LoyaltyCardFormat.QrCode to ("CARD QR" to BarcodeFormat.QR_CODE),
+            LoyaltyCardFormat.Aztec to ("CARD AZTEC" to BarcodeFormat.AZTEC),
+            LoyaltyCardFormat.Pdf417 to ("CARD PDF417" to BarcodeFormat.PDF_417),
+        )
+        val keepGuards = mapOf<DecodeHintType, Any>(DecodeHintType.RETURN_CODABAR_START_END to true)
+
+        assertEquals(LoyaltyCardFormat.entries.toSet(), samples.keys)
+        samples.forEach { (format, sample) ->
+            assertRoundTrip(sample.first, format, sample.second, extraHints = keepGuards)
+        }
+    }
+
+    @Test
+    fun linearCodes_roundTrip_atTheMaximumAcceptedLength() {
+        assertRoundTrip("A".repeat(80), LoyaltyCardFormat.Code128, BarcodeFormat.CODE_128)
+        assertRoundTrip("12".repeat(40), LoyaltyCardFormat.Code128, BarcodeFormat.CODE_128)
+        assertNull(encodeBarcode(content = "A".repeat(81), format = LoyaltyCardFormat.Code128))
+    }
+
+    @Test
+    fun twoDimensionalCodes_encode_theLongestAcceptedContent() {
+        // The validator accepts up to 1000 characters: anything it accepts must also render, or the saved card shows no code.
+        val longest = "1234567890".repeat(100)
+        listOf(LoyaltyCardFormat.QrCode, LoyaltyCardFormat.Aztec, LoyaltyCardFormat.Pdf417).forEach { format ->
+            assertNotNull(encodeBarcode(content = longest, format = format), "$format could not encode 1000 characters")
+        }
+    }
+
+    @Test
     fun encodeBarcode_returnsNull_whenContentIsInvalidForTheFormat() {
         assertNull(encodeBarcode(content = "4006381333932", format = LoyaltyCardFormat.Ean13))
         assertNull(encodeBarcode(content = "lowercase", format = LoyaltyCardFormat.Code39))

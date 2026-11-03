@@ -109,20 +109,24 @@ private fun Barcode.toScannedCode(): ScannedCode? =
     rawValue?.let { value ->
         ScannedCode(
             value = value,
-            format = when (format) {
-                Barcode.FORMAT_EAN_13 -> LoyaltyCardFormat.Ean13
-                Barcode.FORMAT_EAN_8 -> LoyaltyCardFormat.Ean8
-                Barcode.FORMAT_UPC_A -> LoyaltyCardFormat.UpcA
-                Barcode.FORMAT_UPC_E -> LoyaltyCardFormat.UpcE
-                Barcode.FORMAT_CODE_128 -> LoyaltyCardFormat.Code128
-                Barcode.FORMAT_CODE_39 -> LoyaltyCardFormat.Code39
-                Barcode.FORMAT_CODE_93 -> LoyaltyCardFormat.Code93
-                Barcode.FORMAT_ITF -> LoyaltyCardFormat.Itf
-                Barcode.FORMAT_CODABAR -> LoyaltyCardFormat.Codabar
-                Barcode.FORMAT_QR_CODE -> LoyaltyCardFormat.QrCode
-                Barcode.FORMAT_AZTEC -> LoyaltyCardFormat.Aztec
-                Barcode.FORMAT_PDF417 -> LoyaltyCardFormat.Pdf417
-                else -> null
-            },
+            format = mlKitFormatToLoyaltyCardFormat(format),
         )
+    }
+
+/** `null` for symbologies the app cannot display. */
+internal fun mlKitFormatToLoyaltyCardFormat(format: Int): LoyaltyCardFormat? =
+    when (format) {
+        Barcode.FORMAT_EAN_13 -> LoyaltyCardFormat.Ean13
+        Barcode.FORMAT_EAN_8 -> LoyaltyCardFormat.Ean8
+        Barcode.FORMAT_UPC_A -> LoyaltyCardFormat.UpcA
+        Barcode.FORMAT_UPC_E -> LoyaltyCardFormat.UpcE
+        Barcode.FORMAT_CODE_128 -> LoyaltyCardFormat.Code128
+        Barcode.FORMAT_CODE_39 -> LoyaltyCardFormat.Code39
+        Barcode.FORMAT_CODE_93 -> LoyaltyCardFormat.Code93
+        Barcode.FORMAT_ITF -> LoyaltyCardFormat.Itf
+        Barcode.FORMAT_CODABAR -> LoyaltyCardFormat.Codabar
+        Barcode.FORMAT_QR_CODE -> LoyaltyCardFormat.QrCode
+        Barcode.FORMAT_AZTEC -> LoyaltyCardFormat.Aztec
+        Barcode.FORMAT_PDF417 -> LoyaltyCardFormat.Pdf417
+        else -> null
     }

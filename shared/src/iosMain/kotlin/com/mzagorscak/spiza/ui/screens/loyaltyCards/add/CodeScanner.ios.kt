@@ -44,7 +44,7 @@ import platform.darwin.dispatch_queue_create
 
 // Data Matrix is detected only so the user is told it is unsupported instead of seeing nothing happen.
 // iOS has no separate UPC-A type: UPC-A arrives as EAN-13 with a leading zero.
-private val SupportedTypes: Map<String?, LoyaltyCardFormat?> = mapOf(
+internal val SupportedTypes: Map<String?, LoyaltyCardFormat?> = mapOf(
     AVMetadataObjectTypeEAN13Code to LoyaltyCardFormat.Ean13,
     AVMetadataObjectTypeEAN8Code to LoyaltyCardFormat.Ean8,
     AVMetadataObjectTypeUPCECode to LoyaltyCardFormat.UpcE,
