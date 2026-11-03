@@ -11,6 +11,8 @@
     <string name="error_generic">Nešto je pošlo po zlu. Pokušaj ponovno.</string>
 
     <!--  Screen specifics  -->
+    <string name="bottom_navigation_shopping_list">Popis</string>
+    <string name="bottom_navigation_loyalty_cards">Kartice</string>
     <string name="settings_title">Postavke</string>
     <string name="settings_section_profile">Profil</string>
     <string name="settings_user_key_label">Vaš ključ</string>
@@ -28,7 +30,6 @@
     <string name="settings_section_general">Općenito</string>
     <string name="settings_household_management">Upravljanje kućanstvom</string>
     <string name="settings_shopping_items_saving">Spremanje artikala za kupnju</string>
-    <string name="settings_loyalty_cards">Kartice vjernosti</string>
     <string name="settings_shopping_items_saving_sorting_label">Sortirano po:</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_asc">Abecedno uzlazno</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_desc">Abecedno silazno</string>

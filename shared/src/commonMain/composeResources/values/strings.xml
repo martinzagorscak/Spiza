@@ -11,6 +11,8 @@
     <string name="error_generic">Something went wrong. Please try again.</string>
 
     <!--  Screen specifics  -->
+    <string name="bottom_navigation_shopping_list">Shopping list</string>
+    <string name="bottom_navigation_loyalty_cards">Loyalty cards</string>
     <string name="settings_title">Settings</string>
     <string name="settings_section_profile">Profile</string>
     <string name="settings_user_key_label">Your key</string>
@@ -28,7 +30,6 @@
     <string name="settings_section_general">General</string>
     <string name="settings_household_management">Household management</string>
     <string name="settings_shopping_items_saving">Shopping items saving</string>
-    <string name="settings_loyalty_cards">Loyalty cards</string>
     <string name="settings_shopping_items_saving_sorting_label">Sorted by:</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_asc">Alphabetical ascending</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_desc">Alphabetical descending</string>

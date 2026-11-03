@@ -32,6 +32,8 @@ import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.components.common.performHapticFeedback
 import com.mzagorscak.spiza.ui.model.PresentableArticleItem
 import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
+import com.mzagorscak.spiza.ui.screens.common.MainBottomBar
+import com.mzagorscak.spiza.ui.screens.common.MainTab
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -129,6 +131,12 @@ fun ShoppingListScreen(
                     }
                 }
             },
+            bottomBar = {
+                MainBottomBar(
+                    selectedTab = MainTab.ShoppingList,
+                    onTabClick = callbacks.onTabClick,
+                )
+            },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             contentWindowInsets = WindowInsets.safeDrawing,
             modifier = modifier.fillMaxSize(),
@@ -205,6 +213,7 @@ fun ShoppingListScreen(
 
 data class ShoppingListScreenCallbacks(
     val onSettingsClick: () -> Unit,
+    val onTabClick: (MainTab) -> Unit,
     val onOtherHouseholdClick: (householdId: String) -> Unit,
     val onCreateHouseholdClick: () -> Unit,
     val onRetryClick: () -> Unit,
@@ -244,6 +253,7 @@ private fun ShoppingListScreenPreview() {
             ),
             callbacks = ShoppingListScreenCallbacks(
                 onSettingsClick = {},
+                onTabClick = {},
                 onOtherHouseholdClick = {},
                 onCreateHouseholdClick = {},
                 onRetryClick = {},

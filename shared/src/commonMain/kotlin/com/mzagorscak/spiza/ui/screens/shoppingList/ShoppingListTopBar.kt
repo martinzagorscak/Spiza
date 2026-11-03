@@ -105,6 +105,7 @@ private fun ShoppingListTopBarLayoutPreview() {
         ),
         callbacks = ShoppingListScreenCallbacks(
             onSettingsClick = {},
+            onTabClick = {},
             onOtherHouseholdClick = {},
             onCreateHouseholdClick = {},
             onRetryClick = {},

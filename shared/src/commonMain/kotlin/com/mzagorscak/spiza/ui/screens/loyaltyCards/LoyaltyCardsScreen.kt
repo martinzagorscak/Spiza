@@ -16,18 +16,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.mzagorscak.spiza.ui.components.FallbackState
-import com.mzagorscak.spiza.ui.components.IconButton
-import com.mzagorscak.spiza.ui.components.IconButtonAppearance
-import com.mzagorscak.spiza.ui.components.IconButtonSize
-import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.LoyaltyCard
 import com.mzagorscak.spiza.ui.components.TopBar
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
+import com.mzagorscak.spiza.ui.screens.common.MainBottomBar
+import com.mzagorscak.spiza.ui.screens.common.MainTab
 import com.mzagorscak.spiza.ui.theme.padding400
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
-import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_plus
 import spiza.shared.generated.resources.loyalty_cards_empty_description
 import spiza.shared.generated.resources.loyalty_cards_empty_title
@@ -44,17 +41,12 @@ fun LoyaltyCardsScreen(
         topBar = {
             TopBar(
                 title = stringResource(Res.string.loyalty_cards_title),
-                leadingContent = {
-                    IconButton(
-                        resource = Res.drawable.ic_back,
-                        onClick = callbacks.onBackClick,
-                        appearance = IconButtonAppearance(
-                            variant = IconButtonVariant.IconBased,
-                            size = IconButtonSize.Medium,
-                            tintColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                    )
-                },
+            )
+        },
+        bottomBar = {
+            MainBottomBar(
+                selectedTab = MainTab.LoyaltyCards,
+                onTabClick = callbacks.onTabClick,
             )
         },
         floatingActionButton = {
@@ -109,7 +101,7 @@ fun LoyaltyCardsScreen(
 }
 
 data class LoyaltyCardsScreenCallbacks(
-    val onBackClick: () -> Unit,
+    val onTabClick: (MainTab) -> Unit,
     val onAddLoyaltyCardClick: () -> Unit,
     val onCardClick: (Long) -> Unit,
 )

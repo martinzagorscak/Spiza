@@ -1,6 +1,9 @@
 package com.mzagorscak.spiza.navigation
 
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,6 +21,7 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.mzagorscak.spiza.permissions.rememberPlatformPermissionsController
 import com.mzagorscak.spiza.ui.components.common.performHapticFeedback
+import com.mzagorscak.spiza.ui.screens.common.MainTab
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdCallbacks
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdScreen
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
@@ -143,6 +147,10 @@ fun AppNavigation(isSignedIn: Boolean) {
                                         performHapticFeedback(hapticFeedback)
                                         backStack.add(Route.Settings)
                                     },
+                                    onTabClick = { tab ->
+                                        performHapticFeedback(hapticFeedback)
+                                        backStack.switchTab(tab)
+                                    },
                                     onOtherHouseholdClick = viewModel::onHouseholdSelected,
                                     onCreateHouseholdClick = {
                                         performHapticFeedback(hapticFeedback)
@@ -215,10 +223,6 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     onShoppingItemsSavingClick = {
                                         performHapticFeedback(hapticFeedback)
                                         backStack.add(Route.SuggestionsSavingSettings)
-                                    },
-                                    onLoyaltyCardsClick = {
-                                        performHapticFeedback(hapticFeedback)
-                                        backStack.add(Route.LoyaltyCards)
                                     },
                                     onSignOutClick = {
                                         performHapticFeedback(hapticFeedback)
@@ -336,7 +340,7 @@ fun AppNavigation(isSignedIn: Boolean) {
                             },
                         )
                     }
-                    entry<Route.LoyaltyCards> {
+                    entry<Route.LoyaltyCards>(metadata = tabTransition) {
                         val viewModel = koinViewModel<LoyaltyCardsViewModel>()
                         val state by viewModel.state().collectAsStateWithLifecycle()
                         LoyaltyCardsScreen(
@@ -347,9 +351,9 @@ fun AppNavigation(isSignedIn: Boolean) {
                             ),
                             callbacks = remember {
                                 LoyaltyCardsScreenCallbacks(
-                                    onBackClick = {
+                                    onTabClick = { tab ->
                                         performHapticFeedback(hapticFeedback)
-                                        backStack.popIfTop(Route.LoyaltyCards)
+                                        backStack.switchTab(tab)
                                     },
                                     onAddLoyaltyCardClick = {
                                         performHapticFeedback(hapticFeedback)
@@ -423,8 +427,22 @@ fun AppNavigation(isSignedIn: Boolean) {
     }
 }
 
+// Switching tabs crossfades instead of using the push/pop slide, so the bottom bar stays in place.
+private val tabTransition =
+    NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() } +
+        NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() } +
+        NavDisplay.predictivePopTransitionSpec { fadeIn() togetherWith fadeOut() }
+
 private fun NavBackStack<NavKey>.popIfTop(route: Route) {
     if (size > 1 && lastOrNull() == route) {
         removeLastOrNull()
+    }
+}
+
+// Loyalty cards sit on top of the shopping list instead of replacing it, so system back on that tab returns to the start tab.
+private fun NavBackStack<NavKey>.switchTab(tab: MainTab) {
+    when (tab) {
+        MainTab.ShoppingList -> popIfTop(Route.LoyaltyCards)
+        MainTab.LoyaltyCards -> if (lastOrNull() == Route.ShoppingList) add(Route.LoyaltyCards)
     }
 }
