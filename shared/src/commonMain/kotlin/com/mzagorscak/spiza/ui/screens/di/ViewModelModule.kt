@@ -110,6 +110,7 @@ val viewModelModule = module {
         AddLoyaltyCardViewModelImpl(
             addLoyaltyCardUseCase = get(),
             validateLoyaltyCardCodeUseCase = get(),
+            canEnterLoyaltyCardCodeUseCase = get(),
             detectLoyaltyCardFormatUseCase = get(),
             normalizeScannedLoyaltyCardCodeUseCase = get(),
             checkPermissionUseCase = get { parametersOf(controller) },

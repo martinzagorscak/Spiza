@@ -65,6 +65,15 @@ class ValidateLoyaltyCardCodeUseCaseImpl : ValidateLoyaltyCardCodeUseCase {
     override operator fun invoke(code: LoyaltyCardCode): Boolean = LoyaltyCardCodes.isValid(code)
 }
 
+/** Whether typed or pasted input fits the longest code any format accepts. */
+interface CanEnterLoyaltyCardCodeUseCase {
+    operator fun invoke(value: String): Boolean
+}
+
+class CanEnterLoyaltyCardCodeUseCaseImpl : CanEnterLoyaltyCardCodeUseCase {
+    override operator fun invoke(value: String): Boolean = LoyaltyCardCodes.canEnter(value)
+}
+
 interface DetectLoyaltyCardFormatUseCase {
     operator fun invoke(value: String): LoyaltyCardFormat
 }

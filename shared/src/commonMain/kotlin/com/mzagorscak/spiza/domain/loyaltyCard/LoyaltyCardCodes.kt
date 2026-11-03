@@ -18,6 +18,11 @@ private const val CODABAR_GUARDS = "ABCD"
 
 /** Validation, detection and normalization rules for loyalty card codes. */
 internal object LoyaltyCardCodes {
+    /** The longest content any format accepts; longer input can never become a valid card. */
+    const val MAX_CODE_LENGTH = MAX_TWO_DIMENSIONAL_CODE_LENGTH
+
+    fun canEnter(value: String): Boolean = value.length <= MAX_CODE_LENGTH
+
     fun isValid(code: LoyaltyCardCode): Boolean {
         val value = code.value
         if (value.isBlank()) return false

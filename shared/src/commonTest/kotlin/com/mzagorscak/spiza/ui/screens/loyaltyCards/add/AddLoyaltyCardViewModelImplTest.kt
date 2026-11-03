@@ -1,9 +1,11 @@
 package com.mzagorscak.spiza.ui.screens.loyaltyCards.add
 
+import com.mzagorscak.spiza.domain.loyaltyCard.LoyaltyCardCodes
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.domain.model.PermissionType
 import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
 import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.NormalizeScannedLoyaltyCardCodeUseCaseImpl
@@ -45,6 +47,7 @@ class AddLoyaltyCardViewModelImplTest {
         AddLoyaltyCardViewModelImpl(
             addLoyaltyCardUseCase = AddLoyaltyCardUseCaseImpl(repository = repository),
             validateLoyaltyCardCodeUseCase = ValidateLoyaltyCardCodeUseCaseImpl(),
+            canEnterLoyaltyCardCodeUseCase = CanEnterLoyaltyCardCodeUseCaseImpl(),
             detectLoyaltyCardFormatUseCase = DetectLoyaltyCardFormatUseCaseImpl(),
             normalizeScannedLoyaltyCardCodeUseCase = NormalizeScannedLoyaltyCardCodeUseCaseImpl(),
             checkPermissionUseCase = grantedPermission,
@@ -135,6 +138,29 @@ class AddLoyaltyCardViewModelImplTest {
 
         assertEquals(LoyaltyCardFormat.Ean13, viewModel.state().value.format)
         assertTrue(viewModel.state().value.isCodeValid)
+    }
+
+    @Test
+    fun onCodeChange_acceptsInput_upToTheMaximumLength() {
+        val viewModel = viewModel()
+        val longest = "A".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH)
+
+        viewModel.onCodeChange(longest)
+
+        assertEquals(longest, viewModel.state().value.codeText)
+    }
+
+    @Test
+    fun onCodeChange_rejectsInput_overTheMaximumLength() {
+        val viewModel = viewModel()
+        viewModel.onCodeChange("4006381333931")
+
+        viewModel.onCodeChange("1".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH + 1))
+
+        val state = viewModel.state().value
+        assertEquals("4006381333931", state.codeText)
+        assertEquals(LoyaltyCardFormat.Ean13, state.format)
+        assertTrue(state.isCodeValid)
     }
 
     @Test

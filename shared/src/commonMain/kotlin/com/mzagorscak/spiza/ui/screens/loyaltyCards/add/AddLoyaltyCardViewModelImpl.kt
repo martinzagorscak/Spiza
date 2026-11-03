@@ -9,6 +9,7 @@ import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.domain.model.PermissionType
 import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCase
+import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCase
 import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
 import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCase
 import com.mzagorscak.spiza.domain.usecase.NormalizeScannedLoyaltyCardCodeUseCase
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.update
 internal class AddLoyaltyCardViewModelImpl(
     private val addLoyaltyCardUseCase: AddLoyaltyCardUseCase,
     private val validateLoyaltyCardCodeUseCase: ValidateLoyaltyCardCodeUseCase,
+    private val canEnterLoyaltyCardCodeUseCase: CanEnterLoyaltyCardCodeUseCase,
     private val detectLoyaltyCardFormatUseCase: DetectLoyaltyCardFormatUseCase,
     private val normalizeScannedLoyaltyCardCodeUseCase: NormalizeScannedLoyaltyCardCodeUseCase,
     private val checkPermissionUseCase: CheckPermissionUseCase,
@@ -47,6 +49,8 @@ internal class AddLoyaltyCardViewModelImpl(
     }
 
     override fun onCodeChange(code: String) {
+        // Over-long input is rejected rather than cut: a truncated paste could form a different, still valid code.
+        if (canEnterLoyaltyCardCodeUseCase(code).not()) return
         state.update { current ->
             val trimmed = code.trim()
             val format = when {

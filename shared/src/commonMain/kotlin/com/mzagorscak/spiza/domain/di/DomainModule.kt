@@ -14,6 +14,8 @@ import com.mzagorscak.spiza.domain.usecase.CanAddItemToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanAddItemToHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanAddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanAddMemberToHouseholdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCase
+import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCase
@@ -171,6 +173,7 @@ val domainModule =
         single<AddLoyaltyCardUseCase> { AddLoyaltyCardUseCaseImpl(repository = get()) }
         single<DeleteLoyaltyCardUseCase> { DeleteLoyaltyCardUseCaseImpl(repository = get()) }
         single<ValidateLoyaltyCardCodeUseCase> { ValidateLoyaltyCardCodeUseCaseImpl() }
+        single<CanEnterLoyaltyCardCodeUseCase> { CanEnterLoyaltyCardCodeUseCaseImpl() }
         single<DetectLoyaltyCardFormatUseCase> { DetectLoyaltyCardFormatUseCaseImpl() }
         single<NormalizeScannedLoyaltyCardCodeUseCase> { NormalizeScannedLoyaltyCardCodeUseCaseImpl() }
     }

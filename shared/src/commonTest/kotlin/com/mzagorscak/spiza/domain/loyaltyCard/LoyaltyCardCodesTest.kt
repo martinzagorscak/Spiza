@@ -83,6 +83,18 @@ class LoyaltyCardCodesTest {
     }
 
     @Test
+    fun canEnter_allowsInput_upToTheLongestAcceptedCode() {
+        assertTrue(LoyaltyCardCodes.canEnter("1".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH)))
+        assertFalse(LoyaltyCardCodes.canEnter("1".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH + 1)))
+    }
+
+    @Test
+    fun maxCodeLength_isTheLongestLengthAnyFormatAccepts() {
+        val longest = "1".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH)
+        assertTrue(LoyaltyCardFormat.entries.any { isValid(longest, it) })
+    }
+
+    @Test
     fun detectFormat_recognisesRetailBarcodes_byLengthAndCheckDigit() {
         assertEquals(LoyaltyCardFormat.Ean13, LoyaltyCardCodes.detectFormat("4006381333931"))
         assertEquals(LoyaltyCardFormat.UpcA, LoyaltyCardCodes.detectFormat("036000291452"))
