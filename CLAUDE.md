@@ -91,5 +91,5 @@ Detailed rules live in `.claude/rules/` and are loaded automatically. Read them 
 - Every new `Route` must be registered in `routeSerializersModule` (Route.kt).
 - Every new UseCase/Repository/ViewModel must be registered in the matching Koin module.
 - Firestore schema or permission changes ⇒ update `firestore.rules` (see above).
-- Room schema is `version = 1` with `exportSchema = false`: any entity change needs a version bump **and** a migration — see `/room-change`.
+- Room schema is `version = 2` with `exportSchema = false`: any entity change needs a version bump **and** a migration in `SpizaDatabaseMigrations.kt` — see `/room-change`.
 - Keep changes minimal and in the existing style; do not refactor unrelated code in the same change.

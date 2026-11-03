@@ -7,7 +7,7 @@ description: Safely add or change a Room entity, DAO or the SpizaDatabase schema
 
 Change: `$ARGUMENTS`.
 
-Context: `shared/.../data/suggestion/local/SpizaDatabase.kt` is the single database (entities: `SuggestionEntity`, `LoyaltyCardEntity`), `version = 1`, `exportSchema = false`. Users already have data on device, so **schema changes without a migration crash or wipe data**.
+Context: `shared/.../data/suggestion/local/SpizaDatabase.kt` is the single database (entities: `SuggestionEntity`, `LoyaltyCardEntity`), current `version = 2` with migrations in `SpizaDatabaseMigrations.kt`, `exportSchema = false`. Users already have data on device, so **schema changes without a migration crash or wipe data**.
 
 1. Entity in `data/<feature>/model/<X>Entity.kt` with `toDomainModel()` / `toEntity()` mappers; DAO in `data/<feature>/local/<X>Dao.kt` (`Flow` for observe, `suspend` for one-shots).
 2. New entity → add to `@Database(entities = [...])` and an `abstract fun <x>Dao()`; expose the DAO in `DataModule` (`single<XDao> { get<SpizaDatabase>().xDao() }`).
