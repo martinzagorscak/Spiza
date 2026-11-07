@@ -130,6 +130,89 @@ class AddLoyaltyCardViewModelImplTest {
     }
 
     @Test
+    fun onImageCodeDecoded_acceptsCode_afterASingleRead() {
+        val viewModel = viewModel()
+
+        viewModel.onImageCodeDecoded(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
+
+        val state = viewModel.state().value
+        assertEquals(AddLoyaltyCardState.ScanStatus.Scanned, state.scanStatus)
+        assertEquals("4006381333931", state.codeText)
+        assertEquals(LoyaltyCardFormat.Ean13, state.format)
+        assertTrue(state.isCodeValid)
+    }
+
+    @Test
+    fun onImageCodeDecoded_normalizesUpcAReportedAsEan13() {
+        val viewModel = viewModel()
+
+        viewModel.onImageCodeDecoded(ScannedCode(value = "0036000291452", format = LoyaltyCardFormat.Ean13))
+
+        assertEquals(LoyaltyCardFormat.UpcA, viewModel.state().value.format)
+        assertEquals("036000291452", viewModel.state().value.codeText)
+    }
+
+    @Test
+    fun onImageCodeDecoded_showsNotFound_whenImageHasNoCode() {
+        val viewModel = viewModel()
+
+        viewModel.onImageCodeDecoded(null)
+
+        assertEquals(AddLoyaltyCardState.ScanStatus.NotFoundInImage, viewModel.state().value.scanStatus)
+        assertEquals("", viewModel.state().value.codeText)
+    }
+
+    @Test
+    fun onImageCodeDecoded_showsUnsupported_whenFormatIsUnknown() {
+        val viewModel = viewModel()
+
+        viewModel.onImageCodeDecoded(ScannedCode(value = "data matrix content", format = null))
+
+        assertEquals(AddLoyaltyCardState.ScanStatus.Unsupported, viewModel.state().value.scanStatus)
+        assertFalse(viewModel.state().value.isCodeValid)
+    }
+
+    @Test
+    fun onImageCodeDecoded_clearsACameraCode_whenImageHasNoCode() {
+        val viewModel = viewModel()
+        viewModel.onCardNameChange("Store")
+        viewModel.scanTwice(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
+
+        viewModel.onImageCodeDecoded(null)
+
+        val state = viewModel.state().value
+        assertEquals("", state.codeText)
+        assertFalse(state.isCodeValid)
+        assertFalse(state.isSaveEnabled)
+    }
+
+    @Test
+    fun onImageCodeDecoded_clearsACameraCode_whenImageCodeIsUnsupported() {
+        val viewModel = viewModel()
+        viewModel.onCardNameChange("Store")
+        viewModel.scanTwice(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
+
+        viewModel.onImageCodeDecoded(ScannedCode(value = "data matrix content", format = null))
+
+        val state = viewModel.state().value
+        assertEquals(AddLoyaltyCardState.ScanStatus.Unsupported, state.scanStatus)
+        assertEquals("", state.codeText)
+        assertFalse(state.isSaveEnabled)
+    }
+
+    @Test
+    fun onCodeScanned_needsTwoNewReads_afterAnImageWasDecoded() {
+        val viewModel = viewModel()
+        val code = ScannedCode(value = "96385074", format = LoyaltyCardFormat.Ean8)
+        viewModel.onCodeScanned(code)
+
+        viewModel.onImageCodeDecoded(null)
+        viewModel.onCodeScanned(code)
+
+        assertEquals(AddLoyaltyCardState.ScanStatus.NotFoundInImage, viewModel.state().value.scanStatus)
+    }
+
+    @Test
     fun onCodeChange_detectsFormat_whenTyped() {
         val viewModel = viewModel()
         viewModel.onInputTypeChange(AddLoyaltyCardState.InputType.Manual)

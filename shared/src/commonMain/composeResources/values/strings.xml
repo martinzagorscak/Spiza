@@ -102,6 +102,8 @@
     <string name="loyalty_cards_add_scanned_title">Code scanned</string>
     <string name="loyalty_cards_add_scanned_code">%1$s · %2$s</string>
     <string name="loyalty_cards_add_scan_again">Scan again</string>
+    <string name="loyalty_cards_add_pick_image">Load from gallery</string>
+    <string name="loyalty_cards_add_image_no_code">No code found in this image. Try a sharper screenshot where the whole code is visible, or enter the number manually.</string>
     <string name="loyalty_cards_format_ean_13">EAN-13</string>
     <string name="loyalty_cards_format_ean_8">EAN-8</string>
     <string name="loyalty_cards_format_upc_a">UPC-A</string>

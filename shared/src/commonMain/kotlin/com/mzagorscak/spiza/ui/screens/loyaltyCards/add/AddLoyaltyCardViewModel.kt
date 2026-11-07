@@ -47,6 +47,9 @@ data class AddLoyaltyCardState(
 
         /** The camera read a code the app cannot display; scanning continues. */
         Unsupported,
+
+        /** No code was found in an image picked from the gallery (or it could not be read). */
+        NotFoundInImage,
         Scanned,
     }
 }
@@ -65,6 +68,9 @@ abstract class AddLoyaltyCardViewModel : ViewModel() {
     abstract fun onFormatChange(format: LoyaltyCardFormat)
 
     abstract fun onCodeScanned(code: ScannedCode)
+
+    /** [code] is `null` when the picked image has no readable code. */
+    abstract fun onImageCodeDecoded(code: ScannedCode?)
 
     abstract fun onScanAgainClick()
 

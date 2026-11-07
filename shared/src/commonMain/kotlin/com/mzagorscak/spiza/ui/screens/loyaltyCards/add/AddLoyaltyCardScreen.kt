@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -82,7 +83,8 @@ fun AddLoyaltyCardScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(padding400)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
         ) {
             TextField(
                 text = state.cardName,
@@ -181,6 +183,8 @@ data class AddLoyaltyCardScreenCallbacks(
     val onCodeChange: (String) -> Unit,
     val onFormatChange: (LoyaltyCardFormat) -> Unit,
     val onCodeScanned: (ScannedCode) -> Unit,
+    val onPickImageClick: () -> Unit,
+    val onImageCodeDecoded: (ScannedCode?) -> Unit,
     val onScanAgainClick: () -> Unit,
     val onSaveClick: () -> Unit,
     val onRequestPermission: () -> Unit,

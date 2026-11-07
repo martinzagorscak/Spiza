@@ -102,6 +102,8 @@
     <string name="loyalty_cards_add_scanned_title">Kod je skeniran</string>
     <string name="loyalty_cards_add_scanned_code">%1$s · %2$s</string>
     <string name="loyalty_cards_add_scan_again">Skeniraj ponovno</string>
+    <string name="loyalty_cards_add_pick_image">Učitaj iz galerije</string>
+    <string name="loyalty_cards_add_image_no_code">Na ovoj slici nije pronađen kod. Pokušajte s oštrijim snimkom zaslona na kojem se vidi cijeli kod ili ručno unesite broj.</string>
     <string name="loyalty_cards_format_ean_13">EAN-13</string>
     <string name="loyalty_cards_format_ean_8">EAN-8</string>
     <string name="loyalty_cards_format_upc_a">UPC-A</string>

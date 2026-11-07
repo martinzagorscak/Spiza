@@ -84,7 +84,23 @@ internal class AddLoyaltyCardViewModelImpl(
             return
         }
         pendingScan = null
+        acceptScannedCode(code)
+    }
 
+    override fun onImageCodeDecoded(code: ScannedCode?) {
+        // A still image is read once and reliably, so it skips the two-read confirmation of the camera.
+        pendingScan = null
+        // The camera may have confirmed a code while the picker was open; the picked image replaces it,
+        // otherwise a code the user never saw could be saved.
+        state.update { it.resetCode() }
+        if (code == null) {
+            state.update { it.copy(scanStatus = AddLoyaltyCardState.ScanStatus.NotFoundInImage) }
+            return
+        }
+        acceptScannedCode(code)
+    }
+
+    private fun acceptScannedCode(code: ScannedCode) {
         val format = code.format
         val normalized = format?.let { normalizeScannedLoyaltyCardCodeUseCase(LoyaltyCardCode(value = code.value, format = it)) }
         if (normalized == null || validateLoyaltyCardCodeUseCase(normalized).not()) {

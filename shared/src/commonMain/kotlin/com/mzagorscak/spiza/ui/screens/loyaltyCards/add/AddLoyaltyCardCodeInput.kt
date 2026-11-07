@@ -45,6 +45,8 @@ import spiza.shared.generated.resources.loyalty_cards_add_code_label
 import spiza.shared.generated.resources.loyalty_cards_add_code_placeholder
 import spiza.shared.generated.resources.loyalty_cards_add_format_hint
 import spiza.shared.generated.resources.loyalty_cards_add_format_label
+import spiza.shared.generated.resources.loyalty_cards_add_image_no_code
+import spiza.shared.generated.resources.loyalty_cards_add_pick_image
 import spiza.shared.generated.resources.loyalty_cards_add_scan_again
 import spiza.shared.generated.resources.loyalty_cards_add_scan_hint
 import spiza.shared.generated.resources.loyalty_cards_add_scan_unsupported
@@ -116,8 +118,31 @@ internal fun CameraCodeInput(
     callbacks: AddLoyaltyCardScreenCallbacks,
     modifier: Modifier = Modifier,
 ) {
-    when {
-        state.permissionStatus !is PermissionStatus.Granted -> {
+    val pickImage = rememberImageCodePicker(onCodeDecoded = callbacks.onImageCodeDecoded)
+
+    // A code read from an image is shown even without the camera permission.
+    if (state.scanStatus == AddLoyaltyCardState.ScanStatus.Scanned) {
+        ScannedCodeSummary(
+            state = state,
+            onScanAgainClick = callbacks.onScanAgainClick,
+            modifier = modifier,
+        )
+        return
+    }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(padding300),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        if (state.permissionStatus is PermissionStatus.Granted) {
+            CodeScanner(
+                onCodeScanned = callbacks.onCodeScanned,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ScannerHeight)
+                    .clip(roundedShape300),
+            )
+        } else {
             FallbackState(
                 title = stringResource(Res.string.loyalty_cards_add_camera_permission_title),
                 description = stringResource(Res.string.loyalty_cards_add_camera_permission_description),
@@ -125,44 +150,53 @@ internal fun CameraCodeInput(
                     label = stringResource(Res.string.loyalty_cards_add_camera_permission_cta),
                     onClick = callbacks.onOpenSettings,
                 ),
-                modifier = modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        ScanStatusText(
+            scanStatus = state.scanStatus,
+            isCameraAvailable = state.permissionStatus is PermissionStatus.Granted,
+        )
+        Button(
+            label = stringResource(Res.string.loyalty_cards_add_pick_image),
+            onClick = {
+                callbacks.onPickImageClick()
+                pickImage()
+            },
+            appearance = ButtonAppearance(
+                variant = ButtonVariant.Secondary,
+                size = ButtonSize.Medium,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun ScanStatusText(
+    scanStatus: AddLoyaltyCardState.ScanStatus,
+    isCameraAvailable: Boolean,
+) {
+    val errorText = when (scanStatus) {
+        AddLoyaltyCardState.ScanStatus.Unsupported -> stringResource(Res.string.loyalty_cards_add_scan_unsupported)
+        AddLoyaltyCardState.ScanStatus.NotFoundInImage -> stringResource(Res.string.loyalty_cards_add_image_no_code)
+        AddLoyaltyCardState.ScanStatus.Scanning, AddLoyaltyCardState.ScanStatus.Scanned -> null
+    }
+    when {
+        errorText != null -> {
+            Text(
+                text = errorText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
             )
         }
 
-        state.scanStatus == AddLoyaltyCardState.ScanStatus.Scanned -> {
-            ScannedCodeSummary(
-                state = state,
-                onScanAgainClick = callbacks.onScanAgainClick,
-                modifier = modifier,
+        isCameraAvailable -> {
+            Text(
+                text = stringResource(Res.string.loyalty_cards_add_scan_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-
-        else -> {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(padding300),
-                modifier = modifier.fillMaxWidth(),
-            ) {
-                CodeScanner(
-                    onCodeScanned = callbacks.onCodeScanned,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(ScannerHeight)
-                        .clip(roundedShape300),
-                )
-                if (state.scanStatus == AddLoyaltyCardState.ScanStatus.Unsupported) {
-                    Text(
-                        text = stringResource(Res.string.loyalty_cards_add_scan_unsupported),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                } else {
-                    Text(
-                        text = stringResource(Res.string.loyalty_cards_add_scan_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
         }
     }
 }

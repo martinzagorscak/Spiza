@@ -417,6 +417,8 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     onCodeChange = viewModel::onCodeChange,
                                     onFormatChange = viewModel::onFormatChange,
                                     onCodeScanned = viewModel::onCodeScanned,
+                                    onPickImageClick = { performHapticFeedback(hapticFeedback) },
+                                    onImageCodeDecoded = viewModel::onImageCodeDecoded,
                                     onScanAgainClick = {
                                         performHapticFeedback(hapticFeedback)
                                         viewModel.onScanAgainClick()

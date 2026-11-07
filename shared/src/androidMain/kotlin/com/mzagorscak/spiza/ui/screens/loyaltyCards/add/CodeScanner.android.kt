@@ -105,7 +105,7 @@ private class BarcodeAnalyzer(
 }
 
 // rawValue is the exact encoded content; displayValue is reformatted by ML Kit and must not be stored.
-private fun Barcode.toScannedCode(): ScannedCode? =
+internal fun Barcode.toScannedCode(): ScannedCode? =
     rawValue?.let { value ->
         ScannedCode(
             value = value,
