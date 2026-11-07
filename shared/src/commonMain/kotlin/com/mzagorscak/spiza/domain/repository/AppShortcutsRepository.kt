@@ -10,7 +10,7 @@ interface AppShortcutsRepository {
     /**
      * Publishes the cards of [allCards] that are shortcuts until cancelled. [allCards] must contain every stored card
      * (not only shortcuts) so a deleted card can be told apart from one whose shortcut was only switched off.
-     * Shortcut texts are in the in-app [language] and are re-published when it changes.
+     * The disabled-shortcut message is in the in-app [language] and is re-published when it changes.
      */
     suspend fun syncLoyaltyCardShortcuts(
         allCards: Flow<List<LoyaltyCard>>,

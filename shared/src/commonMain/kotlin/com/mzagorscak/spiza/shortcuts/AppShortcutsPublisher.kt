@@ -11,7 +11,7 @@ interface AppShortcutsPublisher {
      * [cards] is the full desired set of loyalty card shortcuts, in display order: shortcuts of cards not in it are removed,
      * the rest are pushed or updated. [existingCardIds] are the ids of all stored cards (shortcut or not); a pinned shortcut
      * whose card is not among them was deleted and gets disabled, while one whose card was only un-toggled stays usable.
-     * Texts (default label, disabled message) are resolved in [language], not the system locale. Throws on failure.
+     * The disabled message (where the platform has one) is resolved in [language], not the system locale. Throws on failure.
      */
     suspend fun publishLoyaltyCards(
         cards: List<LoyaltyCard>,

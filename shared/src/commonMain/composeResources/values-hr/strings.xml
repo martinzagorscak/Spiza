@@ -136,5 +136,4 @@
     <string name="loyalty_cards_shortcut_remove">Ukloni iz prečaca aplikacije</string>
     <string name="loyalty_cards_shortcut_added">Kartica %1$s dodana je u prečace aplikacije</string>
     <string name="loyalty_cards_shortcut_limit_reached">Možete imati najviše %1$d prečaca</string>
-    <string name="loyalty_card_shortcut_default_label">Kartica vjernosti</string>
 </resources>

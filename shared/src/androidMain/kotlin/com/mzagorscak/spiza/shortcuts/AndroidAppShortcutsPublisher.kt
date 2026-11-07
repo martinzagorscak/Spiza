@@ -22,7 +22,6 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.loyalty_card_details_card_missing
-import spiza.shared.generated.resources.loyalty_card_shortcut_default_label
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -48,7 +47,6 @@ internal class AndroidAppShortcutsPublisher(
         language: AppLanguage,
     ) {
         if (isSupported.not()) return
-        val defaultLabel = getLocalizedString(resource = Res.string.loyalty_card_shortcut_default_label, language = language)
         val cardMissingMessage = getLocalizedString(resource = Res.string.loyalty_card_details_card_missing, language = language)
         // ShortcutManager calls are binder IPC and the icons are drawn on a bitmap: keep both off the main thread.
         withContext(Dispatchers.IO) {
@@ -58,11 +56,7 @@ internal class AndroidAppShortcutsPublisher(
                 }
             val desired =
                 cards.mapIndexed { index, card ->
-                    card.toShortcut(
-                        rank = index,
-                        label = card.name.trim().ifEmpty { defaultLabel },
-                        launcherActivity = launcherActivity,
-                    )
+                    card.toShortcut(rank = index, launcherActivity = launcherActivity)
                 }
             val desiredIds = desired.mapTo(mutableSetOf()) { it.id }
             val dynamic = ShortcutManagerCompat.getDynamicShortcuts(context).filter { it.isLoyaltyCardShortcut() }
@@ -117,9 +111,9 @@ internal class AndroidAppShortcutsPublisher(
 
     private fun LoyaltyCard.toShortcut(
         rank: Int,
-        label: String,
         launcherActivity: ComponentName,
     ): ShortcutInfoCompat {
+        val label = name.trim()
         val intent =
             Intent(Intent.ACTION_VIEW)
                 .setComponent(launcherActivity)
@@ -130,7 +124,7 @@ internal class AndroidAppShortcutsPublisher(
             .setShortLabel(label)
             .setLongLabel(label)
             .setRank(rank)
-            .setIcon(createIcon(name = name.trim(), colorArgb = colorArgb))
+            .setIcon(createIcon(name = label, colorArgb = colorArgb))
             .setIntent(intent)
             // Lets an unchanged shortcut be recognised (icons cannot be read back) so it is not pushed again.
             .setExtras(PersistableBundle().apply { putInt(EXTRA_COLOR_ARGB, colorArgb) })
