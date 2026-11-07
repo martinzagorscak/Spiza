@@ -11,6 +11,8 @@ import com.mzagorscak.spiza.data.local.getAndroidSpizaDatabaseBuilder
 import com.mzagorscak.spiza.data.local.getSpizaDatabase
 import com.mzagorscak.spiza.data.user.FirestoreUserDataSource
 import com.mzagorscak.spiza.data.user.UserDataSource
+import com.mzagorscak.spiza.shortcuts.AndroidAppShortcutsPublisher
+import com.mzagorscak.spiza.shortcuts.AppShortcutsPublisher
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
@@ -35,4 +37,5 @@ actual fun platformModule(): Module =
             val builder = getAndroidSpizaDatabaseBuilder(androidContext())
             getSpizaDatabase(builder)
         }
+        single<AppShortcutsPublisher> { AndroidAppShortcutsPublisher(context = androidContext()) }
     }

@@ -13,4 +13,11 @@ interface LoyaltyCardRepository {
     suspend fun addCard(card: LoyaltyCard)
 
     suspend fun deleteCard(id: Long)
+
+    suspend fun addShortcut(
+        id: Long,
+        limit: Int,
+    ): Boolean
+
+    suspend fun removeShortcut(id: Long)
 }

@@ -8,9 +8,11 @@ import com.mzagorscak.spiza.data.repository.PermissionRepositoryImpl
 import com.mzagorscak.spiza.data.settings.SettingsDataSource
 import com.mzagorscak.spiza.data.settings.SettingsDataSourceImpl
 import com.mzagorscak.spiza.data.settings.SettingsRepositoryImpl
+import com.mzagorscak.spiza.data.shortcuts.AppShortcutsRepositoryImpl
 import com.mzagorscak.spiza.data.suggestion.SuggestionRepositoryImpl
 import com.mzagorscak.spiza.data.suggestion.local.SuggestionDao
 import com.mzagorscak.spiza.data.user.UserRepositoryImpl
+import com.mzagorscak.spiza.domain.repository.AppShortcutsRepository
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import com.mzagorscak.spiza.domain.repository.LoyaltyCardRepository
 import com.mzagorscak.spiza.domain.repository.PermissionRepository
@@ -46,6 +48,7 @@ val dataModule =
         single<SuggestionRepository> { SuggestionRepositoryImpl(suggestionDao = get()) }
         single<LoyaltyCardDao> { get<SpizaDatabase>().loyaltyCardDao() }
         single<LoyaltyCardRepository> { LoyaltyCardRepositoryImpl(loyaltyCardDao = get()) }
+        single<AppShortcutsRepository> { AppShortcutsRepositoryImpl(publisher = get(), crashLogger = get()) }
         factory<PermissionRepository> { (permissionsController: PermissionsController) ->
             PermissionRepositoryImpl(permissionsController = permissionsController, crashLogger = get())
         }

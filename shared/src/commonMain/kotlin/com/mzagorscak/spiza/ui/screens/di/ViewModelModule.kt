@@ -122,6 +122,8 @@ val viewModelModule = module {
     viewModel<LoyaltyCardsViewModel> {
         LoyaltyCardsViewModelImpl(
             observeLoyaltyCardsUseCase = get(),
+            canUseAppShortcutsUseCase = get(),
+            toggleLoyaltyCardShortcutUseCase = get(),
             crashLogger = get(),
         )
     }

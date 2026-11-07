@@ -23,4 +23,16 @@ interface LoyaltyCardDao {
 
     @Query("DELETE FROM loyalty_cards WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query(
+        "UPDATE loyalty_cards SET isShortcut = 1 WHERE id = :id AND " +
+            "(isShortcut = 1 OR (SELECT COUNT(*) FROM loyalty_cards WHERE isShortcut = 1) < :limit)",
+    )
+    suspend fun addShortcutWithinLimit(
+        id: Long,
+        limit: Int,
+    ): Int
+
+    @Query("UPDATE loyalty_cards SET isShortcut = 0 WHERE id = :id")
+    suspend fun removeShortcut(id: Long)
 }

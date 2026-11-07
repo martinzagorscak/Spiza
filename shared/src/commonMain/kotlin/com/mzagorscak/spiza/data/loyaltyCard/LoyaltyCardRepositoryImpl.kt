@@ -26,4 +26,13 @@ internal class LoyaltyCardRepositoryImpl(
     override suspend fun deleteCard(id: Long) {
         loyaltyCardDao.deleteById(id)
     }
+
+    override suspend fun addShortcut(
+        id: Long,
+        limit: Int,
+    ): Boolean = loyaltyCardDao.addShortcutWithinLimit(id = id, limit = limit) > 0
+
+    override suspend fun removeShortcut(id: Long) {
+        loyaltyCardDao.removeShortcut(id)
+    }
 }

@@ -1,10 +1,14 @@
 package com.mzagorscak.spiza.domain.usecase
 
+import com.mzagorscak.spiza.domain.constraints.ConstraintsManager
 import com.mzagorscak.spiza.domain.loyaltyCard.LoyaltyCardCodes
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.model.LoyaltyCardCode
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
+import com.mzagorscak.spiza.domain.model.ShortcutToggleResult
+import com.mzagorscak.spiza.domain.repository.AppShortcutsRepository
 import com.mzagorscak.spiza.domain.repository.LoyaltyCardRepository
+import com.mzagorscak.spiza.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 
 interface ObserveLoyaltyCardsUseCase {
@@ -88,4 +92,55 @@ interface NormalizeScannedLoyaltyCardCodeUseCase {
 
 class NormalizeScannedLoyaltyCardCodeUseCaseImpl : NormalizeScannedLoyaltyCardCodeUseCase {
     override operator fun invoke(code: LoyaltyCardCode): LoyaltyCardCode = LoyaltyCardCodes.normalizeScanned(code)
+}
+
+/** Pins the card as an app shortcut if it is not one yet (within the limit), otherwise unpins it. */
+interface ToggleLoyaltyCardShortcutUseCase {
+    suspend operator fun invoke(id: Long): ShortcutToggleResult
+}
+
+class ToggleLoyaltyCardShortcutUseCaseImpl(
+    private val repository: LoyaltyCardRepository,
+    private val constraintsManager: ConstraintsManager,
+) : ToggleLoyaltyCardShortcutUseCase {
+    override suspend operator fun invoke(id: Long): ShortcutToggleResult {
+        val card = repository.getById(id) ?: return ShortcutToggleResult.CardNotFound
+        if (card.isShortcut) {
+            repository.removeShortcut(id)
+            return ShortcutToggleResult.Disabled
+        }
+        val limit = constraintsManager.maxLoyaltyCardShortcuts
+        return when {
+            repository.addShortcut(id = id, limit = limit) -> ShortcutToggleResult.Enabled
+            repository.getById(id) == null -> ShortcutToggleResult.CardNotFound
+            else -> ShortcutToggleResult.LimitReached(limit = limit)
+        }
+    }
+}
+
+interface CanUseAppShortcutsUseCase {
+    operator fun invoke(): Boolean
+}
+
+class CanUseAppShortcutsUseCaseImpl(
+    private val repository: AppShortcutsRepository,
+) : CanUseAppShortcutsUseCase {
+    override operator fun invoke(): Boolean = repository.isSupported
+}
+
+interface SyncLoyaltyCardShortcutsUseCase {
+    suspend operator fun invoke()
+}
+
+class SyncLoyaltyCardShortcutsUseCaseImpl(
+    private val loyaltyCardRepository: LoyaltyCardRepository,
+    private val settingsRepository: SettingsRepository,
+    private val appShortcutsRepository: AppShortcutsRepository,
+) : SyncLoyaltyCardShortcutsUseCase {
+    override suspend operator fun invoke() {
+        appShortcutsRepository.syncLoyaltyCardShortcuts(
+            allCards = loyaltyCardRepository.observeAll(),
+            language = settingsRepository.language,
+        )
+    }
 }

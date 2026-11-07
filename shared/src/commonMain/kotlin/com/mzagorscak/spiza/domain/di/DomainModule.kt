@@ -16,6 +16,8 @@ import com.mzagorscak.spiza.domain.usecase.CanAddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanAddMemberToHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCase
 import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.CanUseAppShortcutsUseCase
+import com.mzagorscak.spiza.domain.usecase.CanUseAppShortcutsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCase
@@ -98,6 +100,10 @@ import com.mzagorscak.spiza.domain.usecase.SignInUseCase
 import com.mzagorscak.spiza.domain.usecase.SignInUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SignOutUseCase
 import com.mzagorscak.spiza.domain.usecase.SignOutUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.SyncLoyaltyCardShortcutsUseCase
+import com.mzagorscak.spiza.domain.usecase.SyncLoyaltyCardShortcutsUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ToggleLoyaltyCardShortcutUseCase
+import com.mzagorscak.spiza.domain.usecase.ToggleLoyaltyCardShortcutUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
@@ -176,4 +182,15 @@ val domainModule =
         single<CanEnterLoyaltyCardCodeUseCase> { CanEnterLoyaltyCardCodeUseCaseImpl() }
         single<DetectLoyaltyCardFormatUseCase> { DetectLoyaltyCardFormatUseCaseImpl() }
         single<NormalizeScannedLoyaltyCardCodeUseCase> { NormalizeScannedLoyaltyCardCodeUseCaseImpl() }
+        single<ToggleLoyaltyCardShortcutUseCase> {
+            ToggleLoyaltyCardShortcutUseCaseImpl(repository = get(), constraintsManager = get())
+        }
+        single<CanUseAppShortcutsUseCase> { CanUseAppShortcutsUseCaseImpl(repository = get()) }
+        single<SyncLoyaltyCardShortcutsUseCase> {
+            SyncLoyaltyCardShortcutsUseCaseImpl(
+                loyaltyCardRepository = get(),
+                settingsRepository = get(),
+                appShortcutsRepository = get(),
+            )
+        }
     }

@@ -25,3 +25,11 @@ internal val MIGRATION_1_2 =
             legacyLoyaltyCardFormatsSql().forEach { connection.execSQL(it) }
         }
     }
+
+/** 2 → 3: loyalty cards can be app shortcuts; existing cards are not. */
+internal val MIGRATION_2_3 =
+    object : Migration(2, 3) {
+        override fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE loyalty_cards ADD COLUMN isShortcut INTEGER NOT NULL DEFAULT 0")
+        }
+    }

@@ -12,7 +12,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.mzagorscak.spiza.ui.components.FallbackState
@@ -25,9 +29,12 @@ import com.mzagorscak.spiza.ui.theme.padding400
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_plus
 import spiza.shared.generated.resources.loyalty_cards_empty_description
 import spiza.shared.generated.resources.loyalty_cards_empty_title
+import spiza.shared.generated.resources.loyalty_cards_shortcut_added
+import spiza.shared.generated.resources.loyalty_cards_shortcut_limit_reached
 import spiza.shared.generated.resources.loyalty_cards_title
 
 @Composable
@@ -37,6 +44,22 @@ fun LoyaltyCardsScreen(
     sharedTransition: LoyaltyCardSharedTransition,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val message = when (val stateMessage = state.message) {
+        is LoyaltyCardsState.Message.ShortcutLimitReached ->
+            stringResource(Res.string.loyalty_cards_shortcut_limit_reached, stateMessage.limit)
+        is LoyaltyCardsState.Message.ShortcutAdded ->
+            stringResource(Res.string.loyalty_cards_shortcut_added, stateMessage.cardName)
+        LoyaltyCardsState.Message.GenericError -> stringResource(Res.string.error_generic)
+        LoyaltyCardsState.Message.None -> null
+    }
+    LaunchedEffect(state.message) {
+        message?.let {
+            snackbarHostState.showSnackbar(it)
+            callbacks.onMessageShown()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopBar(
@@ -49,6 +72,7 @@ fun LoyaltyCardsScreen(
                 onTabClick = callbacks.onTabClick,
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = callbacks.onAddLoyaltyCardClick,
@@ -89,6 +113,11 @@ fun LoyaltyCardsScreen(
                     ) { card ->
                         LoyaltyCard(
                             card = card,
+                            onShortcutClick = if (state.areShortcutsSupported) {
+                                { callbacks.onToggleShortcut(card.id) }
+                            } else {
+                                null
+                            },
                             modifier = sharedTransition
                                 .modifierFor(card.id)
                                 .clickable { callbacks.onCardClick(card.id) },
@@ -104,4 +133,6 @@ data class LoyaltyCardsScreenCallbacks(
     val onTabClick: (MainTab) -> Unit,
     val onAddLoyaltyCardClick: () -> Unit,
     val onCardClick: (Long) -> Unit,
+    val onToggleShortcut: (Long) -> Unit,
+    val onMessageShown: () -> Unit,
 )

@@ -15,6 +15,7 @@ data class LoyaltyCardEntity(
     val codeText: String,
     val format: LoyaltyCardFormat,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val isShortcut: Boolean = false,
 ) {
     fun toDomainModel(): LoyaltyCard =
         LoyaltyCard(
@@ -23,6 +24,7 @@ data class LoyaltyCardEntity(
             colorArgb = colorArgb,
             codeText = codeText,
             format = format,
+            isShortcut = isShortcut,
         )
 }
 
@@ -33,4 +35,5 @@ fun LoyaltyCard.toEntity(): LoyaltyCardEntity =
         colorArgb = colorArgb,
         codeText = codeText,
         format = format,
+        isShortcut = isShortcut,
     )

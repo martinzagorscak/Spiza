@@ -23,6 +23,7 @@ import com.mzagorscak.spiza.ui.components.ButtonAppearance
 import com.mzagorscak.spiza.ui.components.ButtonSize
 import com.mzagorscak.spiza.ui.components.ButtonVariant
 import com.mzagorscak.spiza.ui.components.Dialog
+import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
@@ -38,6 +39,7 @@ import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_trash
+import spiza.shared.generated.resources.loyalty_card_details_card_missing
 import spiza.shared.generated.resources.loyalty_card_details_delete_button
 import spiza.shared.generated.resources.loyalty_card_details_delete_dialog_description
 import spiza.shared.generated.resources.loyalty_card_details_delete_dialog_title
@@ -96,7 +98,12 @@ fun LoyaltyCardDetailsScreen(
                 .padding(padding400),
         ) {
             val card = state.card
-            if (card != null) {
+            if (state.isCardMissing) {
+                FallbackState(
+                    title = stringResource(Res.string.loyalty_card_details_card_missing),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else if (card != null) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(padding400),
                     horizontalAlignment = Alignment.CenterHorizontally,

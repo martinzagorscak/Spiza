@@ -12,6 +12,8 @@ import com.mzagorscak.spiza.data.local.getIosSpizaDatabaseBuilder
 import com.mzagorscak.spiza.data.local.getSpizaDatabase
 import com.mzagorscak.spiza.data.user.IosUserDataSource
 import com.mzagorscak.spiza.data.user.UserDataSource
+import com.mzagorscak.spiza.shortcuts.AppShortcutsPublisher
+import com.mzagorscak.spiza.shortcuts.NoOpAppShortcutsPublisher
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -30,4 +32,6 @@ actual fun platformModule(): Module =
             val builder = getIosSpizaDatabaseBuilder()
             getSpizaDatabase(builder)
         }
+        // iOS Quick Actions are not implemented yet; the shortcut CTA is hidden.
+        single<AppShortcutsPublisher> { NoOpAppShortcutsPublisher }
     }

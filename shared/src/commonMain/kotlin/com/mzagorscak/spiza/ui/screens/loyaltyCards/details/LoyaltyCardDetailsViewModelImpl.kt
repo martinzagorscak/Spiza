@@ -18,10 +18,17 @@ internal class LoyaltyCardDetailsViewModelImpl(
     private val deleteLoyaltyCardUseCase: DeleteLoyaltyCardUseCase,
     private val crashLogger: CrashLogger,
 ) : LoyaltyCardDetailsViewModel() {
+    private var isDeleteRequested = false
+
     private val state: StateFlow<LoyaltyCardDetailsState> =
         observeLoyaltyCardByIdUseCase(cardId)
-            .map { card -> LoyaltyCardDetailsState(card = card?.toPresentable(), isLoading = false) }
-            .catchAndRecord(crashLogger = crashLogger, context = "Loyalty card details stream failed") {
+            .map { card ->
+                LoyaltyCardDetailsState(
+                    card = card?.toPresentable(),
+                    isLoading = false,
+                    isCardMissing = card == null && isDeleteRequested.not(),
+                )
+            }.catchAndRecord(crashLogger = crashLogger, context = "Loyalty card details stream failed") {
                 emit(LoyaltyCardDetailsState(isLoading = false))
             }.stateIn(
                 scope = viewModelScope,
@@ -32,6 +39,7 @@ internal class LoyaltyCardDetailsViewModelImpl(
     override fun state(): StateFlow<LoyaltyCardDetailsState> = state
 
     override fun deleteCard() {
+        isDeleteRequested = true
         launchSafely(crashLogger = crashLogger, context = "Deleting loyalty card failed") {
             deleteLoyaltyCardUseCase(cardId)
         }

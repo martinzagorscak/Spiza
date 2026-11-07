@@ -13,6 +13,7 @@ data class PresentableLoyaltyCard(
     val color: Color,
     val codeText: String,
     val format: LoyaltyCardFormat,
+    val isShortcut: Boolean = false,
 ) {
     val displayCode: String = codeText.toDisplayCode()
 }
@@ -24,6 +25,7 @@ fun LoyaltyCard.toPresentable(): PresentableLoyaltyCard =
         color = Color(colorArgb),
         codeText = codeText,
         format = format,
+        isShortcut = isShortcut,
     )
 
 fun List<LoyaltyCard>.toPresentable(): List<PresentableLoyaltyCard> = map { it.toPresentable() }

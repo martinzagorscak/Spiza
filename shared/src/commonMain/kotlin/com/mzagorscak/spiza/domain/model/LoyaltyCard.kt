@@ -34,4 +34,17 @@ data class LoyaltyCard(
     val colorArgb: Int,
     val codeText: String,
     val format: LoyaltyCardFormat,
+    val isShortcut: Boolean = false,
 )
+
+sealed interface ShortcutToggleResult {
+    data object Enabled : ShortcutToggleResult
+
+    data object Disabled : ShortcutToggleResult
+
+    data class LimitReached(
+        val limit: Int,
+    ) : ShortcutToggleResult
+
+    data object CardNotFound : ShortcutToggleResult
+}

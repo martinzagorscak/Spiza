@@ -52,6 +52,7 @@ import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListViewModel
 import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingViewModel
 import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingsScreen
 import com.mzagorscak.spiza.ui.screens.suggestionSaving.SuggestionSavingSettingsScreenCallbacks
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -73,6 +74,18 @@ fun AppNavigation(isSignedIn: Boolean) {
             backStack.clear()
             backStack.add(startRoute)
         }
+    }
+
+    val shortcutNavigationRequests = koinInject<ShortcutNavigationRequests>()
+    val shortcutLoyaltyCardId by shortcutNavigationRequests.loyaltyCardId.collectAsStateWithLifecycle()
+    // Declared after the root reset above so it runs after it. Signed out, a shortcut has nothing to open: drop it.
+    LaunchedEffect(shortcutLoyaltyCardId, isSignedIn) {
+        val cardId = shortcutLoyaltyCardId ?: return@LaunchedEffect
+        if (isSignedIn) {
+            backStack.clear()
+            backStack.addAll(listOf(Route.ShoppingList, Route.LoyaltyCards, Route.LoyaltyCardDetails(cardId)))
+        }
+        shortcutNavigationRequests.consume(cardId)
     }
 
     SharedTransitionLayout {
@@ -368,6 +381,11 @@ fun AppNavigation(isSignedIn: Boolean) {
                                         performHapticFeedback(hapticFeedback)
                                         backStack.add(Route.LoyaltyCardDetails(cardId))
                                     },
+                                    onToggleShortcut = { cardId ->
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.onToggleShortcut(cardId = cardId)
+                                    },
+                                    onMessageShown = viewModel::onMessageShown,
                                 )
                             },
                         )
