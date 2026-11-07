@@ -12,6 +12,17 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
         return true
     }
+
+    // Home Screen Quick Actions are delivered to the scene delegate in a scene-based app.
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        configuration.delegateClass = SceneDelegate.self
+        return configuration
+    }
 }
 
 @main

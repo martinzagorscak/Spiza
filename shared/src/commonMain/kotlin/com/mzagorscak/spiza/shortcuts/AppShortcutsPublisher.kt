@@ -19,14 +19,3 @@ interface AppShortcutsPublisher {
         language: AppLanguage,
     )
 }
-
-/** For platforms without app shortcuts (iOS for now): the UI hides the shortcut CTA. */
-internal object NoOpAppShortcutsPublisher : AppShortcutsPublisher {
-    override val isSupported: Boolean = false
-
-    override suspend fun publishLoyaltyCards(
-        cards: List<LoyaltyCard>,
-        existingCardIds: Set<Long>,
-        language: AppLanguage,
-    ) = Unit
-}
