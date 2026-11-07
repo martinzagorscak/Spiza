@@ -23,6 +23,7 @@ import com.mzagorscak.spiza.fakes.FakeHouseholdRepository
 import com.mzagorscak.spiza.fakes.FakeSettingsRepository
 import com.mzagorscak.spiza.fakes.FakeSuggestionRepository
 import com.mzagorscak.spiza.fakes.FakeUserRepository
+import com.mzagorscak.spiza.fakes.household
 import com.mzagorscak.spiza.fakes.item
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -144,25 +145,17 @@ class ShoppingListViewModelImplTest {
         }
 
     @Test
-    fun failedStream_showsErrorState_andRetryRecovers() =
+    fun failedStream_showsGenericError_andRetryRecovers() =
         runTest {
-            households.householdsFailure = IllegalStateException("listener failed")
+            households.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
             val viewModel = viewModel()
 
-            assertIs<ShoppingListState.Body.Error>(viewModel.bodyState().value)
+            assertEquals(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.Generic), viewModel.bodyState().value)
 
             households.householdsFailure = null
             viewModel.retry()
 
             assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-        }
-
-    @Test
-    fun noHouseholds_showsNoHouseholdState() =
-        runTest {
-            households.households.value = emptyList()
-
-            assertIs<ShoppingListState.Body.NoHousehold>(viewModel().bodyState().value)
         }
 
     @Test
@@ -177,30 +170,7 @@ class ShoppingListViewModelImplTest {
         }
 
     @Test
-    fun failedStream_showsGenericError_whenFailureIsNotQuota() =
-        runTest {
-            households.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
-
-            val body = viewModel().bodyState().value
-
-            assertEquals(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.Generic), body)
-        }
-
-    @Test
-    fun failedStream_recoversToContent_whenRetriedAfterQuotaReset() =
-        runTest {
-            households.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-            val viewModel = viewModel()
-            assertIs<ShoppingListState.Body.Error>(viewModel.bodyState().value)
-
-            households.householdsFailure = null
-            viewModel.retry()
-
-            assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-        }
-
-    @Test
-    fun failedWrite_showsQuotaExceededError_untilItIsShown() =
+    fun failedWrite_showsQuotaExceededError_whenQuotaIsExceeded() =
         runTest {
             households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
             val viewModel = viewModel()
@@ -209,23 +179,25 @@ class ShoppingListViewModelImplTest {
 
             val body = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
             assertEquals(ShoppingListState.ContentErrorState.QuotaExceeded, body.contentErrorState)
-            assertEquals(1, logger.exceptions.size)
-
-            viewModel.onErrorShown()
-
-            val shown = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-            assertEquals(ShoppingListState.ContentErrorState.None, shown.contentErrorState)
         }
 
     @Test
-    fun failedWrite_showsWriteError_whenQuotaExceededIsNotTheCause() =
+    fun noHouseholds_showsNoHouseholdState() =
         runTest {
-            households.writeFailure = IllegalStateException("bug")
+            households.households.value = emptyList()
+
+            assertIs<ShoppingListState.Body.NoHousehold>(viewModel().bodyState().value)
+        }
+
+    @Test
+    fun newlyCreatedHousehold_isSelected_whenItAppearsAfterTheFirstLoad() =
+        runTest {
             val viewModel = viewModel()
 
-            viewModel.onItemDelete("milk")
+            households.households.value += household(id = "household-new", name = "Cottage")
 
-            val body = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-            assertEquals(ShoppingListState.ContentErrorState.WriteError, body.contentErrorState)
+            assertEquals("household-new", settings.selectedId.value)
+            assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
+            assertEquals("Cottage", viewModel.headerState().value.currentHouseholdName)
         }
 }

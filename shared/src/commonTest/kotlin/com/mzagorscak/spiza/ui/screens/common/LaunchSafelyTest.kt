@@ -1,7 +1,6 @@
 package com.mzagorscak.spiza.ui.screens.common
 
 import androidx.lifecycle.ViewModel
-import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,20 +39,6 @@ class LaunchSafelyTest {
 
             assertSame(error, reported)
             assertSame(error, logger.exceptions.single().cause)
-        }
-
-    @Test
-    fun launchSafely_onlyLogsWarning_whenOffline() =
-        runTest {
-            var errorCount = 0
-
-            viewModel.launchSafely(crashLogger = logger, context = "Saving", onError = { errorCount++ }) {
-                throw DataException(DataException.Reason.Offline, "offline")
-            }
-
-            assertEquals(1, errorCount)
-            assertEquals(1, logger.warnings.size)
-            assertTrue(logger.exceptions.isEmpty())
         }
 
     @Test

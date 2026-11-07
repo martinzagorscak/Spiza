@@ -9,7 +9,8 @@ Target: `$ARGUMENTS` (class, file, feature, or "uncommitted changes" → use `gi
 Rules: `.claude/rules/testing.md`. For larger scopes delegate to the `test-writer` agent.
 
 ## Steps
-1. Read the target and list behaviours: happy path · edge cases (blank/whitespace, case-insensitive duplicates, empty lists, limit N-1/N/N+1, null) · error paths (data source throws, stream fails, unauthenticated, timeout).
+1. Read the target and list the behaviours other code or the user relies on: happy path · each distinct error branch (data source throws, stream fails, unauthenticated, timeout) · edge cases (blank/whitespace, duplicates, limit N-1/N/N+1) **only where the code branches on them**.
+   Then cut the list using "How much to test" in `.claude/rules/testing.md`: drop anything already covered where the logic lives, symmetric duplicates and tests that cannot catch a real regression. Aim for the minimal set.
 2. Fakes: use and extend the ones in `shared/src/commonTest/kotlin/com/mzagorscak/spiza/fakes/` (listed in `.claude/rules/testing.md`).
    Only create a new fake for an interface that has none; keep it a plain class that records calls and can be configured to fail.
 3. `kotlinx-coroutines-test` is already a commonTest dependency (`runTest`, `UnconfinedTestDispatcher`, `setMain`/`resetMain`).

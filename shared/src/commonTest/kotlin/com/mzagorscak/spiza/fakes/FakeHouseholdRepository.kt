@@ -20,6 +20,9 @@ class FakeHouseholdRepository : HouseholdRepository {
     /** When set, every write throws it. */
     var writeFailure: Throwable? = null
 
+    /** What [addMemberToHousehold] returns; false means no user has that join key. */
+    var addMemberResult = true
+
     data class AddedItem(
         val text: String,
         val position: Double,
@@ -33,6 +36,8 @@ class FakeHouseholdRepository : HouseholdRepository {
     val deletedItems = mutableListOf<String>()
     val removedMembers = mutableListOf<String>()
     val deletedHouseholds = mutableListOf<String>()
+    val createdHouseholds = mutableListOf<String>()
+    val updatedHouseholds = mutableListOf<Pair<String, String>>()
 
     private fun write() {
         writeFailure?.let { throw it }
@@ -50,7 +55,7 @@ class FakeHouseholdRepository : HouseholdRepository {
     override suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
-    ): Boolean = true
+    ): Boolean = addMemberResult
 
     override suspend fun removeMemberFromHousehold(
         householdId: String,
@@ -80,6 +85,7 @@ class FakeHouseholdRepository : HouseholdRepository {
         description: String,
     ): String? {
         write()
+        createdHouseholds += name
         return "household-new"
     }
 
@@ -87,7 +93,10 @@ class FakeHouseholdRepository : HouseholdRepository {
         householdId: String,
         name: String,
         description: String,
-    ) = write()
+    ) {
+        write()
+        updatedHouseholds += householdId to name
+    }
 
     override suspend fun addItem(
         householdId: String,

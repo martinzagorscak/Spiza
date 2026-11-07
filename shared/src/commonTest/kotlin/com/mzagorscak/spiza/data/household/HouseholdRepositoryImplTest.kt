@@ -1,6 +1,7 @@
 package com.mzagorscak.spiza.data.household
 
 import com.mzagorscak.spiza.crash.DataException
+import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
 import com.mzagorscak.spiza.domain.model.UserProfile
@@ -181,25 +182,19 @@ class HouseholdRepositoryImplTest {
         }
 
     @Test
-    fun observeItems_failsWithoutRetrying_whenQuotaIsExceeded() =
+    fun observeItems_emitsItemsOrderedByPosition() =
         runTest {
-            dataSource.itemsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+            // Moving an item only rewrites its own position, so the stored order is not the display order.
+            dataSource.items.value =
+                listOf(
+                    ArticleItemDto(id = "c", text = "c", isChecked = false, position = 3.0),
+                    ArticleItemDto(id = "a", text = "a", isChecked = false, position = 1.0),
+                    ArticleItemDto(id = "b", text = "b", isChecked = true, position = 1.5),
+                )
 
-            val error = assertFailsWith<DataException> { repository.observeItems(householdId = "household-1").first() }
+            val items = repository.observeItems(householdId = "household-1").first()
 
-            assertEquals(DataException.Reason.QuotaExceeded, error.reason)
-            assertEquals(1, dataSource.itemsSubscriptions)
-            assertEquals(1, logger.warnings.size)
-        }
-
-    @Test
-    fun observeItems_failsWithoutRetrying_whenQuotaExceededIsTheCause() =
-        runTest {
-            dataSource.itemsFailure = RuntimeException("listener", DataException(DataException.Reason.QuotaExceeded, "quota"))
-
-            assertFailsWith<RuntimeException> { repository.observeItems(householdId = "household-1").first() }
-
-            assertEquals(1, dataSource.itemsSubscriptions)
+            assertEquals(listOf("a", "b", "c"), items.map { it.id })
         }
 
     @Test

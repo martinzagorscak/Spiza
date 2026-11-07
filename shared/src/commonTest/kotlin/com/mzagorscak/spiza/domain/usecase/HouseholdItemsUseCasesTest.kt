@@ -26,7 +26,10 @@ class HouseholdItemsUseCasesTest {
 
             val added = repository.addedItems.single()
             assertEquals("butter", added.text)
-            assertTrue(added.position > 2048.0, "Position must come after the last pending item, ignoring checked ones")
+            assertTrue(
+                added.position > 2048.0 && added.position < 4096.0,
+                "Position must follow the last pending item, ignoring checked ones",
+            )
             assertEquals(3, added.currentItemsCount)
         }
 

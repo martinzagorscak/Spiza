@@ -14,7 +14,6 @@ class FakeHouseholdDataSource : HouseholdDataSource {
     val households = MutableStateFlow<List<HouseholdDto>>(emptyList())
     val items = MutableStateFlow<List<ArticleItemDto>>(emptyList())
     var joinKey: Flow<String?> = flowOf(null)
-    var addMemberResult = true
 
     /** When set, [observeHouseholds] fails with it on every subscription (like a rejected Firestore listener). */
     var householdsFailure: Throwable? = null
@@ -32,7 +31,6 @@ class FakeHouseholdDataSource : HouseholdDataSource {
     val addedMembers = mutableListOf<Pair<String, String>>()
     val addedItems = mutableListOf<String>()
     val createdHouseholds = mutableListOf<String>()
-    val updatedHouseholds = mutableListOf<String>()
     val deletedJoinKeysOfUsers = mutableListOf<String>()
 
     private suspend fun write() {
@@ -56,7 +54,7 @@ class FakeHouseholdDataSource : HouseholdDataSource {
     ): Boolean {
         write()
         addedMembers += householdId to userJoinKey
-        return addMemberResult
+        return true
     }
 
     override suspend fun removeMemberFromHousehold(
@@ -94,10 +92,7 @@ class FakeHouseholdDataSource : HouseholdDataSource {
         householdId: String,
         name: String,
         description: String,
-    ) {
-        write()
-        updatedHouseholds += householdId
-    }
+    ) = write()
 
     override suspend fun addItem(
         householdId: String,

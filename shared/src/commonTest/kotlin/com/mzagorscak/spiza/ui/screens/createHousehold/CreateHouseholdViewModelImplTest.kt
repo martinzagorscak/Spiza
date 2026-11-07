@@ -44,17 +44,20 @@ class CreateHouseholdViewModelImplTest {
         }
 
     @Test
-    fun createHousehold_setsQuotaExceededError_whenQuotaIsExceeded() =
+    fun createHousehold_setsQuotaExceededError_untilTheNameIsEdited() =
         runTest {
             households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+            val viewModel = submittedViewModel()
 
-            val state = submittedViewModel().state().value
-
-            assertEquals(CreateHouseholdState.ErrorState.QuotaExceeded, state.errorState)
-            assertTrue(state.hasError)
-            assertFalse(state.isSubmitting)
-            assertFalse(state.isCreated)
+            val failed = viewModel.state().value
+            assertEquals(CreateHouseholdState.ErrorState.QuotaExceeded, failed.errorState)
+            assertFalse(failed.isSubmitting)
+            assertFalse(failed.isCreated)
             assertEquals(1, logger.exceptions.size)
+
+            viewModel.onNameChange("Home 2")
+
+            assertEquals(CreateHouseholdState.ErrorState.None, viewModel.state().value.errorState)
         }
 
     @Test
@@ -65,56 +68,11 @@ class CreateHouseholdViewModelImplTest {
             val state = submittedViewModel().state().value
 
             assertEquals(CreateHouseholdState.ErrorState.Generic, state.errorState)
-            assertTrue(state.hasError)
             assertFalse(state.isSubmitting)
         }
 
     @Test
-    fun updateHousehold_setsQuotaExceededError_whenQuotaIsExceededInEditScenario() =
-        runTest {
-            households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-            val scenario = HouseholdScenario.Edit(householdId = "household-1", householdName = "Home", householdDescription = "")
-
-            val state = submittedViewModel(scenario).state().value
-
-            assertEquals(CreateHouseholdState.ErrorState.QuotaExceeded, state.errorState)
-        }
-
-    @Test
-    fun createHousehold_hasNoErrorAndIsCreated_whenItSucceeds() =
-        runTest {
-            val state = submittedViewModel().state().value
-
-            assertEquals(CreateHouseholdState.ErrorState.None, state.errorState)
-            assertFalse(state.hasError)
-            assertTrue(state.isCreated)
-        }
-
-    @Test
-    fun onNameChange_resetsError_afterQuotaExceeded() =
-        runTest {
-            households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-            val viewModel = submittedViewModel()
-
-            viewModel.onNameChange("Home 2")
-
-            assertEquals(CreateHouseholdState.ErrorState.None, viewModel.state().value.errorState)
-            assertFalse(viewModel.state().value.hasError)
-        }
-
-    @Test
-    fun onDescriptionChange_resetsError_afterQuotaExceeded() =
-        runTest {
-            households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-            val viewModel = submittedViewModel()
-
-            viewModel.onDescriptionChange("Our flat")
-
-            assertEquals(CreateHouseholdState.ErrorState.None, viewModel.state().value.errorState)
-        }
-
-    @Test
-    fun createHousehold_clearsPreviousQuotaError_whenResubmittedSuccessfully() =
+    fun createHousehold_clearsPreviousError_whenResubmittedSuccessfully() =
         runTest {
             households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
             val viewModel = submittedViewModel()
@@ -124,5 +82,18 @@ class CreateHouseholdViewModelImplTest {
 
             assertEquals(CreateHouseholdState.ErrorState.None, viewModel.state().value.errorState)
             assertTrue(viewModel.state().value.isCreated)
+            assertEquals(listOf("Home"), households.createdHouseholds)
+        }
+
+    @Test
+    fun createHousehold_updatesTheEditedHousehold_insteadOfCreatingANewOne() =
+        runTest {
+            val scenario = HouseholdScenario.Edit(householdId = "household-1", householdName = "Home", householdDescription = "")
+
+            val state = submittedViewModel(scenario).state().value
+
+            assertTrue(state.isCreated)
+            assertEquals(listOf("household-1" to "Home"), households.updatedHouseholds)
+            assertTrue(households.createdHouseholds.isEmpty())
         }
 }

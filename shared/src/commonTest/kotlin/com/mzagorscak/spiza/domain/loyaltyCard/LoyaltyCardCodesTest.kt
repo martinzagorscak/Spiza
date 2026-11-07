@@ -14,18 +14,10 @@ class LoyaltyCardCodesTest {
     ) = LoyaltyCardCodes.isValid(LoyaltyCardCode(value = value, format = format))
 
     @Test
-    fun isValid_acceptsEan13_whenCheckDigitIsCorrect() {
+    fun isValid_checksEan13_lengthDigitsAndCheckDigit() {
         assertTrue(isValid("4006381333931", LoyaltyCardFormat.Ean13))
         assertTrue(isValid("3850123456782", LoyaltyCardFormat.Ean13))
-    }
-
-    @Test
-    fun isValid_rejectsEan13_whenCheckDigitIsWrong() {
         assertFalse(isValid("4006381333932", LoyaltyCardFormat.Ean13))
-    }
-
-    @Test
-    fun isValid_rejectsEan13_whenLengthOrCharactersAreWrong() {
         assertFalse(isValid("400638133393", LoyaltyCardFormat.Ean13))
         assertFalse(isValid("40063813339A1", LoyaltyCardFormat.Ean13))
     }
@@ -46,12 +38,8 @@ class LoyaltyCardCodesTest {
     }
 
     @Test
-    fun isValid_acceptsCode128_withControlCharacters() {
+    fun isValid_checksCode128_isAsciiWithinLinearLength() {
         assertTrue(isValid("ABC\u001D123", LoyaltyCardFormat.Code128))
-    }
-
-    @Test
-    fun isValid_rejectsCode128_withNonAsciiOrTooLongContent() {
         assertFalse(isValid("Čevapi", LoyaltyCardFormat.Code128))
         assertFalse(isValid("1".repeat(81), LoyaltyCardFormat.Code128))
     }
@@ -86,12 +74,6 @@ class LoyaltyCardCodesTest {
     fun canEnter_allowsInput_upToTheLongestAcceptedCode() {
         assertTrue(LoyaltyCardCodes.canEnter("1".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH)))
         assertFalse(LoyaltyCardCodes.canEnter("1".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH + 1)))
-    }
-
-    @Test
-    fun maxCodeLength_isTheLongestLengthAnyFormatAccepts() {
-        val longest = "1".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH)
-        assertTrue(LoyaltyCardFormat.entries.any { isValid(longest, it) })
     }
 
     @Test

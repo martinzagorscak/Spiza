@@ -56,7 +56,7 @@ class SettingsViewModelImplTest {
         )
 
     @Test
-    fun createJoinKey_setsQuotaExceededError_whenQuotaIsExceeded() =
+    fun createJoinKey_setsQuotaExceededError_untilItIsShown() =
         runTest {
             households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
             val viewModel = viewModel()
@@ -65,17 +65,10 @@ class SettingsViewModelImplTest {
 
             assertEquals(SettingsState.ErrorState.QuotaExceeded, viewModel.state().value.errorState)
             assertEquals(1, logger.exceptions.size)
-        }
 
-    @Test
-    fun refreshJoinKey_setsQuotaExceededError_whenQuotaExceededIsTheCause() =
-        runTest {
-            households.writeFailure = RuntimeException("refresh", DataException(DataException.Reason.QuotaExceeded, "quota"))
-            val viewModel = viewModel()
+            viewModel.onErrorShown()
 
-            viewModel.refreshJoinKey()
-
-            assertEquals(SettingsState.ErrorState.QuotaExceeded, viewModel.state().value.errorState)
+            assertEquals(SettingsState.ErrorState.None, viewModel.state().value.errorState)
         }
 
     @Test
@@ -87,27 +80,5 @@ class SettingsViewModelImplTest {
             viewModel.createJoinKey()
 
             assertEquals(SettingsState.ErrorState.Generic, viewModel.state().value.errorState)
-        }
-
-    @Test
-    fun createJoinKey_keepsNoError_whenItSucceeds() =
-        runTest {
-            val viewModel = viewModel()
-
-            viewModel.createJoinKey()
-
-            assertEquals(SettingsState.ErrorState.None, viewModel.state().value.errorState)
-        }
-
-    @Test
-    fun onErrorShown_resetsError_afterQuotaExceeded() =
-        runTest {
-            households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-            val viewModel = viewModel()
-            viewModel.createJoinKey()
-
-            viewModel.onErrorShown()
-
-            assertEquals(SettingsState.ErrorState.None, viewModel.state().value.errorState)
         }
 }

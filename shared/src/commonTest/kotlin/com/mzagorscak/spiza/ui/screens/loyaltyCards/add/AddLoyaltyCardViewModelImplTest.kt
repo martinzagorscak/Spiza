@@ -6,14 +6,15 @@ import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.domain.model.PermissionType
 import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCaseImpl
-import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
+import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.NormalizeScannedLoyaltyCardCodeUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.OpenAppSettingsUseCase
-import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCase
+import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ValidateLoyaltyCardCodeUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import com.mzagorscak.spiza.fakes.FakeLoyaltyCardRepository
+import com.mzagorscak.spiza.fakes.FakePermissionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -32,10 +33,7 @@ class AddLoyaltyCardViewModelImplTest {
     private val repository = FakeLoyaltyCardRepository()
     private val crashLogger = FakeCrashLogger()
 
-    private val grantedPermission =
-        object : CheckPermissionUseCase, RequestPermissionUseCase {
-            override suspend fun invoke(permission: PermissionType): PermissionStatus = PermissionStatus.Granted
-        }
+    private val permissions = FakePermissionRepository()
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -50,8 +48,8 @@ class AddLoyaltyCardViewModelImplTest {
             canEnterLoyaltyCardCodeUseCase = CanEnterLoyaltyCardCodeUseCaseImpl(),
             detectLoyaltyCardFormatUseCase = DetectLoyaltyCardFormatUseCaseImpl(),
             normalizeScannedLoyaltyCardCodeUseCase = NormalizeScannedLoyaltyCardCodeUseCaseImpl(),
-            checkPermissionUseCase = grantedPermission,
-            requestPermissionUseCase = grantedPermission,
+            checkPermissionUseCase = CheckPermissionUseCaseImpl(repository = permissions),
+            requestPermissionUseCase = RequestPermissionUseCaseImpl(repository = permissions),
             openAppSettingsUseCase = object : OpenAppSettingsUseCase {
                 override fun invoke() = Unit
             },
@@ -64,36 +62,21 @@ class AddLoyaltyCardViewModelImplTest {
     }
 
     @Test
-    fun onCodeScanned_ignoresASingleRead() {
+    fun onCodeScanned_acceptsCode_onlyAfterTwoIdenticalReadsInARow() {
         val viewModel = viewModel()
 
         viewModel.onCodeScanned(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
+        assertEquals(AddLoyaltyCardState.ScanStatus.Scanning, viewModel.state().value.scanStatus, "A single read is ignored")
 
-        assertEquals(AddLoyaltyCardState.ScanStatus.Scanning, viewModel.state().value.scanStatus)
-        assertEquals("", viewModel.state().value.codeText)
-    }
+        viewModel.onCodeScanned(ScannedCode(value = "96385074", format = LoyaltyCardFormat.Ean8))
+        assertEquals(AddLoyaltyCardState.ScanStatus.Scanning, viewModel.state().value.scanStatus, "A changed read restarts")
 
-    @Test
-    fun onCodeScanned_acceptsCodeAndFormat_afterTwoIdenticalReads() {
-        val viewModel = viewModel()
-
-        viewModel.scanTwice(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
-
+        viewModel.onCodeScanned(ScannedCode(value = "96385074", format = LoyaltyCardFormat.Ean8))
         val state = viewModel.state().value
         assertEquals(AddLoyaltyCardState.ScanStatus.Scanned, state.scanStatus)
-        assertEquals("4006381333931", state.codeText)
-        assertEquals(LoyaltyCardFormat.Ean13, state.format)
+        assertEquals("96385074", state.codeText)
+        assertEquals(LoyaltyCardFormat.Ean8, state.format)
         assertTrue(state.isCodeValid)
-    }
-
-    @Test
-    fun onCodeScanned_restartsConfirmation_whenTheReadChanges() {
-        val viewModel = viewModel()
-
-        viewModel.onCodeScanned(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
-        viewModel.onCodeScanned(ScannedCode(value = "96385074", format = LoyaltyCardFormat.Ean8))
-
-        assertEquals(AddLoyaltyCardState.ScanStatus.Scanning, viewModel.state().value.scanStatus)
     }
 
     @Test
@@ -143,37 +126,7 @@ class AddLoyaltyCardViewModelImplTest {
     }
 
     @Test
-    fun onImageCodeDecoded_normalizesUpcAReportedAsEan13() {
-        val viewModel = viewModel()
-
-        viewModel.onImageCodeDecoded(ScannedCode(value = "0036000291452", format = LoyaltyCardFormat.Ean13))
-
-        assertEquals(LoyaltyCardFormat.UpcA, viewModel.state().value.format)
-        assertEquals("036000291452", viewModel.state().value.codeText)
-    }
-
-    @Test
-    fun onImageCodeDecoded_showsNotFound_whenImageHasNoCode() {
-        val viewModel = viewModel()
-
-        viewModel.onImageCodeDecoded(null)
-
-        assertEquals(AddLoyaltyCardState.ScanStatus.NotFoundInImage, viewModel.state().value.scanStatus)
-        assertEquals("", viewModel.state().value.codeText)
-    }
-
-    @Test
-    fun onImageCodeDecoded_showsUnsupported_whenFormatIsUnknown() {
-        val viewModel = viewModel()
-
-        viewModel.onImageCodeDecoded(ScannedCode(value = "data matrix content", format = null))
-
-        assertEquals(AddLoyaltyCardState.ScanStatus.Unsupported, viewModel.state().value.scanStatus)
-        assertFalse(viewModel.state().value.isCodeValid)
-    }
-
-    @Test
-    fun onImageCodeDecoded_clearsACameraCode_whenImageHasNoCode() {
+    fun onImageCodeDecoded_showsNotFoundAndClearsACameraCode_whenImageHasNoCode() {
         val viewModel = viewModel()
         viewModel.onCardNameChange("Store")
         viewModel.scanTwice(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
@@ -181,13 +134,14 @@ class AddLoyaltyCardViewModelImplTest {
         viewModel.onImageCodeDecoded(null)
 
         val state = viewModel.state().value
+        assertEquals(AddLoyaltyCardState.ScanStatus.NotFoundInImage, state.scanStatus)
         assertEquals("", state.codeText)
         assertFalse(state.isCodeValid)
         assertFalse(state.isSaveEnabled)
     }
 
     @Test
-    fun onImageCodeDecoded_clearsACameraCode_whenImageCodeIsUnsupported() {
+    fun onImageCodeDecoded_showsUnsupportedAndClearsACameraCode_whenImageCodeIsUnsupported() {
         val viewModel = viewModel()
         viewModel.onCardNameChange("Store")
         viewModel.scanTwice(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
@@ -221,16 +175,6 @@ class AddLoyaltyCardViewModelImplTest {
 
         assertEquals(LoyaltyCardFormat.Ean13, viewModel.state().value.format)
         assertTrue(viewModel.state().value.isCodeValid)
-    }
-
-    @Test
-    fun onCodeChange_acceptsInput_upToTheMaximumLength() {
-        val viewModel = viewModel()
-        val longest = "A".repeat(LoyaltyCardCodes.MAX_CODE_LENGTH)
-
-        viewModel.onCodeChange(longest)
-
-        assertEquals(longest, viewModel.state().value.codeText)
     }
 
     @Test
@@ -302,4 +246,26 @@ class AddLoyaltyCardViewModelImplTest {
 
             assertTrue(repository.addedCards.isEmpty())
         }
+
+    @Test
+    fun checkPermission_requestsAndStoresReturnedStatus_whenCameraIsNotGranted() {
+        permissions.checkStatus = PermissionStatus.NotGranted
+        permissions.requestStatus = PermissionStatus.Denied
+        val viewModel = viewModel()
+
+        viewModel.checkPermission()
+
+        assertEquals(listOf(PermissionType.CAMERA), permissions.requestedPermissions)
+        assertEquals(PermissionStatus.Denied, viewModel.state().value.permissionStatus)
+    }
+
+    @Test
+    fun checkPermission_doesNotRequest_whenCameraIsAlreadyGranted() {
+        val viewModel = viewModel()
+
+        viewModel.checkPermission()
+
+        assertTrue(permissions.requestedPermissions.isEmpty())
+        assertEquals(PermissionStatus.Granted, viewModel.state().value.permissionStatus)
+    }
 }

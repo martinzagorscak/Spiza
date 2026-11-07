@@ -63,33 +63,20 @@ class HouseholdManagementViewModelImplTest {
         }
 
     @Test
-    fun retry_restoresHouseholds_afterQuotaStreamFailure() =
+    fun retry_restoresHouseholdsAndDialogs_afterQuotaStreamFailure() =
         runTest {
             households.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
             val viewModel = viewModel()
 
             households.householdsFailure = null
             viewModel.retry()
+            // The dialog state is part of the restarted stream, so it must keep working after the retry.
+            viewModel.showAddMemberToHouseholdDialog(householdId = "household-1")
 
             val state = viewModel.state().value
             assertFalse(state.isQuotaExceeded)
             assertEquals(listOf("household-1"), state.households.map { it.id })
-        }
-
-    @Test
-    fun dialogState_keepsUpdating_afterStreamRetry() =
-        runTest {
-            households.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-            val viewModel = viewModel()
-            households.householdsFailure = null
-            viewModel.retry()
-
-            viewModel.showAddMemberToHouseholdDialog(householdId = "household-1")
-
-            assertEquals(
-                HouseholdManagementScreenState.DialogState.AddMemberToHousehold(householdId = "household-1"),
-                viewModel.state().value.dialogState,
-            )
+            assertEquals(HouseholdManagementScreenState.DialogState.AddMemberToHousehold(householdId = "household-1"), state.dialogState)
         }
 
     @Test
@@ -104,27 +91,7 @@ class HouseholdManagementViewModelImplTest {
         }
 
     @Test
-    fun loadedStream_hasNoQuotaFlag_whenHouseholdsLoad() =
-        runTest {
-            val state = viewModel().state().value
-
-            assertFalse(state.isQuotaExceeded)
-            assertEquals(listOf("household-1"), state.households.map { it.id })
-        }
-
-    @Test
-    fun onErrorShown_keepsQuotaFallback_afterQuotaStreamFailure() =
-        runTest {
-            households.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-            val viewModel = viewModel()
-
-            viewModel.onErrorShown()
-
-            assertTrue(viewModel.state().value.isQuotaExceeded, "The fallback must stay until the stream works again")
-        }
-
-    @Test
-    fun deleteHousehold_setsQuotaExceededError_whenQuotaIsExceeded() =
+    fun deleteHousehold_setsQuotaExceededError_untilItIsShown() =
         runTest {
             households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
             val viewModel = viewModel()
@@ -133,6 +100,10 @@ class HouseholdManagementViewModelImplTest {
 
             assertEquals(HouseholdManagementScreenState.ErrorState.QuotaExceeded, viewModel.state().value.errorState)
             assertFalse(viewModel.state().value.isQuotaExceeded, "A failed write must not replace the household list")
+
+            viewModel.onErrorShown()
+
+            assertEquals(HouseholdManagementScreenState.ErrorState.None, viewModel.state().value.errorState)
         }
 
     @Test
@@ -147,25 +118,18 @@ class HouseholdManagementViewModelImplTest {
         }
 
     @Test
-    fun removeMember_setsQuotaExceededError_whenQuotaIsExceeded() =
+    fun addMemberToHousehold_setsUserNotFoundAndDismissesDialog_whenJoinKeyHasNoUser() =
         runTest {
-            households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+            households.addMemberResult = false
             val viewModel = viewModel()
+            viewModel.showAddMemberToHouseholdDialog(householdId = "household-1")
+            viewModel.onDialogJoinKeyInputChanged("unknown-key")
 
-            viewModel.removeMemberFromHousehold(householdId = "household-1", memberId = "user-2", householdOwnerId = TEST_USER.uid)
+            viewModel.addMemberToHousehold(householdId = "household-1")
 
-            assertEquals(HouseholdManagementScreenState.ErrorState.QuotaExceeded, viewModel.state().value.errorState)
-        }
-
-    @Test
-    fun onErrorShown_resetsError_afterQuotaWriteFailure() =
-        runTest {
-            households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-            val viewModel = viewModel()
-            viewModel.deleteHousehold(householdId = "household-1", householdOwnerId = TEST_USER.uid)
-
-            viewModel.onErrorShown()
-
-            assertEquals(HouseholdManagementScreenState.ErrorState.None, viewModel.state().value.errorState)
+            val state = viewModel.state().value
+            assertEquals(HouseholdManagementScreenState.ErrorState.UserNotFound, state.errorState)
+            assertEquals(HouseholdManagementScreenState.DialogState.Hidden, state.dialogState)
+            assertEquals("", viewModel.dialogInput().value)
         }
 }

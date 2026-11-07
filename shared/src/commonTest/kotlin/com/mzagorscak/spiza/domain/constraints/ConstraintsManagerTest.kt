@@ -12,37 +12,22 @@ class ConstraintsManagerTest {
     private val constraintsManager: ConstraintsManager = ConstraintsManagerImpl
 
     @Test
-    fun canUserCreateOrJoinHousehold_returnsTrue_whenCountIsLessThanLimit() {
-        assertTrue(constraintsManager.canUserCreateOrJoinHousehold(0))
+    fun canUserCreateOrJoinHousehold_isTrueOnlyBelowTheLimit() {
         assertTrue(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT - 1))
-    }
-
-    @Test
-    fun canUserCreateOrJoinHousehold_returnsFalse_whenCountIsAtOrAboveLimit() {
         assertFalse(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT))
         assertFalse(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT + 1))
     }
 
     @Test
-    fun canAddItemToHousehold_returnsTrue_whenCountIsLessThanLimit() {
-        assertTrue(constraintsManager.canAddItemToHousehold(0))
+    fun canAddItemToHousehold_isTrueOnlyBelowTheLimit() {
         assertTrue(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT - 1))
-    }
-
-    @Test
-    fun canAddItemToHousehold_returnsFalse_whenCountIsAtOrAboveLimit() {
         assertFalse(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT))
         assertFalse(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT + 1))
     }
 
     @Test
-    fun canAddMemberToHousehold_returnsTrue_whenCountIsLessThanLimit() {
-        assertTrue(constraintsManager.canAddMemberToHousehold(0))
+    fun canAddMemberToHousehold_isTrueOnlyBelowTheLimit() {
         assertTrue(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT - 1))
-    }
-
-    @Test
-    fun canAddMemberToHousehold_returnsFalse_whenCountIsAtOrAboveLimit() {
         assertFalse(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT))
         assertFalse(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT + 1))
     }

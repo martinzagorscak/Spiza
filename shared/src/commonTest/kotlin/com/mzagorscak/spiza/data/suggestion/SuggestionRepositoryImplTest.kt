@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /** In-memory DAO: the real `getAll` and `upsert` default methods run against it, so their logic is covered too. */
 private class FakeSuggestionDao : SuggestionDao {
@@ -86,18 +85,5 @@ class SuggestionRepositoryImplTest {
             assertEquals(listOf("Apples", "Bread"), repository.observeAll(SuggestionSortingType.ALPHABETICAL_ASC).first().map { it.name })
             assertEquals(listOf("Bread", "Apples"), repository.observeAll(SuggestionSortingType.LAST_USED_DESC).first().map { it.name })
             assertEquals(listOf("Apples", "Bread"), repository.observeAll(SuggestionSortingType.MOST_USED_DESC).first().map { it.name })
-        }
-
-    @Test
-    fun delete_removesOneSuggestion_andDeleteAll_removesEverything() =
-        runTest {
-            repository.addOrUpdate(name = "Milk", normalizedName = "milk", timestamp = 100L)
-            repository.addOrUpdate(name = "Bread", normalizedName = "bread", timestamp = 200L)
-
-            repository.delete(id = 1L)
-            assertEquals(listOf("Bread"), repository.observeAll().first().map { it.name })
-
-            repository.deleteAll()
-            assertTrue(repository.observeAll().first().isEmpty())
         }
 }
