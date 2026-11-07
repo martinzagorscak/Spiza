@@ -161,22 +161,21 @@ fun ShoppingListScreen(
                     }
 
                     is ShoppingListState.Body.Error -> {
-                        val isQuotaExceeded = bodyState.errorType == ShoppingListState.ErrorType.QuotaExceeded
+                        val (title, description) = when (bodyState.errorType) {
+                            ShoppingListState.ErrorType.QuotaExceeded -> {
+                                stringResource(Res.string.error_quota_exceeded_title) to
+                                    stringResource(Res.string.shopping_list_quota_exceeded_description)
+                            }
+
+                            ShoppingListState.ErrorType.Generic -> {
+                                stringResource(Res.string.shopping_list_loading_error_title) to
+                                    stringResource(Res.string.shopping_list_loading_error_description)
+                            }
+                        }
+
                         FallbackState(
-                            title = stringResource(
-                                if (isQuotaExceeded) {
-                                    Res.string.error_quota_exceeded_title
-                                } else {
-                                    Res.string.shopping_list_loading_error_title
-                                },
-                            ),
-                            description = stringResource(
-                                if (isQuotaExceeded) {
-                                    Res.string.shopping_list_quota_exceeded_description
-                                } else {
-                                    Res.string.shopping_list_loading_error_description
-                                },
-                            ),
+                            title = title,
+                            description = description,
                             lottiePath = ERROR_LOTTIE_PATH,
                             cta = CTA(
                                 label = stringResource(Res.string.retry),
