@@ -20,9 +20,18 @@ class DataException(
         /** The requested document does not exist. */
         NotFound,
 
+        /**
+         * Firestore `RESOURCE_EXHAUSTED` (gRPC 8): the project's read/write quota or spending limit is used up.
+         * Retrying immediately does not help; it resets later (daily quota) or after the plan is upgraded.
+         */
+        QuotaExceeded,
+
         Unknown,
     }
 }
 
 /** Classifies this throwable, looking through its causes. */
 expect fun Throwable.dataErrorReason(): DataException.Reason
+
+/** True when this failure (or one of its causes) means the Firestore quota is used up, see [DataException.Reason.QuotaExceeded]. */
+fun Throwable.isQuotaExceeded(): Boolean = dataErrorReason() == DataException.Reason.QuotaExceeded

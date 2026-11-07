@@ -9,6 +9,9 @@
     <string name="delete">Delete</string>
     <string name="remove">Remove</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_quota_exceeded">Spiza has reached its usage limit for now. Please try again later.</string>
+    <string name="error_quota_exceeded_title">Service temporarily unavailable</string>
+    <string name="error_quota_exceeded_description">Spiza has reached its usage limit for now. Your data is safe — please try again later.</string>
 
     <!--  Screen specifics  -->
     <string name="bottom_navigation_shopping_list">Shopping list</string>
@@ -54,6 +57,7 @@
     <string name="shopping_list_create_household">Create household</string>
     <string name="shopping_list_loading_error_title">Something went wrong</string>
     <string name="shopping_list_loading_error_description">We couldn't load your shopping list. Check your connection and try again.</string>
+    <string name="shopping_list_quota_exceeded_description">Spiza has reached its usage limit for now. Your list is safe — please try again later.</string>
     <string name="shopping_list_no_household_title">No household yet</string>
     <string name="shopping_list_no_household_description">Create or join a household to start a shared shopping list.</string>
     <string name="shopping_list_empty_title">Your list is empty</string>

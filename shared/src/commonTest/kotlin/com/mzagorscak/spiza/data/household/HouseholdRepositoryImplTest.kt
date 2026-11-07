@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -23,6 +24,9 @@ import kotlin.test.assertTrue
 private const val MAX_MEMBERS = 10
 private const val MAX_ITEMS = 100
 private const val MAX_HOUSEHOLDS = 3
+
+// The first subscription plus the repository's three retries.
+private const val SUBSCRIPTIONS_WITH_RETRIES = 4
 
 class HouseholdRepositoryImplTest {
     private val dataSource = FakeHouseholdDataSource()
@@ -151,5 +155,61 @@ class HouseholdRepositoryImplTest {
 
             assertNull(repository.getHouseholdJoinKey().first())
             assertTrue(logger.exceptions.isEmpty())
+        }
+
+    @Test
+    fun observeHouseholds_failsWithoutRetrying_whenQuotaIsExceeded() =
+        runTest {
+            dataSource.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+
+            val error = assertFailsWith<DataException> { repository.observeHouseholds().first() }
+
+            assertEquals(DataException.Reason.QuotaExceeded, error.reason)
+            assertEquals(1, dataSource.householdsSubscriptions)
+            assertEquals(1, logger.warnings.size)
+        }
+
+    @Test
+    fun observeHouseholds_retriesBeforeFailing_whenListenerFailsForAnotherReason() =
+        runTest {
+            dataSource.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
+
+            val error = assertFailsWith<DataException> { repository.observeHouseholds().first() }
+
+            assertEquals(DataException.Reason.PermissionDenied, error.reason)
+            assertEquals(SUBSCRIPTIONS_WITH_RETRIES, dataSource.householdsSubscriptions)
+        }
+
+    @Test
+    fun observeItems_failsWithoutRetrying_whenQuotaIsExceeded() =
+        runTest {
+            dataSource.itemsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+
+            val error = assertFailsWith<DataException> { repository.observeItems(householdId = "household-1").first() }
+
+            assertEquals(DataException.Reason.QuotaExceeded, error.reason)
+            assertEquals(1, dataSource.itemsSubscriptions)
+            assertEquals(1, logger.warnings.size)
+        }
+
+    @Test
+    fun observeItems_failsWithoutRetrying_whenQuotaExceededIsTheCause() =
+        runTest {
+            dataSource.itemsFailure = RuntimeException("listener", DataException(DataException.Reason.QuotaExceeded, "quota"))
+
+            assertFailsWith<RuntimeException> { repository.observeItems(householdId = "household-1").first() }
+
+            assertEquals(1, dataSource.itemsSubscriptions)
+        }
+
+    @Test
+    fun observeItems_retriesBeforeFailing_whenListenerFailsForAnotherReason() =
+        runTest {
+            dataSource.itemsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
+
+            val error = assertFailsWith<DataException> { repository.observeItems(householdId = "household-1").first() }
+
+            assertEquals(DataException.Reason.PermissionDenied, error.reason)
+            assertEquals(SUBSCRIPTIONS_WITH_RETRIES, dataSource.itemsSubscriptions)
         }
 }

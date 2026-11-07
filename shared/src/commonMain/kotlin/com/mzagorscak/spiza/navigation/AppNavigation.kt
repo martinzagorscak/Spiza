@@ -295,6 +295,10 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     onDialogJoinKeyInputChanged = viewModel::onDialogJoinKeyInputChanged,
                                     onDismissDialog = viewModel::dismissDialog,
                                     onUserNotFoundErrorShown = viewModel::onErrorShown,
+                                    onRetryClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.retry()
+                                    },
                                 )
                             },
                         )

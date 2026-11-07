@@ -12,8 +12,14 @@ data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.System,
     val language: AppLanguage = AppLanguage.Default,
     val isSigningOut: Boolean = false,
-    val hasError: Boolean = false,
+    val errorState: ErrorState = ErrorState.None,
 ) {
+    enum class ErrorState {
+        None,
+        Generic,
+        QuotaExceeded,
+    }
+
     companion object {
         val PlaceholderProfile = PresentableUserProfile(
             name = "",

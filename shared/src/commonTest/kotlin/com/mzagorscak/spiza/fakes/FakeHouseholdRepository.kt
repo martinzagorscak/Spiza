@@ -38,11 +38,14 @@ class FakeHouseholdRepository : HouseholdRepository {
         writeFailure?.let { throw it }
     }
 
-    override suspend fun createHouseholdJoinKey(): String? = "join-key"
+    override suspend fun createHouseholdJoinKey(): String? {
+        write()
+        return "join-key"
+    }
 
     override fun getHouseholdJoinKey(): Flow<String?> = flowOf("join-key")
 
-    override suspend fun refreshHouseholdJoinKey() = Unit
+    override suspend fun refreshHouseholdJoinKey() = write()
 
     override suspend fun addMemberToHousehold(
         householdId: String,
@@ -75,13 +78,16 @@ class FakeHouseholdRepository : HouseholdRepository {
     override suspend fun createHousehold(
         name: String,
         description: String,
-    ): String? = "household-new"
+    ): String? {
+        write()
+        return "household-new"
+    }
 
     override suspend fun updateHousehold(
         householdId: String,
         name: String,
         description: String,
-    ) = Unit
+    ) = write()
 
     override suspend fun addItem(
         householdId: String,

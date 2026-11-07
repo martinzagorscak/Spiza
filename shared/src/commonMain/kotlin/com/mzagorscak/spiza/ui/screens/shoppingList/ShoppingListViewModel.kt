@@ -16,7 +16,9 @@ sealed class ShoppingListState {
     sealed class Body : ShoppingListState() {
         data object Loading : Body()
 
-        data object Error : Body()
+        data class Error(
+            val errorType: ErrorType,
+        ) : Body()
 
         data object NoHousehold : Body()
 
@@ -40,6 +42,13 @@ sealed class ShoppingListState {
     enum class ContentErrorState {
         None,
         WriteError,
+        QuotaExceeded,
+    }
+
+    /** Why the list could not be loaded; [QuotaExceeded] is not fixed by retrying right away. */
+    enum class ErrorType {
+        Generic,
+        QuotaExceeded,
     }
 }
 

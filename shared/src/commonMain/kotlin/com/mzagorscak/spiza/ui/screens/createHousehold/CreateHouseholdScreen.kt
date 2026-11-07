@@ -41,6 +41,7 @@ import spiza.shared.generated.resources.create_household_title
 import spiza.shared.generated.resources.edit_household_error
 import spiza.shared.generated.resources.edit_household_submit
 import spiza.shared.generated.resources.edit_household_title
+import spiza.shared.generated.resources.error_quota_exceeded
 import spiza.shared.generated.resources.ic_back
 
 @Composable
@@ -112,7 +113,11 @@ fun CreateHouseholdScreen(
             if (state.hasError) {
                 Text(
                     text = stringResource(
-                        if (state.isEditScenario) Res.string.edit_household_error else Res.string.create_household_error,
+                        when {
+                            state.errorState == CreateHouseholdState.ErrorState.QuotaExceeded -> Res.string.error_quota_exceeded
+                            state.isEditScenario -> Res.string.edit_household_error
+                            else -> Res.string.create_household_error
+                        },
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,

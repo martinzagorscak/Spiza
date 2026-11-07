@@ -41,6 +41,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
+import spiza.shared.generated.resources.error_quota_exceeded
+import spiza.shared.generated.resources.error_quota_exceeded_title
 import spiza.shared.generated.resources.ic_plus
 import spiza.shared.generated.resources.retry
 import spiza.shared.generated.resources.shopping_list_clear_checked_items_dialog_confirm
@@ -51,6 +53,7 @@ import spiza.shared.generated.resources.shopping_list_loading_error_description
 import spiza.shared.generated.resources.shopping_list_loading_error_title
 import spiza.shared.generated.resources.shopping_list_no_household_description
 import spiza.shared.generated.resources.shopping_list_no_household_title
+import spiza.shared.generated.resources.shopping_list_quota_exceeded_description
 import spiza.shared.generated.resources.shopping_list_write_error
 
 private const val ERROR_LOTTIE_PATH = "files/lottie_error.json"
@@ -72,18 +75,18 @@ fun ShoppingListScreen(
     val writeErrorMessage = if (bodyState is ShoppingListState.Body.Content) {
         when (bodyState.contentErrorState) {
             ShoppingListState.ContentErrorState.WriteError -> stringResource(Res.string.shopping_list_write_error)
+            ShoppingListState.ContentErrorState.QuotaExceeded -> stringResource(Res.string.error_quota_exceeded)
             ShoppingListState.ContentErrorState.None -> null
         }
     } else {
         null
     }
-    val hasError = (bodyState as? ShoppingListState.Body.Content)?.contentErrorState != ShoppingListState.ContentErrorState.None
-    LaunchedEffect(hasError) {
-        if (hasError) {
-            writeErrorMessage?.let {
-                snackbarHostState.showSnackbar(writeErrorMessage)
-                callbacks.onWriteErrorShown()
-            }
+    // Keyed on the enum so a different error replacing the current one is shown too.
+    val contentErrorState = (bodyState as? ShoppingListState.Body.Content)?.contentErrorState
+    LaunchedEffect(contentErrorState) {
+        writeErrorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            callbacks.onWriteErrorShown()
         }
     }
 
@@ -157,10 +160,23 @@ fun ShoppingListScreen(
                         )
                     }
 
-                    ShoppingListState.Body.Error -> {
+                    is ShoppingListState.Body.Error -> {
+                        val isQuotaExceeded = bodyState.errorType == ShoppingListState.ErrorType.QuotaExceeded
                         FallbackState(
-                            title = stringResource(Res.string.shopping_list_loading_error_title),
-                            description = stringResource(Res.string.shopping_list_loading_error_description),
+                            title = stringResource(
+                                if (isQuotaExceeded) {
+                                    Res.string.error_quota_exceeded_title
+                                } else {
+                                    Res.string.shopping_list_loading_error_title
+                                },
+                            ),
+                            description = stringResource(
+                                if (isQuotaExceeded) {
+                                    Res.string.shopping_list_quota_exceeded_description
+                                } else {
+                                    Res.string.shopping_list_loading_error_description
+                                },
+                            ),
                             lottiePath = ERROR_LOTTIE_PATH,
                             cta = CTA(
                                 label = stringResource(Res.string.retry),
@@ -253,23 +269,38 @@ private fun ShoppingListScreenPreview() {
                 doneItems = listOf(PresentableArticleItem(id = "3", text = "Bread", isChecked = true)),
                 areCheckedItemsCollapsed = false,
             ),
-            callbacks = ShoppingListScreenCallbacks(
-                onSettingsClick = {},
-                onTabClick = {},
-                onOtherHouseholdClick = {},
-                onCreateHouseholdClick = {},
-                onRetryClick = {},
-                onAddItem = {},
-                onItemTextChange = { _, _ -> },
-                onItemCheckedChange = { _, _ -> },
-                onItemMoved = { _, _ -> },
-                onItemDelete = {},
-                onCheckedItemsCollapse = {},
-                showClearCheckedItemsConfirmationDialog = {},
-                onDismissDialog = {},
-                clearCheckedItems = {},
-                onWriteErrorShown = {},
-            ),
+            callbacks = PreviewCallbacks,
         )
     }
 }
+
+@Preview
+@Composable
+private fun ShoppingListScreenQuotaExceededPreview() {
+    TheAppTheme {
+        ShoppingListScreen(
+            headerState = ShoppingListState.Header(),
+            bodyState = ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.QuotaExceeded),
+            callbacks = PreviewCallbacks,
+        )
+    }
+}
+
+private val PreviewCallbacks =
+    ShoppingListScreenCallbacks(
+        onSettingsClick = {},
+        onTabClick = {},
+        onOtherHouseholdClick = {},
+        onCreateHouseholdClick = {},
+        onRetryClick = {},
+        onAddItem = {},
+        onItemTextChange = { _, _ -> },
+        onItemCheckedChange = { _, _ -> },
+        onItemMoved = { _, _ -> },
+        onItemDelete = {},
+        onCheckedItemsCollapse = {},
+        showClearCheckedItemsConfirmationDialog = {},
+        onDismissDialog = {},
+        clearCheckedItems = {},
+        onWriteErrorShown = {},
+    )

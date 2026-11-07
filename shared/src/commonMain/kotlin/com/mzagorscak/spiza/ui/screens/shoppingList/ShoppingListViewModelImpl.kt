@@ -3,6 +3,7 @@ package com.mzagorscak.spiza.ui.screens.shoppingList
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.catchAndRecord
+import com.mzagorscak.spiza.crash.isQuotaExceeded
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
@@ -47,7 +48,9 @@ private const val CHECKED_ITEMS_COLLAPSE_DELAY_MS = 300L
 private sealed interface Snapshot {
     data object Loading : Snapshot
 
-    data object Failed : Snapshot
+    data class Failed(
+        val isQuotaExceeded: Boolean,
+    ) : Snapshot
 
     data object NoHousehold : Snapshot
 
@@ -205,11 +208,15 @@ internal class ShoppingListViewModelImpl(
         launchSafely(
             crashLogger = crashLogger,
             context = "Shopping list write failed",
-            onError = {
+            onError = { error ->
                 body.update {
                     if (it is ShoppingListState.Body.Content) {
                         it.copy(
-                            contentErrorState = ShoppingListState.ContentErrorState.WriteError,
+                            contentErrorState = if (error.isQuotaExceeded()) {
+                                ShoppingListState.ContentErrorState.QuotaExceeded
+                            } else {
+                                ShoppingListState.ContentErrorState.WriteError
+                            },
                         )
                     } else {
                         it
@@ -240,8 +247,8 @@ internal class ShoppingListViewModelImpl(
                     }
                 }
             }.onStart<Snapshot> { emit(Snapshot.Loading) }
-                .catchAndRecord(crashLogger = crashLogger, context = "Shopping list stream failed") {
-                    emit(Snapshot.Failed)
+                .catchAndRecord(crashLogger = crashLogger, context = "Shopping list stream failed") { error ->
+                    emit(Snapshot.Failed(isQuotaExceeded = error.isQuotaExceeded()))
                 }
         }
 
@@ -254,9 +261,16 @@ internal class ShoppingListViewModelImpl(
         latest = snapshot as? Snapshot.Loaded
         when (snapshot) {
             Snapshot.Loading -> body.value = ShoppingListState.Body.Loading
-            Snapshot.Failed -> {
+            is Snapshot.Failed -> {
                 header.value = ShoppingListState.Header()
-                body.value = ShoppingListState.Body.Error
+                body.value =
+                    ShoppingListState.Body.Error(
+                        errorType = if (snapshot.isQuotaExceeded) {
+                            ShoppingListState.ErrorType.QuotaExceeded
+                        } else {
+                            ShoppingListState.ErrorType.Generic
+                        },
+                    )
             }
 
             Snapshot.NoHousehold -> {

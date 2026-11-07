@@ -4,6 +4,7 @@ import com.mzagorscak.spiza.auth.AuthService
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.ExpectedErrors
 import com.mzagorscak.spiza.crash.catchAndRecord
+import com.mzagorscak.spiza.crash.isQuotaExceeded
 import com.mzagorscak.spiza.crash.recordError
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
@@ -160,7 +161,7 @@ internal class HouseholdRepositoryImpl(
                         crashLogger.logWarning(
                             message = "Households listener of user ${user.uid} failed (attempt $attempt): ${cause.message}",
                         )
-                        (attempt < ITEMS_RETRY_COUNT).also { if (it) delay(OBSERVATION_RETRY_DELAY_MS.milliseconds) }
+                        shouldRetryObservation(cause = cause, attempt = attempt)
                     }
             }
         }
@@ -176,7 +177,7 @@ internal class HouseholdRepositoryImpl(
             // items listener can be rejected by the rules (they read the parent document). Retrying resolves it.
             .retryWhen { cause, attempt ->
                 crashLogger.logWarning(message = "Items listener of household $householdId failed (attempt $attempt): ${cause.message}")
-                (attempt < ITEMS_RETRY_COUNT).also { if (it) delay(OBSERVATION_RETRY_DELAY_MS.milliseconds) }
+                shouldRetryObservation(cause = cause, attempt = attempt)
             }
 
     override suspend fun createHousehold(
@@ -275,6 +276,15 @@ internal class HouseholdRepositoryImpl(
             crashLogger.recordError(context = "Fetching household members failed", error = error, expected = ExpectedErrors.streams)
             emptyList()
         }
+
+    // Every retry re-reads the whole query, so a used-up quota is not retried: it burns more reads and can not succeed.
+    private suspend fun shouldRetryObservation(
+        cause: Throwable,
+        attempt: Long,
+    ): Boolean {
+        if (cause.isQuotaExceeded()) return false
+        return (attempt < ITEMS_RETRY_COUNT).also { if (it) delay(OBSERVATION_RETRY_DELAY_MS.milliseconds) }
+    }
 
     private fun recordNonAuthenticatedError(message: String) =
         crashLogger.recordException(Throwable(message = "Non-authenticated user error: $message"))

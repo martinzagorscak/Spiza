@@ -278,7 +278,8 @@ extension QueryDocumentSnapshot {
 
 extension Error {
     /// Maps a Firebase error to a BridgeError whose reason is a Kotlin DataException.Reason name.
-    /// Firestore uses gRPC status codes: 4 deadlineExceeded, 5 notFound, 7 permissionDenied, 14 unavailable, 16 unauthenticated.
+    /// Firestore uses gRPC status codes: 4 deadlineExceeded, 5 notFound, 7 permissionDenied, 8 resourceExhausted (quota), 14 unavailable,
+    /// 16 unauthenticated.
     func toBridgeError() -> BridgeError {
         let nsError = self as NSError
         let reason: String
@@ -289,6 +290,8 @@ extension Error {
             reason = "PermissionDenied"
         case ("FIRFirestoreErrorDomain", 5):
             reason = "NotFound"
+        case ("FIRFirestoreErrorDomain", 8):
+            reason = "QuotaExceeded"
         default:
             reason = "Unknown"
         }

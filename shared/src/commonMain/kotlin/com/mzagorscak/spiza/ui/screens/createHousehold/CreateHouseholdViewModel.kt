@@ -18,15 +18,22 @@ data class CreateHouseholdState(
     val name: String = "",
     val description: String = "",
     val isSubmitting: Boolean = false,
-    val hasError: Boolean = false,
+    val errorState: ErrorState = ErrorState.None,
     val isCreated: Boolean = false,
 ) {
+    enum class ErrorState {
+        None,
+        Generic,
+        QuotaExceeded,
+    }
+
     companion object {
         const val MAX_NAME_LENGTH = 50
         const val MAX_DESCRIPTION_LENGTH = 200
     }
 
     val isEditScenario get() = id != null
+    val hasError: Boolean get() = errorState != ErrorState.None
     val canSubmit: Boolean get() = name.isNotBlank() && isSubmitting.not()
 }
 

@@ -10,6 +10,8 @@ data class HouseholdManagementScreenState(
     val canUserCreateHousehold: Boolean = false,
     val dialogState: DialogState = DialogState.Hidden,
     val errorState: ErrorState = ErrorState.None,
+    // The households listener stopped because the Firestore quota is used up, so an empty list does not mean "no households".
+    val isQuotaExceeded: Boolean = false,
 ) {
     sealed class DialogState {
         object Hidden : DialogState()
@@ -39,6 +41,7 @@ data class HouseholdManagementScreenState(
         OnlyOwnerCanRemoveOtherMembers,
         OnlyOwnerCanDeleteHousehold,
         Generic,
+        QuotaExceeded,
     }
 }
 
@@ -46,6 +49,8 @@ abstract class HouseholdManagementViewModel : ViewModel() {
     abstract fun state(): StateFlow<HouseholdManagementScreenState>
 
     abstract fun dialogInput(): StateFlow<String>
+
+    abstract fun retry()
 
     abstract fun showAddMemberToHouseholdDialog(householdId: String)
 

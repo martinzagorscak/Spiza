@@ -6,6 +6,8 @@ import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 
 class FakeHouseholdDataSource : HouseholdDataSource {
@@ -13,6 +15,16 @@ class FakeHouseholdDataSource : HouseholdDataSource {
     val items = MutableStateFlow<List<ArticleItemDto>>(emptyList())
     var joinKey: Flow<String?> = flowOf(null)
     var addMemberResult = true
+
+    /** When set, [observeHouseholds] fails with it on every subscription (like a rejected Firestore listener). */
+    var householdsFailure: Throwable? = null
+
+    /** When set, [observeItems] fails with it on every subscription. */
+    var itemsFailure: Throwable? = null
+
+    /** How many times each listener was subscribed to (every retry subscribes again). */
+    var householdsSubscriptions = 0
+    var itemsSubscriptions = 0
 
     /** Writes never complete, like Firestore writes while offline. */
     var neverAcknowledgeWrites = false
@@ -54,9 +66,19 @@ class FakeHouseholdDataSource : HouseholdDataSource {
 
     override suspend fun deleteHousehold(householdId: String) = write()
 
-    override fun observeHouseholds(userId: String): Flow<List<HouseholdDto>> = households
+    override fun observeHouseholds(userId: String): Flow<List<HouseholdDto>> =
+        flow {
+            householdsSubscriptions++
+            householdsFailure?.let { throw it }
+            emitAll(households)
+        }
 
-    override fun observeItems(householdId: String): Flow<List<ArticleItemDto>> = items
+    override fun observeItems(householdId: String): Flow<List<ArticleItemDto>> =
+        flow {
+            itemsSubscriptions++
+            itemsFailure?.let { throw it }
+            emitAll(items)
+        }
 
     override suspend fun createHousehold(
         ownerId: String,

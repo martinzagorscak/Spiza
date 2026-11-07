@@ -3,6 +3,7 @@ package com.mzagorscak.spiza.ui.screens.settings
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.catchAndRecord
+import com.mzagorscak.spiza.crash.isQuotaExceeded
 import com.mzagorscak.spiza.domain.model.AppLanguage
 import com.mzagorscak.spiza.domain.model.ThemeMode
 import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCase
@@ -93,7 +94,7 @@ internal class SettingsViewModelImpl(
     }
 
     override fun onErrorShown() {
-        state.update { it.copy(hasError = false) }
+        state.update { it.copy(errorState = SettingsState.ErrorState.None) }
     }
 
     private fun launchAction(
@@ -103,7 +104,14 @@ internal class SettingsViewModelImpl(
         launchSafely(
             crashLogger = crashLogger,
             context = context,
-            onError = { state.update { it.copy(hasError = true) } },
+            onError = { error -> state.update { it.copy(errorState = error.toErrorState()) } },
         ) { block() }
     }
 }
+
+private fun Throwable.toErrorState(): SettingsState.ErrorState =
+    if (isQuotaExceeded()) {
+        SettingsState.ErrorState.QuotaExceeded
+    } else {
+        SettingsState.ErrorState.Generic
+    }

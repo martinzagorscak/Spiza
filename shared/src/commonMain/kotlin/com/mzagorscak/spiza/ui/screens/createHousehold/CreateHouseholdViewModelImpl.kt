@@ -1,6 +1,7 @@
 package com.mzagorscak.spiza.ui.screens.createHousehold
 
 import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.isQuotaExceeded
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
 import com.mzagorscak.spiza.ui.screens.common.launchSafely
@@ -38,22 +39,22 @@ internal class CreateHouseholdViewModelImpl(
 
     override fun onNameChange(name: String) {
         if (name.length > CreateHouseholdState.MAX_NAME_LENGTH) return
-        state.update { it.copy(name = name, hasError = false) }
+        state.update { it.copy(name = name, errorState = CreateHouseholdState.ErrorState.None) }
     }
 
     override fun onDescriptionChange(description: String) {
         if (description.length > CreateHouseholdState.MAX_DESCRIPTION_LENGTH) return
-        state.update { it.copy(description = description, hasError = false) }
+        state.update { it.copy(description = description, errorState = CreateHouseholdState.ErrorState.None) }
     }
 
     override fun createHousehold() {
         val current = state.value
         if (current.canSubmit.not()) return
-        state.update { it.copy(isSubmitting = true, hasError = false) }
+        state.update { it.copy(isSubmitting = true, errorState = CreateHouseholdState.ErrorState.None) }
         launchSafely(
             crashLogger = crashLogger,
             context = if (current.isEditScenario) "Updating household failed" else "Creating household failed",
-            onError = { state.update { it.copy(isSubmitting = false, hasError = true) } },
+            onError = { error -> state.update { it.copy(isSubmitting = false, errorState = error.toErrorState()) } },
         ) {
             if (current.isEditScenario) {
                 val householdId = current.id ?: return@launchSafely
@@ -65,3 +66,10 @@ internal class CreateHouseholdViewModelImpl(
         }
     }
 }
+
+private fun Throwable.toErrorState(): CreateHouseholdState.ErrorState =
+    if (isQuotaExceeded()) {
+        CreateHouseholdState.ErrorState.QuotaExceeded
+    } else {
+        CreateHouseholdState.ErrorState.Generic
+    }

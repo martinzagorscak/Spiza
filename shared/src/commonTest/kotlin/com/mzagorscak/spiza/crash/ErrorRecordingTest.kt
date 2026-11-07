@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -75,4 +76,51 @@ class ErrorRecordingTest {
             assertTrue(values.isEmpty())
             assertEquals(1, logger.exceptions.size)
         }
+
+    @Test
+    fun recordError_recordsExceptionNotWarning_whenWriteFailsWithQuotaExceeded() {
+        val error = DataException(DataException.Reason.QuotaExceeded, "quota")
+
+        logger.recordError(context = "Saving", error = error)
+
+        assertTrue(logger.warnings.isEmpty())
+        assertSame(error, logger.exceptions.single().cause)
+    }
+
+    @Test
+    fun catchAndRecord_recordsExceptionNotWarning_whenStreamFailsWithQuotaExceeded() =
+        runTest {
+            val values =
+                flow<Int> { throw DataException(DataException.Reason.QuotaExceeded, "quota") }
+                    .catchAndRecord(crashLogger = logger, context = "Items") { emit(-1) }
+                    .toList()
+
+            assertEquals(listOf(-1), values)
+            assertTrue(logger.warnings.isEmpty())
+            assertEquals(1, logger.exceptions.size)
+        }
+
+    @Test
+    fun isQuotaExceeded_isTrue_whenErrorIsQuotaExceeded() {
+        assertTrue(DataException(DataException.Reason.QuotaExceeded, "quota").isQuotaExceeded())
+    }
+
+    @Test
+    fun isQuotaExceeded_isTrue_whenQuotaExceededIsTheCause() {
+        val wrapped = RuntimeException("outer", IllegalStateException("middle", DataException(DataException.Reason.QuotaExceeded, "quota")))
+
+        assertTrue(wrapped.isQuotaExceeded())
+    }
+
+    @Test
+    fun isQuotaExceeded_isFalse_whenReasonIsNotQuotaExceeded() {
+        DataException.Reason.entries.filter { it != DataException.Reason.QuotaExceeded }.forEach { reason ->
+            assertFalse(DataException(reason, "failure").isQuotaExceeded(), "$reason must not be a quota failure")
+        }
+    }
+
+    @Test
+    fun isQuotaExceeded_isFalse_whenErrorIsUnclassified() {
+        assertFalse(IllegalStateException("bug").isQuotaExceeded())
+    }
 }

@@ -23,6 +23,7 @@ private fun Throwable.knownReason(): DataException.Reason? =
                 -> DataException.Reason.PermissionDenied
 
                 FirebaseFirestoreException.Code.NOT_FOUND -> DataException.Reason.NotFound
+                FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED -> DataException.Reason.QuotaExceeded
                 else -> null
             }
 

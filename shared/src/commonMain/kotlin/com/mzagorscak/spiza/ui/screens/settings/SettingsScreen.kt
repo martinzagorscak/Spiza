@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.error_generic
+import spiza.shared.generated.resources.error_quota_exceeded
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_refresh
 import spiza.shared.generated.resources.ic_right_chevron
@@ -74,10 +75,14 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val errorMessage = stringResource(Res.string.error_generic)
-    LaunchedEffect(state.hasError) {
-        if (state.hasError) {
-            snackbarHostState.showSnackbar(errorMessage)
+    val errorMessage = when (state.errorState) {
+        SettingsState.ErrorState.Generic -> stringResource(Res.string.error_generic)
+        SettingsState.ErrorState.QuotaExceeded -> stringResource(Res.string.error_quota_exceeded)
+        SettingsState.ErrorState.None -> null
+    }
+    LaunchedEffect(state.errorState) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
             callbacks.onErrorShown()
         }
     }

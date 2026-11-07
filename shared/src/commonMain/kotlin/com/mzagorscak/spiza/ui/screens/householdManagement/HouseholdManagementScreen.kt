@@ -44,6 +44,9 @@ import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.delete
 import spiza.shared.generated.resources.error_generic
+import spiza.shared.generated.resources.error_quota_exceeded
+import spiza.shared.generated.resources.error_quota_exceeded_description
+import spiza.shared.generated.resources.error_quota_exceeded_title
 import spiza.shared.generated.resources.household_management_add_member_dialog_confirm_label
 import spiza.shared.generated.resources.household_management_add_member_dialog_description
 import spiza.shared.generated.resources.household_management_add_member_dialog_title
@@ -61,10 +64,12 @@ import spiza.shared.generated.resources.ic_close
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.join_key
 import spiza.shared.generated.resources.remove
+import spiza.shared.generated.resources.retry
 import spiza.shared.generated.resources.settings_household_management
 import spiza.shared.generated.resources.shopping_list_no_household_description
 import spiza.shared.generated.resources.shopping_list_no_household_title
 
+private const val ERROR_LOTTIE_PATH = "files/lottie_error.json"
 private val MinHouseholdCardHeight = 100.dp
 private val MaxHouseholdCardHeight = 500.dp
 
@@ -87,6 +92,7 @@ fun HouseholdManagementScreen(
         )
 
         HouseholdManagementScreenState.ErrorState.Generic -> stringResource(Res.string.error_generic)
+        HouseholdManagementScreenState.ErrorState.QuotaExceeded -> stringResource(Res.string.error_quota_exceeded)
         HouseholdManagementScreenState.ErrorState.None -> null
     }
     LaunchedEffect(state.errorState) {
@@ -186,6 +192,16 @@ fun HouseholdManagementScreen(
                         )
                     }
                 }
+            } else if (state.isQuotaExceeded) {
+                FallbackState(
+                    title = stringResource(Res.string.error_quota_exceeded_title),
+                    description = stringResource(Res.string.error_quota_exceeded_description),
+                    lottiePath = ERROR_LOTTIE_PATH,
+                    cta = CTA(
+                        label = stringResource(Res.string.retry),
+                        onClick = callbacks.onRetryClick,
+                    ),
+                )
             } else {
                 FallbackState(
                     title = stringResource(Res.string.shopping_list_no_household_title),
@@ -291,4 +307,5 @@ data class HouseholdManagementScreenCallbacks(
     val onDialogJoinKeyInputChanged: (String) -> Unit,
     val onDismissDialog: () -> Unit,
     val onUserNotFoundErrorShown: () -> Unit,
+    val onRetryClick: () -> Unit,
 )

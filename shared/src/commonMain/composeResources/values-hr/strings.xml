@@ -9,6 +9,9 @@
     <string name="delete">Obriši</string>
     <string name="remove">Ukloni</string>
     <string name="error_generic">Nešto je pošlo po zlu. Pokušaj ponovno.</string>
+    <string name="error_quota_exceeded">Spiza je trenutno dosegnula ograničenje korištenja. Pokušaj ponovno kasnije.</string>
+    <string name="error_quota_exceeded_title">Usluga je privremeno nedostupna</string>
+    <string name="error_quota_exceeded_description">Spiza je trenutno dosegnula ograničenje korištenja. Tvoji su podaci sigurni — pokušaj ponovno kasnije.</string>
 
     <!--  Screen specifics  -->
     <string name="bottom_navigation_shopping_list">Popis</string>
@@ -54,6 +57,7 @@
     <string name="shopping_list_create_household">Stvori kućanstvo</string>
     <string name="shopping_list_loading_error_title">Nešto je pošlo po zlu</string>
     <string name="shopping_list_loading_error_description">Nismo mogli učitati tvoj popis za kupnju. Provjeri vezu i pokušaj ponovno.</string>
+    <string name="shopping_list_quota_exceeded_description">Spiza je trenutno dosegnula ograničenje korištenja. Tvoj popis je siguran — pokušaj ponovno kasnije.</string>
     <string name="shopping_list_no_household_title">Još nemaš kućanstvo</string>
     <string name="shopping_list_no_household_description">Stvori ili pridruži se kućanstvu kako bi započeo zajednički popis za kupnju.</string>
     <string name="shopping_list_empty_title">Tvoj popis je prazan</string>

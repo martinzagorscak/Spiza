@@ -164,4 +164,68 @@ class ShoppingListViewModelImplTest {
 
             assertIs<ShoppingListState.Body.NoHousehold>(viewModel().bodyState().value)
         }
+
+    @Test
+    fun failedStream_showsQuotaExceededError_whenQuotaIsExceeded() =
+        runTest {
+            households.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+
+            val body = viewModel().bodyState().value
+
+            assertEquals(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.QuotaExceeded), body)
+            assertEquals(1, logger.exceptions.size, "A used-up quota must be recorded, not only logged")
+        }
+
+    @Test
+    fun failedStream_showsGenericError_whenFailureIsNotQuota() =
+        runTest {
+            households.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
+
+            val body = viewModel().bodyState().value
+
+            assertEquals(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.Generic), body)
+        }
+
+    @Test
+    fun failedStream_recoversToContent_whenRetriedAfterQuotaReset() =
+        runTest {
+            households.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+            val viewModel = viewModel()
+            assertIs<ShoppingListState.Body.Error>(viewModel.bodyState().value)
+
+            households.householdsFailure = null
+            viewModel.retry()
+
+            assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
+        }
+
+    @Test
+    fun failedWrite_showsQuotaExceededError_untilItIsShown() =
+        runTest {
+            households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+            val viewModel = viewModel()
+
+            viewModel.onItemDelete("milk")
+
+            val body = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
+            assertEquals(ShoppingListState.ContentErrorState.QuotaExceeded, body.contentErrorState)
+            assertEquals(1, logger.exceptions.size)
+
+            viewModel.onErrorShown()
+
+            val shown = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
+            assertEquals(ShoppingListState.ContentErrorState.None, shown.contentErrorState)
+        }
+
+    @Test
+    fun failedWrite_showsWriteError_whenQuotaExceededIsNotTheCause() =
+        runTest {
+            households.writeFailure = IllegalStateException("bug")
+            val viewModel = viewModel()
+
+            viewModel.onItemDelete("milk")
+
+            val body = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
+            assertEquals(ShoppingListState.ContentErrorState.WriteError, body.contentErrorState)
+        }
 }
