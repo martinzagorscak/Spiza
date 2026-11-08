@@ -49,9 +49,8 @@ val viewModelModule = module {
     }
     viewModel<ShoppingListViewModel> {
         ShoppingListViewModelImpl(
-            observeHouseholds = get(),
+            observeHouseholdSelection = get(),
             observeItems = get(),
-            observeSelectedHouseholdId = get(),
             setSelectedHouseholdId = get(),
             canUserCreateHousehold = get(),
             getCurrentUserProfile = get(),

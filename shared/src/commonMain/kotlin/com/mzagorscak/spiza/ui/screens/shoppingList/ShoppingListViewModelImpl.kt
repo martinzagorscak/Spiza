@@ -17,8 +17,7 @@ import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
-import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCase
-import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdSelectionUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
@@ -63,9 +62,8 @@ private sealed interface Snapshot {
 }
 
 internal class ShoppingListViewModelImpl(
-    private val observeHouseholds: ObserveHouseholdsUseCase,
+    private val observeHouseholdSelection: ObserveHouseholdSelectionUseCase,
     private val observeItems: ObserveArticleItemsUseCase,
-    observeSelectedHouseholdId: ObserveSelectedHouseholdIdUseCase,
     private val setSelectedHouseholdId: SetSelectedHouseholdIdUseCase,
     private val canUserCreateHousehold: CanUserCreateHouseholdUseCase,
     private val getCurrentUserProfile: GetCurrentUserProfileUseCase,
@@ -84,7 +82,6 @@ internal class ShoppingListViewModelImpl(
     private val header = MutableStateFlow(ShoppingListState.Header())
     private val body = MutableStateFlow<ShoppingListState.Body>(ShoppingListState.Body.Loading)
     private val retryTrigger = MutableStateFlow(INITIAL_COUNT)
-    private val selectedHouseholdId = observeSelectedHouseholdId()
     private val areCheckedItemsCollapsedState = MutableStateFlow(true)
     private val dialogStatePublisher = MutableStateFlow(ShoppingListState.DialogState.Hidden)
     private val isSuggestionsSavingEnabled = observeSuggestionsSavingEnabled()
@@ -220,24 +217,20 @@ internal class ShoppingListViewModelImpl(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeSnapshots(): Flow<Snapshot> =
         retryTrigger.flatMapLatest {
-            combine(
-                observeHouseholds(),
-                selectedHouseholdId,
-            ) { households, selectedId ->
-                households to (households.firstOrNull { it.id == selectedId } ?: households.firstOrNull())
-            }.flatMapLatest { (households, current) ->
-                if (current == null) {
-                    flowOf(Snapshot.NoHousehold)
-                } else {
-                    observeItems(current.id).map {
-                        Snapshot.Loaded(
-                            households = households,
-                            current = current,
-                            items = it,
-                        )
+            observeHouseholdSelection()
+                .flatMapLatest { (households, current) ->
+                    if (current == null) {
+                        flowOf(Snapshot.NoHousehold)
+                    } else {
+                        observeItems(current.id).map {
+                            Snapshot.Loaded(
+                                households = households,
+                                current = current,
+                                items = it,
+                            )
+                        }
                     }
-                }
-            }.onStart<Snapshot> { emit(Snapshot.Loading) }
+                }.onStart<Snapshot> { emit(Snapshot.Loading) }
                 .catchAndRecord(crashLogger = crashLogger, context = "Shopping list stream failed") { error ->
                     emit(Snapshot.Failed(isQuotaExceeded = error.isQuotaExceeded()))
                 }

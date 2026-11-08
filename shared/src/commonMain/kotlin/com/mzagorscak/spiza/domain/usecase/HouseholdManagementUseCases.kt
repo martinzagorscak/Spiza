@@ -1,9 +1,11 @@
 package com.mzagorscak.spiza.domain.usecase
 
 import com.mzagorscak.spiza.domain.model.Household
+import com.mzagorscak.spiza.domain.model.HouseholdSelection
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import com.mzagorscak.spiza.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 interface CreateHouseholdJoinKeyUseCase {
     suspend operator fun invoke(): String?
@@ -154,14 +156,22 @@ class UpdateHouseholdUseCaseImpl(
     }
 }
 
-interface ObserveSelectedHouseholdIdUseCase {
-    operator fun invoke(): Flow<String?>
+interface ObserveHouseholdSelectionUseCase {
+    /** The stored selection, or the first household when nothing is stored or that household is gone (left, removed or deleted). */
+    operator fun invoke(): Flow<HouseholdSelection>
 }
 
-class ObserveSelectedHouseholdIdUseCaseImpl(
-    private val repository: SettingsRepository,
-) : ObserveSelectedHouseholdIdUseCase {
-    override operator fun invoke(): Flow<String?> = repository.selectedHouseholdId
+class ObserveHouseholdSelectionUseCaseImpl(
+    private val householdRepository: HouseholdRepository,
+    private val settingsRepository: SettingsRepository,
+) : ObserveHouseholdSelectionUseCase {
+    override operator fun invoke(): Flow<HouseholdSelection> =
+        combine(householdRepository.observeHouseholds(), settingsRepository.selectedHouseholdId) { households, selectedId ->
+            HouseholdSelection(
+                households = households,
+                current = households.firstOrNull { it.id == selectedId } ?: households.firstOrNull(),
+            )
+        }
 }
 
 interface SetSelectedHouseholdIdUseCase {

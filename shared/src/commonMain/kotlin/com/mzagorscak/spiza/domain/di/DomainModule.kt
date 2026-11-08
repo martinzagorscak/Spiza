@@ -62,14 +62,14 @@ import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdSelectionUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdSelectionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardByIdUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardByIdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardsUseCaseImpl
-import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCase
-import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
@@ -141,7 +141,9 @@ val domainModule =
         single<ObserveHouseholdsUseCase> { ObserveHouseholdsUseCaseImpl(repository = get()) }
         single<CreateHouseholdUseCase> { CreateHouseholdUseCaseImpl(repository = get()) }
         single<UpdateHouseholdUseCase> { UpdateHouseholdUseCaseImpl(repository = get()) }
-        single<ObserveSelectedHouseholdIdUseCase> { ObserveSelectedHouseholdIdUseCaseImpl(repository = get()) }
+        single<ObserveHouseholdSelectionUseCase> {
+            ObserveHouseholdSelectionUseCaseImpl(householdRepository = get(), settingsRepository = get())
+        }
         single<SetSelectedHouseholdIdUseCase> { SetSelectedHouseholdIdUseCaseImpl(repository = get()) }
 
         // Household Items Use Cases

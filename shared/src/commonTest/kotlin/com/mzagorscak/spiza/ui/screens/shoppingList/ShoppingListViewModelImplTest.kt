@@ -21,8 +21,7 @@ import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCaseImpl
-import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdsUseCaseImpl
-import com.mzagorscak.spiza.domain.usecase.ObserveSelectedHouseholdIdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdSelectionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCaseImpl
@@ -81,9 +80,8 @@ class ShoppingListViewModelImplTest {
 
     private fun viewModel() =
         ShoppingListViewModelImpl(
-            observeHouseholds = ObserveHouseholdsUseCaseImpl(households),
+            observeHouseholdSelection = ObserveHouseholdSelectionUseCaseImpl(households, settings),
             observeItems = ObserveArticleItemsUseCaseImpl(households),
-            observeSelectedHouseholdId = ObserveSelectedHouseholdIdUseCaseImpl(settings),
             setSelectedHouseholdId = SetSelectedHouseholdIdUseCaseImpl(settings),
             canUserCreateHousehold = CanUserCreateHouseholdUseCaseImpl(ConstraintsManagerImpl),
             getCurrentUserProfile = GetCurrentUserProfileUseCaseImpl(FakeUserRepository()),

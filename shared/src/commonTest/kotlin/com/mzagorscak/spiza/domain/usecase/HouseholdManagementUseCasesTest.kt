@@ -8,6 +8,9 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.mzagorscak.spiza.fakes.FakeHouseholdRepository
+import com.mzagorscak.spiza.fakes.FakeSettingsRepository
+import com.mzagorscak.spiza.fakes.household
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
@@ -17,6 +20,8 @@ class HouseholdManagementUseCasesTest {
     private val deleteHousehold = DeleteHouseholdUseCaseImpl(repository)
     private val createHousehold = CreateHouseholdUseCaseImpl(repository)
     private val updateHousehold = UpdateHouseholdUseCaseImpl(repository)
+    private val settings = FakeSettingsRepository()
+    private val observeHouseholdSelection = ObserveHouseholdSelectionUseCaseImpl(repository, settings)
 
     @Test
     fun removeMember_isAllowed_whenMemberLeavesTheHousehold() =
@@ -61,6 +66,25 @@ class HouseholdManagementUseCasesTest {
             assertThat(repository.updatedHouseholds).containsExactly(
                 FakeHouseholdRepository.UpdatedHousehold(householdId = "household-1", name = "Home", description = "Our flat"),
             )
+        }
+
+    @Test
+    fun observeHouseholdSelection_selectsTheStoredHousehold() =
+        runTest {
+            repository.households.value = listOf(household(id = "household-1"), household(id = "household-2"))
+            settings.selectedId.value = "household-2"
+
+            assertThat(observeHouseholdSelection().first().current?.id).isEqualTo("household-2")
+        }
+
+    @Test
+    fun observeHouseholdSelection_fallsBackToTheFirstHousehold_whenTheStoredOneIsGone() =
+        runTest {
+            // E.g. the user left it or was removed on another device.
+            repository.households.value = listOf(household(id = "household-1"), household(id = "household-2"))
+            settings.selectedId.value = "deleted-household"
+
+            assertThat(observeHouseholdSelection().first().current?.id).isEqualTo("household-1")
         }
 
     // region Error handling
