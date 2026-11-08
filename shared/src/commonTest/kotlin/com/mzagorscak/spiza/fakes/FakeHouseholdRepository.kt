@@ -1,6 +1,7 @@
 package com.mzagorscak.spiza.fakes
 
 import com.mzagorscak.spiza.domain.model.ArticleItem
+import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import kotlinx.coroutines.awaitCancellation
@@ -40,9 +41,15 @@ class FakeHouseholdRepository : HouseholdRepository {
     /**
      * Writes never complete, like a write that is still waiting for the server (a hanging call).
      * Do not use it to model an offline [updateHousehold] / [createHousehold]: the real repository gives up after a timeout
-     * (update returns normally with a warning, create returns null), which the repository tests cover.
+     * (update returns normally with a warning, create returns `Created(householdId = null)`), which the repository tests cover.
      */
     var neverCompleteWrites = false
+
+    /**
+     * When set, [createHousehold] records the attempt and returns it without creating anything, like the real repository
+     * when the user is not signed in or reached the household limit. Null creates the household and returns [CreateHouseholdResult.Created].
+     */
+    var createHouseholdResult: CreateHouseholdResult? = null
 
     data class AddedItem(
         val text: String,
@@ -169,13 +176,14 @@ class FakeHouseholdRepository : HouseholdRepository {
     override suspend fun createHousehold(
         name: String,
         description: String,
-    ): String? {
+    ): CreateHouseholdResult {
         createdHouseholds += name to description
         write()
+        createHouseholdResult?.let { return it }
         val id = "household-new-${++nextHouseholdId}"
         // Created by the signed-in test user, who becomes its owner and only member.
         updateHouseholds { all -> all + household(id = id, name = name).copy(description = description) }
-        return id
+        return CreateHouseholdResult.Created(householdId = id)
     }
 
     override suspend fun updateHousehold(

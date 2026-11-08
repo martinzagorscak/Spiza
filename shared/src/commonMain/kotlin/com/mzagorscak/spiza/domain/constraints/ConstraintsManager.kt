@@ -3,6 +3,9 @@ package com.mzagorscak.spiza.domain.constraints
 interface ConstraintsManager {
     fun canUserCreateOrJoinHousehold(householdCount: Int): Boolean
 
+    /** The number of households [canUserCreateOrJoinHousehold] allows, shown to the user when the limit blocks an action. */
+    val maxHouseholdsPerUser: Int
+
     fun canAddItemToHousehold(itemCount: Int): Boolean
 
     fun canAddMemberToHousehold(memberCount: Int): Boolean
@@ -20,6 +23,8 @@ internal object ConstraintsManagerImpl : ConstraintsManager {
     private const val LOYALTY_CARD_SHORTCUTS_CONSTRAINT: Int = 3
 
     override fun canUserCreateOrJoinHousehold(householdCount: Int): Boolean = householdCount < HOUSEHOLDS_PER_USER_CONTRAINT
+
+    override val maxHouseholdsPerUser: Int = HOUSEHOLDS_PER_USER_CONTRAINT
 
     override fun canAddItemToHousehold(itemCount: Int): Boolean = itemCount < ITEMS_PER_HOUSEHOLD_CONSTRAINT
 

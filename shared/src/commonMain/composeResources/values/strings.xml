@@ -77,6 +77,7 @@
     <string name="text_field_optional_template">%1$s (optional)</string>
     <string name="create_household_submit">Create</string>
     <string name="create_household_error">Couldn't create the household. Please try again.</string>
+    <string name="create_household_limit_reached">You can be a member of at most %1$d households.</string>
     <string name="edit_household_title">Edit household</string>
     <string name="edit_household_submit">Save</string>
     <string name="edit_household_error">Couldn't save household changes. Please try again.</string>

@@ -8,6 +8,8 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.mzagorscak.spiza.crash.DataException
+import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
+import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
@@ -83,6 +85,17 @@ class CreateHouseholdViewModelImplTest {
             val state = viewModel.state().value
             assertThat(state.isCreated).isTrue()
             assertThat(state.isSubmitting).isFalse()
+            assertThat(state.errorState).isEqualTo(CreateHouseholdState.ErrorState.None)
+        }
+
+    @Test
+    fun createHousehold_closesTheScreen_whenTheHouseholdWillSyncOnceOnline() =
+        runTest {
+            households.createHouseholdResult = CreateHouseholdResult.Created(householdId = null)
+
+            val state = submittedViewModel().state().value
+
+            assertThat(state.isCreated).isTrue()
             assertThat(state.errorState).isEqualTo(CreateHouseholdState.ErrorState.None)
         }
 
@@ -173,6 +186,32 @@ class CreateHouseholdViewModelImplTest {
 
             assertThat(households.createdHouseholds).isEmpty()
             assertThat(viewModel.state().value.isCreated).isFalse()
+        }
+
+    @Test
+    fun createHousehold_staysOnScreenWithLimitError_whenUserReachedTheHouseholdLimit() =
+        runTest {
+            val limit = ConstraintsManagerImpl.maxHouseholdsPerUser
+            households.createHouseholdResult = CreateHouseholdResult.LimitReached(limit = limit)
+
+            val state = submittedViewModel().state().value
+
+            assertThat(state.errorState).isEqualTo(CreateHouseholdState.ErrorState.HouseholdLimitReached(limit = limit))
+            assertThat(state.isCreated).isFalse()
+            assertThat(state.isSubmitting).isFalse()
+            assertThat(households.createdHouseholds).containsExactly("Home" to "")
+        }
+
+    @Test
+    fun createHousehold_staysOnScreenWithGenericError_whenUserIsNotSignedIn() =
+        runTest {
+            households.createHouseholdResult = CreateHouseholdResult.NotSignedIn
+
+            val state = submittedViewModel().state().value
+
+            assertThat(state.errorState).isEqualTo(CreateHouseholdState.ErrorState.Generic)
+            assertThat(state.isCreated).isFalse()
+            assertThat(state.isSubmitting).isFalse()
         }
 
     @Test

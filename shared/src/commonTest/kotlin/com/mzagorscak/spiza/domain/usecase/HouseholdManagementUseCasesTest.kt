@@ -5,8 +5,8 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
-import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.fakes.FakeHouseholdRepository
 import com.mzagorscak.spiza.fakes.FakeSettingsRepository
 import com.mzagorscak.spiza.fakes.household
@@ -51,9 +51,9 @@ class HouseholdManagementUseCasesTest {
     @Test
     fun createHousehold_createsTrimmedHousehold_andReturnsItsId() =
         runTest {
-            val id = createHousehold(name = "  Home ", description = " Our flat  ")
+            val result = createHousehold(name = "  Home ", description = " Our flat  ")
 
-            assertThat(id).isEqualTo("household-new-1")
+            assertThat(result).isEqualTo(CreateHouseholdResult.Created(householdId = "household-new-1"))
             assertThat(repository.createdHouseholds).containsExactly("Home" to "Our flat")
         }
 
@@ -106,9 +106,9 @@ class HouseholdManagementUseCasesTest {
         }
 
     @Test
-    fun createHousehold_returnsNullWithoutWriting_whenNameIsBlank() =
+    fun createHousehold_returnsInvalidNameWithoutWriting_whenNameIsBlank() =
         runTest {
-            assertThat(createHousehold(name = "   ", description = "Our flat")).isNull()
+            assertThat(createHousehold(name = "   ", description = "Our flat")).isEqualTo(CreateHouseholdResult.InvalidName)
             assertThat(repository.createdHouseholds).isEmpty()
         }
 

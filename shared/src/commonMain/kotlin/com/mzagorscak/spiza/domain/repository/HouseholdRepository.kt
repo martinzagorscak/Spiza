@@ -1,6 +1,7 @@
 package com.mzagorscak.spiza.domain.repository
 
 import com.mzagorscak.spiza.domain.model.ArticleItem
+import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.Household
 import kotlinx.coroutines.flow.Flow
 
@@ -32,11 +33,11 @@ interface HouseholdRepository {
     /** Realtime items of a household, ordered by position. */
     fun observeItems(householdId: String): Flow<List<ArticleItem>>
 
-    /** Returns the id of the created household. */
+    /** Never returns [CreateHouseholdResult.InvalidName]; validating the name is the use case's job. */
     suspend fun createHousehold(
         name: String,
         description: String,
-    ): String?
+    ): CreateHouseholdResult
 
     suspend fun updateHousehold(
         householdId: String,

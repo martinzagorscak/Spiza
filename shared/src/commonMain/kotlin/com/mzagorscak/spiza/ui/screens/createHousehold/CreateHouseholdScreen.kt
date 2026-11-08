@@ -35,6 +35,7 @@ import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.create_household_description_label
 import spiza.shared.generated.resources.create_household_error
+import spiza.shared.generated.resources.create_household_limit_reached
 import spiza.shared.generated.resources.create_household_name_label
 import spiza.shared.generated.resources.create_household_submit
 import spiza.shared.generated.resources.create_household_title
@@ -111,14 +112,15 @@ fun CreateHouseholdScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             if (state.hasError) {
+                val errorState = state.errorState
                 Text(
-                    text = stringResource(
-                        when {
-                            state.errorState == CreateHouseholdState.ErrorState.QuotaExceeded -> Res.string.error_quota_exceeded
-                            state.isEditScenario -> Res.string.edit_household_error
-                            else -> Res.string.create_household_error
-                        },
-                    ),
+                    text = when {
+                        errorState is CreateHouseholdState.ErrorState.HouseholdLimitReached ->
+                            stringResource(Res.string.create_household_limit_reached, errorState.limit)
+                        errorState == CreateHouseholdState.ErrorState.QuotaExceeded -> stringResource(Res.string.error_quota_exceeded)
+                        state.isEditScenario -> stringResource(Res.string.edit_household_error)
+                        else -> stringResource(Res.string.create_household_error)
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )

@@ -10,6 +10,7 @@ import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManager
 import com.mzagorscak.spiza.domain.model.ArticleItem
+import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
@@ -183,10 +184,10 @@ internal class HouseholdRepositoryImpl(
     override suspend fun createHousehold(
         name: String,
         description: String,
-    ): String? {
+    ): CreateHouseholdResult {
         val ownerId = authService.currentUser?.uid
             ?: recordNonAuthenticatedError(message = "User tried to create a household")
-                .let { return null }
+                .let { return CreateHouseholdResult.NotSignedIn }
 
         // Constraint verification
         val householdCount = cachedHouseholds.value.count()
@@ -194,18 +195,20 @@ internal class HouseholdRepositoryImpl(
             crashLogger.logWarning(
                 message = "User $ownerId tried to create a household but has already joined the maximum number of households",
             )
-            return null
+            return CreateHouseholdResult.LimitReached(limit = constraintsManager.maxHouseholdsPerUser)
         }
 
+        // Offline the household is already created locally and synced later, so a timeout is not a failure.
         val id =
             withTimeoutOrNull(CREATE_TIMEOUT_MS.milliseconds) {
                 dataSource.createHousehold(ownerId = ownerId, name = name, description = description)
             }
+        if (id == null) crashLogger.logWarning(message = "Creating a household of user $ownerId timed out, it will sync when online")
         if (constraintsManager.canUserCreateOrJoinHousehold(householdCount + 1).not() && id != null) {
             dataSource.deleteHouseholdJoinKey(ownerId)
             refreshHouseholdJoinKey()
         }
-        return id
+        return CreateHouseholdResult.Created(householdId = id)
     }
 
     override suspend fun updateHousehold(

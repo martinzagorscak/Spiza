@@ -21,3 +21,18 @@ data class ArticleItem(
     val isChecked: Boolean,
     val position: Double,
 )
+
+sealed interface CreateHouseholdResult {
+    /** [householdId] is null when the server did not acknowledge in time: the household is created locally and synced later. */
+    data class Created(
+        val householdId: String?,
+    ) : CreateHouseholdResult
+
+    data class LimitReached(
+        val limit: Int,
+    ) : CreateHouseholdResult
+
+    data object NotSignedIn : CreateHouseholdResult
+
+    data object InvalidName : CreateHouseholdResult
+}

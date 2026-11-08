@@ -15,6 +15,7 @@ import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
+import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.fakes.FakeAuthService
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
@@ -212,9 +213,9 @@ class HouseholdRepositoryImplTest {
         runTest {
             dataSource.joinKeys["join-key"] = TEST_USER.uid
 
-            val id = repository.createHousehold(name = "Cottage", description = "Weekends")
+            val result = repository.createHousehold(name = "Cottage", description = "Weekends")
 
-            assertThat(id).isEqualTo("household-new-1")
+            assertThat(result).isEqualTo(CreateHouseholdResult.Created(householdId = "household-new-1"))
             assertThat(dataSource.createdHouseholds).containsExactly(
                 FakeHouseholdDataSource.CreatedHousehold(ownerId = TEST_USER.uid, name = "Cottage", description = "Weekends"),
             )
@@ -227,9 +228,9 @@ class HouseholdRepositoryImplTest {
             observeHouseholds(*Array(maxHouseholds - 1) { householdDto(id = "household-$it") })
             dataSource.joinKeys["join-key"] = TEST_USER.uid
 
-            val id = repository.createHousehold(name = "Cottage", description = "")
+            val result = repository.createHousehold(name = "Cottage", description = "")
 
-            assertThat(id).isEqualTo("household-new-1")
+            assertThat(result).isEqualTo(CreateHouseholdResult.Created(householdId = "household-new-1"))
             assertThat(dataSource.deletedJoinKeysOfUsers).containsExactly(TEST_USER.uid)
         }
 
@@ -375,14 +376,41 @@ class HouseholdRepositoryImplTest {
         }
 
     @Test
-    fun createHousehold_returnsNullWithoutWriting_whenUserReachedTheHouseholdLimit() =
+    fun createHousehold_returnsLimitReachedWithoutWriting_whenUserReachedTheHouseholdLimit() =
         runTest {
             observeHouseholds(*Array(maxHouseholds) { householdDto(id = "household-$it") })
 
-            val id = repository.createHousehold(name = "Cottage", description = "")
+            val result = repository.createHousehold(name = "Cottage", description = "")
 
-            assertThat(id).isNull()
+            assertThat(result).isEqualTo(CreateHouseholdResult.LimitReached(limit = maxHouseholds))
             assertThat(dataSource.createdHouseholds).isEmpty()
+            assertThat(logger.warnings).hasSize(1)
+            assertThat(logger.exceptions).isEmpty()
+        }
+
+    @Test
+    fun createHousehold_returnsNotSignedInWithoutWritingAndRecordsError_whenUserIsNotSignedIn() =
+        runTest {
+            authService.user.value = null
+
+            val result = repository.createHousehold(name = "Cottage", description = "")
+
+            assertThat(result).isEqualTo(CreateHouseholdResult.NotSignedIn)
+            assertThat(dataSource.createdHouseholds).isEmpty()
+            assertThat(logger.exceptions).hasSize(1)
+        }
+
+    @Test
+    fun createHousehold_returnsCreatedWithoutId_whenServerNeverAcknowledgesTheWrite() =
+        runTest {
+            dataSource.neverAcknowledgeWrites = true
+
+            val result = repository.createHousehold(name = "Cottage", description = "")
+
+            assertThat(result).isEqualTo(CreateHouseholdResult.Created(householdId = null))
+            assertThat(dataSource.createdHouseholds).hasSize(1)
+            assertThat(logger.exceptions).isEmpty()
+            assertThat(logger.warnings).hasSize(1)
         }
 
     @Test

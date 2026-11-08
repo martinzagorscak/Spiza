@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.domain.usecase
 
+import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.HouseholdSelection
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
@@ -119,7 +120,7 @@ interface CreateHouseholdUseCase {
     suspend operator fun invoke(
         name: String,
         description: String,
-    ): String?
+    ): CreateHouseholdResult
 }
 
 class CreateHouseholdUseCaseImpl(
@@ -128,8 +129,8 @@ class CreateHouseholdUseCaseImpl(
     override suspend operator fun invoke(
         name: String,
         description: String,
-    ): String? {
-        if (name.isBlank()) return null
+    ): CreateHouseholdResult {
+        if (name.isBlank()) return CreateHouseholdResult.InvalidName
         return repository.createHousehold(name = name.trim(), description = description.trim())
     }
 }

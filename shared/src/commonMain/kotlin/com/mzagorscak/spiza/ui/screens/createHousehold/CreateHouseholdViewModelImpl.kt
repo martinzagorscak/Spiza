@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.ui.screens.createHousehold
 
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.isQuotaExceeded
+import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
 import com.mzagorscak.spiza.ui.screens.common.launchSafely
@@ -56,16 +57,31 @@ internal class CreateHouseholdViewModelImpl(
             context = if (current.isEditScenario) "Updating household failed" else "Creating household failed",
             onError = { error -> state.update { it.copy(isSubmitting = false, errorState = error.toErrorState()) } },
         ) {
-            if (current.isEditScenario) {
+            val errorState = if (current.isEditScenario) {
                 val householdId = current.id ?: return@launchSafely
                 updateHousehold(householdId, current.name, current.description)
+                CreateHouseholdState.ErrorState.None
             } else {
-                createHousehold(current.name, current.description)
+                createHousehold(current.name, current.description).toErrorState()
             }
-            state.update { it.copy(isSubmitting = false, isCreated = true) }
+            state.update {
+                it.copy(
+                    isSubmitting = false,
+                    errorState = errorState,
+                    isCreated = errorState == CreateHouseholdState.ErrorState.None,
+                )
+            }
         }
     }
 }
+
+// The repository already logged the rejection (warning for the limit, non-fatal for a missing user).
+private fun CreateHouseholdResult.toErrorState(): CreateHouseholdState.ErrorState =
+    when (this) {
+        is CreateHouseholdResult.Created -> CreateHouseholdState.ErrorState.None
+        is CreateHouseholdResult.LimitReached -> CreateHouseholdState.ErrorState.HouseholdLimitReached(limit = limit)
+        CreateHouseholdResult.NotSignedIn, CreateHouseholdResult.InvalidName -> CreateHouseholdState.ErrorState.Generic
+    }
 
 private fun Throwable.toErrorState(): CreateHouseholdState.ErrorState =
     if (isQuotaExceeded()) {

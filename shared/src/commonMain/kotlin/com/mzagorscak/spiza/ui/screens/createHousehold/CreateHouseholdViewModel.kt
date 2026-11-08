@@ -21,10 +21,16 @@ data class CreateHouseholdState(
     val errorState: ErrorState = ErrorState.None,
     val isCreated: Boolean = false,
 ) {
-    enum class ErrorState {
-        None,
-        Generic,
-        QuotaExceeded,
+    sealed interface ErrorState {
+        data object None : ErrorState
+
+        data object Generic : ErrorState
+
+        data object QuotaExceeded : ErrorState
+
+        data class HouseholdLimitReached(
+            val limit: Int,
+        ) : ErrorState
     }
 
     companion object {
