@@ -68,7 +68,6 @@ private fun RequiredUpdateContent(
 ) {
     RequiredUpdateBackHandler()
 
-    // A focused text field underneath would otherwise keep the keyboard open and receive input.
     val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
         focusManager.clearFocus(force = true)
