@@ -63,6 +63,8 @@ Dependencies point inward only: `ui → domain ← data`. Everything is wired wi
 Navigation is wired in `AppNavigation.kt` — that is where `koinViewModel()`, `collectAsStateWithLifecycle()` and the screen's callbacks
 (with haptic feedback) are created.
 
+Testing handbook for humans (levels, structure, commands, recipes): `docs/TESTING.md`.
+
 Detailed rules live in `.claude/rules/` and are loaded automatically. Read them before writing code in an area you have not touched yet.
 
 ## Firestore data & security rules
