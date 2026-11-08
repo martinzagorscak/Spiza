@@ -11,6 +11,10 @@ data class SuggestionSavingSettingState(
     val suggestions: List<PresentableShoppingItemSuggestion> = emptyList(),
     val dialogState: DialogState = DialogState.Hidden,
     val dialogInput: String = "",
+    /** Blocking: the suggestions or the saving setting could not be loaded; the screen offers a retry. */
+    val hasLoadingError: Boolean = false,
+    /** Transient: a write failed; shown once as a snackbar and cleared with `onErrorShown()`. */
+    val hasWriteError: Boolean = false,
 ) {
     enum class DialogState {
         Hidden,
@@ -39,4 +43,8 @@ abstract class SuggestionSavingSettingViewModel : ViewModel() {
     abstract fun dismissDialog()
 
     abstract fun removeAllSuggestions()
+
+    abstract fun retry()
+
+    abstract fun onErrorShown()
 }

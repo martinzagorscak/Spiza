@@ -17,8 +17,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,10 +55,12 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
+import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_close
 import spiza.shared.generated.resources.ic_plus
 import spiza.shared.generated.resources.ic_trash
+import spiza.shared.generated.resources.retry
 import spiza.shared.generated.resources.settings_shopping_items_saving
 import spiza.shared.generated.resources.settings_shopping_items_saving_add_suggestion_dialog_confirm
 import spiza.shared.generated.resources.settings_shopping_items_saving_add_suggestion_dialog_description
@@ -63,6 +68,8 @@ import spiza.shared.generated.resources.settings_shopping_items_saving_add_sugge
 import spiza.shared.generated.resources.settings_shopping_items_saving_add_suggestion_dialog_title
 import spiza.shared.generated.resources.settings_shopping_items_saving_empty_state_description
 import spiza.shared.generated.resources.settings_shopping_items_saving_empty_state_title
+import spiza.shared.generated.resources.settings_shopping_items_saving_loading_error_description
+import spiza.shared.generated.resources.settings_shopping_items_saving_loading_error_title
 import spiza.shared.generated.resources.settings_shopping_items_saving_remove_all_suggestions_dialog_confirm
 import spiza.shared.generated.resources.settings_shopping_items_saving_remove_all_suggestions_dialog_description
 import spiza.shared.generated.resources.settings_shopping_items_saving_remove_all_suggestions_dialog_title
@@ -75,6 +82,7 @@ import spiza.shared.generated.resources.settings_shopping_items_saving_sorting_m
 import spiza.shared.generated.resources.settings_shopping_items_saving_sorting_most_used_desc
 
 private const val GRID_COLUMNS = 3
+private const val ERROR_LOTTIE_PATH = "files/lottie_error.json"
 
 @Composable
 fun SuggestionSavingSettingsScreen(
@@ -82,6 +90,15 @@ fun SuggestionSavingSettingsScreen(
     callbacks: SuggestionSavingSettingsScreenCallbacks,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val writeErrorMessage = stringResource(Res.string.error_generic)
+    LaunchedEffect(state.hasWriteError) {
+        if (state.hasWriteError) {
+            snackbarHostState.showSnackbar(writeErrorMessage)
+            callbacks.onErrorShown()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopBar(
@@ -98,36 +115,56 @@ fun SuggestionSavingSettingsScreen(
                     )
                 },
                 trailingContent = {
-                    ToggleButton(
-                        checked = state.isEnabled,
-                        onCheckedChange = callbacks.onToggleSavingEnabled,
-                        variant = ToggleButtonVariant.Custom(
-                            checkedColor = MaterialTheme.colorScheme.primary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                            checkedBorderColor = MaterialTheme.colorScheme.primary,
-                            uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                            uncheckedBorderColor = MaterialTheme.colorScheme.primary,
-                        ),
-                    )
+                    // The saved value is unknown while loading failed, so the toggle would show a guess.
+                    if (state.hasLoadingError.not()) {
+                        ToggleButton(
+                            checked = state.isEnabled,
+                            onCheckedChange = callbacks.onToggleSavingEnabled,
+                            variant = ToggleButtonVariant.Custom(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                                checkedBorderColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                                uncheckedBorderColor = MaterialTheme.colorScheme.primary,
+                            ),
+                        )
+                    }
                 },
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = callbacks.showAddSuggestionDialog,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_plus),
-                    contentDescription = null,
-                )
+            if (state.hasLoadingError.not()) {
+                FloatingActionButton(
+                    onClick = callbacks.showAddSuggestionDialog,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_plus),
+                        contentDescription = null,
+                    )
+                }
             }
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier.fillMaxSize(),
     ) { paddingValues ->
-        if (state.suggestions.isEmpty()) {
+        if (state.hasLoadingError) {
+            FallbackState(
+                title = stringResource(Res.string.settings_shopping_items_saving_loading_error_title),
+                description = stringResource(Res.string.settings_shopping_items_saving_loading_error_description),
+                lottiePath = ERROR_LOTTIE_PATH,
+                cta = CTA(
+                    label = stringResource(Res.string.retry),
+                    onClick = callbacks.onRetryClick,
+                ),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(padding400),
+            )
+        } else if (state.suggestions.isEmpty()) {
             FallbackState(
                 title = stringResource(Res.string.settings_shopping_items_saving_empty_state_title),
                 description = stringResource(Res.string.settings_shopping_items_saving_empty_state_description),
@@ -317,6 +354,8 @@ data class SuggestionSavingSettingsScreenCallbacks(
     val onAddSuggestion: () -> Unit = {},
     val onDismissDialog: () -> Unit = {},
     val removeAllSuggestions: () -> Unit,
+    val onRetryClick: () -> Unit,
+    val onErrorShown: () -> Unit,
 )
 
 @Composable
@@ -341,6 +380,8 @@ private fun SuggestionSavingSettingsScreenLayoutPreview() {
             onAddSuggestion = {},
             onDismissDialog = {},
             removeAllSuggestions = {},
+            onRetryClick = {},
+            onErrorShown = {},
         ),
     )
 }

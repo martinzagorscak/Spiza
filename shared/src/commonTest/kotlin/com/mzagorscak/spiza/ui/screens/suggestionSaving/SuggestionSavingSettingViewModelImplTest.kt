@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
 import com.mzagorscak.spiza.domain.model.SuggestionSortingType
@@ -219,7 +220,7 @@ class SuggestionSavingSettingViewModelImplTest {
         }
 
     @Test
-    fun removeSuggestion_recordsTheError_whenDeleteFails() =
+    fun removeSuggestion_keepsTheSuggestion_andShowsWriteErrorUntilItIsShown_whenDeleteFails() =
         runTest {
             val error = IllegalStateException("db closed")
             suggestions.writeFailure = error
@@ -228,34 +229,68 @@ class SuggestionSavingSettingViewModelImplTest {
 
             viewModel.removeSuggestion(suggestionId = 1L)
 
+            val state = viewModel.state().value
+            assertThat(state.hasWriteError).isTrue()
+            assertThat(state.suggestions.map { it.name }).containsExactly("Milk")
             assertThat(
                 logger.exceptions
                     .single()
                     .cause
                     ?.message,
             ).isEqualTo(error.message)
-            assertThat(
-                viewModel
-                    .state()
-                    .value.suggestions
-                    .map { it.name },
-            ).containsExactly("Milk")
+
+            viewModel.onErrorShown()
+
+            assertThat(viewModel.state().value.hasWriteError).isFalse()
         }
 
     @Test
-    fun state_recordsTheError_whenSuggestionStreamFails() =
+    fun addSuggestion_closesTheDialog_andShowsWriteError_whenSaveFails() =
+        runTest {
+            suggestions.writeFailure = IllegalStateException("disk full")
+            val viewModel = viewModel()
+            viewModel.showAddSuggestionDialog()
+            viewModel.onDialogInputChanged("Eggs")
+
+            viewModel.addSuggestion()
+
+            val state = viewModel.state().value
+            assertThat(state.hasWriteError).isTrue()
+            assertThat(state.dialogState).isEqualTo(DialogState.Hidden)
+            assertThat(state.suggestions).isEmpty()
+        }
+
+    @Test
+    fun state_showsLoadingError_whenSuggestionStreamFails() =
         runTest {
             val failure = IllegalStateException("db corrupted")
             suggestions.observeFailure = failure
 
-            viewModel()
+            val state = viewModel().state().value
 
+            assertThat(state.hasLoadingError).isTrue()
+            assertThat(state.hasWriteError).isFalse()
             assertThat(
                 logger.exceptions
                     .single()
                     .cause
                     ?.message,
             ).isEqualTo(failure.message)
+        }
+
+    @Test
+    fun retry_reloadsTheSuggestions_afterTheStreamFailed() =
+        runTest {
+            suggestions.observeFailure = IllegalStateException("db corrupted")
+            suggestions.suggestions.value = listOf(suggestion(id = 1L, name = "Milk"))
+            val viewModel = viewModel()
+            suggestions.observeFailure = null
+
+            viewModel.retry()
+
+            val state = viewModel.state().value
+            assertThat(state.hasLoadingError).isFalse()
+            assertThat(state.suggestions.map { it.name }).containsExactly("Milk")
         }
 
     // endregion

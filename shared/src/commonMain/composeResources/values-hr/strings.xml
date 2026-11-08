@@ -42,6 +42,8 @@
     <string name="settings_shopping_items_saving_sorting_most_used_desc">Najčešće korišteno</string>
     <string name="settings_shopping_items_saving_empty_state_title">Nema spremljenih prijedloga</string>
     <string name="settings_shopping_items_saving_empty_state_description">Prijedlozi će biti spremljeni kada dodaš artikle na svoj popis za kupnju dok je opcija spremanja omogućena.</string>
+    <string name="settings_shopping_items_saving_loading_error_title">Nešto je pošlo po zlu</string>
+    <string name="settings_shopping_items_saving_loading_error_description">Nismo mogli učitati tvoje spremljene prijedloge. Pokušaj ponovno.</string>
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_title">Brisanje svih spremljenih prijedloga</string>
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_description">Jeste li sigurni da želite izbrisati sve spremljene prijedloge? Ova se radnja ne može poništiti.</string>
     <string name="settings_shopping_items_saving_remove_all_suggestions_dialog_confirm">Obriši sve</string>

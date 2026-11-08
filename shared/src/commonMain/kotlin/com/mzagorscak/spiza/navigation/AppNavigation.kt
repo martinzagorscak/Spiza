@@ -354,6 +354,11 @@ fun AppNavigation(isSignedIn: Boolean) {
                                         performHapticFeedback(hapticFeedback)
                                         viewModel.removeAllSuggestions()
                                     },
+                                    onRetryClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.retry()
+                                    },
+                                    onErrorShown = viewModel::onErrorShown,
                                 )
                             },
                         )
