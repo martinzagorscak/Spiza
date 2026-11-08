@@ -16,11 +16,15 @@ class ObserveArticleItemsUseCaseImpl(
 }
 
 interface AddArticleItemUseCase {
+    /**
+     * Adds [text] at the end of the pending items. When it is already on the list (ignoring case and surrounding spaces),
+     * a pending item is moved to the end instead and a checked one is unchecked. Returns true only when a new item was added.
+     */
     suspend operator fun invoke(
         householdId: String,
         text: String,
         currentItems: List<ArticleItem>,
-    )
+    ): Boolean
 }
 
 class AddArticleItemUseCaseImpl(
@@ -30,17 +34,36 @@ class AddArticleItemUseCaseImpl(
         householdId: String,
         text: String,
         currentItems: List<ArticleItem>,
-    ) {
+    ): Boolean {
         val trimmed = text.trim()
-        if (trimmed.isEmpty()) return
-        if (currentItems.map { it.text }.contains(trimmed)) return
-        val pending = currentItems.filterNot { it.isChecked }
-        repository.addItem(
-            householdId = householdId,
-            text = trimmed,
-            position = ArticleItemOrdering.appendPosition(pending),
-            currentItemsCount = currentItems.count(),
-        )
+        if (trimmed.isEmpty()) return false
+        val normalizedText = trimmed.lowercase()
+        val existingItem = currentItems.firstOrNull { it.text.trim().lowercase() == normalizedText }
+        val pending = currentItems.filterNot { it.isChecked || it.id == existingItem?.id }
+        when {
+            existingItem == null -> {
+                repository.addItem(
+                    householdId = householdId,
+                    text = trimmed,
+                    position = ArticleItemOrdering.appendPosition(pending),
+                    currentItemsCount = currentItems.count(),
+                )
+                return true
+            }
+
+            existingItem.isChecked -> {
+                repository.setItemChecked(householdId = householdId, itemId = existingItem.id, isChecked = false)
+            }
+
+            else -> {
+                repository.moveItem(
+                    householdId = householdId,
+                    itemId = existingItem.id,
+                    position = ArticleItemOrdering.appendPosition(pending),
+                )
+            }
+        }
+        return false
     }
 }
 

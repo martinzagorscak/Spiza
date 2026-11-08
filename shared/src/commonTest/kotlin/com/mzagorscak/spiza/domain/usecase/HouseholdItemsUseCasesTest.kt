@@ -5,6 +5,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
 import com.mzagorscak.spiza.fakes.FakeHouseholdRepository
@@ -37,6 +38,36 @@ class HouseholdItemsUseCasesTest {
                 isLessThan(4096.0)
             }
             assertThat(added.currentItemsCount).isEqualTo(3)
+        }
+
+    @Test
+    fun addItem_movesTheExistingPendingItemAfterTheOtherPendingItems_insteadOfAddingADuplicate() =
+        runTest {
+            val currentItems =
+                listOf(
+                    item(id = "milk", text = "Milk", position = 1024.0),
+                    item(id = "bread", position = 2048.0),
+                    item(id = "eggs", isChecked = true, position = 4096.0),
+                )
+
+            val isNewItem = AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, " MILK ", currentItems)
+
+            assertThat(isNewItem).isFalse()
+            assertThat(repository.addedItems).isEmpty()
+            // After bread, the last other pending item; the checked eggs do not count.
+            assertThat(repository.movedItems).containsExactly("milk" to 3072.0)
+        }
+
+    @Test
+    fun addItem_unchecksTheExistingCheckedItem_insteadOfAddingADuplicate() =
+        runTest {
+            val currentItems = listOf(item(id = "eggs", text = "Eggs", isChecked = true, position = 1024.0))
+
+            val isNewItem = AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, "eggs", currentItems)
+
+            assertThat(isNewItem).isFalse()
+            assertThat(repository.addedItems).isEmpty()
+            assertThat(repository.checkedChanges).containsExactly("eggs" to false)
         }
 
     @Test
@@ -78,14 +109,6 @@ class HouseholdItemsUseCasesTest {
     fun addItem_ignoresBlankText() =
         runTest {
             AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, "   ", emptyList())
-
-            assertThat(repository.addedItems).isEmpty()
-        }
-
-    @Test
-    fun addItem_ignoresTextAlreadyOnTheList() =
-        runTest {
-            AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, " milk", listOf(item(id = "1", text = "milk", position = 1.0)))
 
             assertThat(repository.addedItems).isEmpty()
         }

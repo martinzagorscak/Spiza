@@ -240,30 +240,15 @@ class ShoppingListViewModelImplTest {
         }
 
     @Test
-    fun addItem_unchecksTheExistingDoneItem_insteadOfAddingADuplicate() =
+    fun addItem_doesNotSaveSuggestion_whenTheItemIsAlreadyOnTheList() =
         runTest {
-            val viewModel = viewModel()
+            settings.savingEnabled.value = true
 
-            viewModel.onAddItem(" bread ")
+            viewModel().onAddItem(" bread ")
 
             assertThat(households.checkedChanges).containsExactly("bread" to false)
             assertThat(households.addedItems).isEmpty()
-            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk", "bread")
-            assertThat(viewModel.content().doneItems).isEmpty()
-        }
-
-    @Test
-    fun addItem_movesTheExistingPendingItemToTheEnd_insteadOfAddingADuplicate() =
-        runTest {
-            households.items.value += item(id = "eggs", text = "Eggs", position = 3072.0)
-            val viewModel = viewModel()
-
-            viewModel.onAddItem("MILK")
-
-            assertThat(households.movedItems.map { it.first }).containsExactly("milk")
-            // Must be after the last other pending item.
-            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("eggs", "milk")
-            assertThat(households.addedItems).isEmpty()
+            assertThat(suggestions.saved).isEmpty()
         }
 
     @Test
