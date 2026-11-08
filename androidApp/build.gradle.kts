@@ -33,6 +33,9 @@ android {
         val majorVersion = 1
         val minorVersion = 0
         val patchVersion = 0
+        // The update check (Remote Config, iOS version parsing) encodes versions as major * 10_000 + minor * 100 + patch;
+        // a minor or patch above 99 would overlap the next component and break version comparisons.
+        require(minorVersion in 0..99 && patchVersion in 0..99) { "minorVersion and patchVersion must be in 0..99" }
 
         versionCode = majorVersion * 10_000 + minorVersion * 100 + patchVersion
         versionName = "$majorVersion.$minorVersion.$patchVersion"

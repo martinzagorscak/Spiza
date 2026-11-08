@@ -21,6 +21,7 @@ class SettingsDataSourceImplTest {
         assertThat(dataSource.language.value).isEqualTo(AppLanguage.Default)
         assertThat(dataSource.selectedHouseholdId.value).isNull()
         assertThat(dataSource.suggestionsSavingEnabled.value).isFalse()
+        assertThat(dataSource.dismissedRecommendedVersion.value).isNull()
     }
 
     @Test
@@ -31,6 +32,7 @@ class SettingsDataSourceImplTest {
         dataSource.setLanguage(AppLanguage.Croatian)
         dataSource.setSelectedHouseholdId("household-2")
         dataSource.setSuggestionsSavingEnabled(true)
+        dataSource.setDismissedRecommendedVersion(10_203)
 
         assertThat(dataSource.themeMode.value).isEqualTo(ThemeMode.Dark)
         assertThat(dataSource.currentThemeMode).isEqualTo(ThemeMode.Dark)
@@ -38,6 +40,7 @@ class SettingsDataSourceImplTest {
         assertThat(dataSource.currentLanguage).isEqualTo(AppLanguage.Croatian)
         assertThat(dataSource.selectedHouseholdId.value).isEqualTo("household-2")
         assertThat(dataSource.suggestionsSavingEnabled.value).isTrue()
+        assertThat(dataSource.dismissedRecommendedVersion.value).isEqualTo(10_203L)
     }
 
     @Test
@@ -47,6 +50,7 @@ class SettingsDataSourceImplTest {
             setLanguage(AppLanguage.Croatian)
             setSelectedHouseholdId("household-2")
             setSuggestionsSavingEnabled(true)
+            setDismissedRecommendedVersion(10_203)
         }
 
         val restarted = SettingsDataSourceImpl(settings = storage)
@@ -55,6 +59,7 @@ class SettingsDataSourceImplTest {
         assertThat(restarted.currentLanguage).isEqualTo(AppLanguage.Croatian)
         assertThat(restarted.selectedHouseholdId.value).isEqualTo("household-2")
         assertThat(restarted.suggestionsSavingEnabled.value).isTrue()
+        assertThat(restarted.dismissedRecommendedVersion.value).isEqualTo(10_203L)
     }
 
     // region Error handling

@@ -46,6 +46,14 @@ object RemoteConfigKeys {
     // Must stay above the keys: object properties are initialised top to bottom.
     private val keys = mutableListOf<RemoteConfigKey<*>>()
 
+    // App update thresholds are encoded versions (see AppVersionProvider); 0 = not set, never triggers an update.
+    // Each platform has its own keys because version numbers and release timing differ: a value set for one platform
+    // must never block the other.
+    val ANDROID_MIN_SUPPORTED_VERSION = long(name = "android_min_supported_version", default = 0L)
+    val ANDROID_RECOMMENDED_VERSION = long(name = "android_recommended_version", default = 0L)
+    val IOS_MIN_SUPPORTED_VERSION = long(name = "ios_min_supported_version", default = 0L)
+    val IOS_RECOMMENDED_VERSION = long(name = "ios_recommended_version", default = 0L)
+
     /** Defaults of every key above, applied to the SDK before the first fetch or read. Shared with Swift as `RemoteConfigKeys.shared`. */
     val defaults: Map<String, Any> by lazy { keys.associate { it.name to it.default } }
 

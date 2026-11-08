@@ -11,6 +11,7 @@ interface SettingsDataSource {
     val currentLanguage: AppLanguage
     val selectedHouseholdId: StateFlow<String?>
     val suggestionsSavingEnabled: StateFlow<Boolean>
+    val dismissedRecommendedVersion: StateFlow<Long?>
 
     fun setThemeMode(mode: ThemeMode)
 
@@ -19,4 +20,6 @@ interface SettingsDataSource {
     fun setSelectedHouseholdId(householdId: String)
 
     fun setSuggestionsSavingEnabled(enabled: Boolean)
+
+    fun setDismissedRecommendedVersion(version: Long)
 }

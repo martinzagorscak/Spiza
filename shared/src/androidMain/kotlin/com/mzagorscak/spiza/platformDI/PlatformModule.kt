@@ -5,6 +5,8 @@ import com.mzagorscak.spiza.auth.AndroidAuthService
 import com.mzagorscak.spiza.auth.AuthService
 import com.mzagorscak.spiza.crash.AndroidCrashLogger
 import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.data.appUpdate.AndroidAppVersionProvider
+import com.mzagorscak.spiza.data.appUpdate.AppVersionProvider
 import com.mzagorscak.spiza.data.household.FirestoreHouseholdDataSource
 import com.mzagorscak.spiza.data.household.HouseholdDataSource
 import com.mzagorscak.spiza.data.local.SpizaDatabase
@@ -33,6 +35,7 @@ actual fun platformModule(): Module =
                 isDebuggable = (androidContext().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,
             )
         }
+        single<AppVersionProvider> { AndroidAppVersionProvider(context = androidContext()) }
         single<AuthService> {
             AndroidAuthService(
                 context = androidContext(),

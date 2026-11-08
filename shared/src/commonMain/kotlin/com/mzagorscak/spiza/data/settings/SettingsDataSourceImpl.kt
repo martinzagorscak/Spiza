@@ -15,6 +15,7 @@ internal class SettingsDataSourceImpl(
     private val languageState = MutableStateFlow(AppLanguage.fromTag(settings.getStringOrNull(KEY_LANGUAGE)))
     private val selectedHouseholdIdState = MutableStateFlow(settings.getStringOrNull(KEY_SELECTED_HOUSEHOLD_ID))
     private val suggestionsSavingEnabledState = MutableStateFlow(settings.getBoolean(KEY_SUGGESTIONS_SAVING_ENABLED, false))
+    private val dismissedRecommendedVersionState = MutableStateFlow(settings.getLongOrNull(KEY_DISMISSED_RECOMMENDED_VERSION))
 
     override val themeMode: StateFlow<ThemeMode> = themeModeState.asStateFlow()
     override val language: StateFlow<AppLanguage> = languageState.asStateFlow()
@@ -22,6 +23,7 @@ internal class SettingsDataSourceImpl(
     override val currentLanguage: AppLanguage get() = languageState.value
     override val selectedHouseholdId: StateFlow<String?> = selectedHouseholdIdState.asStateFlow()
     override val suggestionsSavingEnabled: StateFlow<Boolean> = suggestionsSavingEnabledState.asStateFlow()
+    override val dismissedRecommendedVersion: StateFlow<Long?> = dismissedRecommendedVersionState.asStateFlow()
 
     override fun setThemeMode(mode: ThemeMode) {
         settings.putString(KEY_THEME_MODE, mode.name)
@@ -43,6 +45,11 @@ internal class SettingsDataSourceImpl(
         suggestionsSavingEnabledState.value = enabled
     }
 
+    override fun setDismissedRecommendedVersion(version: Long) {
+        settings.putLong(KEY_DISMISSED_RECOMMENDED_VERSION, version)
+        dismissedRecommendedVersionState.value = version
+    }
+
     private fun readThemeMode(): ThemeMode =
         settings.getStringOrNull(KEY_THEME_MODE)?.let { stored ->
             ThemeMode.entries.firstOrNull { it.name == stored }
@@ -53,5 +60,6 @@ internal class SettingsDataSourceImpl(
         const val KEY_LANGUAGE = "language"
         const val KEY_SELECTED_HOUSEHOLD_ID = "selected_household_id"
         const val KEY_SUGGESTIONS_SAVING_ENABLED = "suggestions_saving_enabled"
+        const val KEY_DISMISSED_RECOMMENDED_VERSION = "dismissed_recommended_version"
     }
 }
