@@ -133,13 +133,14 @@ class ShoppingListViewModelImplTest {
     @Test
     fun body_disablesSuggestions_thatAreAlreadyOnTheList() =
         runTest {
+            // "milk" matches the pending "Milk" like adding it would, so it must not look addable.
             suggestions.suggestions.value =
-                listOf(suggestion(id = 1, name = "Milk"), suggestion(id = 2, name = "Bread"), suggestion(id = 3, name = "Eggs"))
+                listOf(suggestion(id = 1, name = "milk"), suggestion(id = 2, name = "Bread"), suggestion(id = 3, name = "Eggs"))
 
             val body = viewModel().content()
 
             assertThat(body.suggestions).containsExactly(
-                PresentableShoppingItemSuggestion(id = 1, name = "Milk", isEnabled = false),
+                PresentableShoppingItemSuggestion(id = 1, name = "milk", isEnabled = false),
                 PresentableShoppingItemSuggestion(id = 2, name = "Bread", isEnabled = false),
                 PresentableShoppingItemSuggestion(id = 3, name = "Eggs", isEnabled = true),
             )

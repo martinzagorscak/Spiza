@@ -7,6 +7,7 @@ import com.mzagorscak.spiza.crash.isQuotaExceeded
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
+import com.mzagorscak.spiza.domain.model.findByText
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.CanAddItemToHouseholdUseCase
@@ -291,11 +292,7 @@ internal class ShoppingListViewModelImpl(
                         pendingItems = pendingItems,
                         doneItems = doneItems,
                         canAddItemToHousehold = canAddItemToHousehold(snapshot.items.count()),
-                        suggestions = suggestions.map {
-                            val pendingItemsContain = pendingItems.map { it.text }.contains(it.name)
-                            val doneItemsContain = doneItems.map { it.text }.contains(it.name)
-                            it.toPresentable(isEnabled = pendingItemsContain.not() && doneItemsContain.not())
-                        },
+                        suggestions = suggestions.map { it.toPresentable(isEnabled = snapshot.items.findByText(it.name) == null) },
                         areCheckedItemsCollapsed = areCheckedItemsCollapsed,
                         dialogState = dialogState,
                         contentErrorState = previousError,

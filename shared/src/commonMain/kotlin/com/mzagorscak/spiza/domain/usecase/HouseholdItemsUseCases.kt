@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.domain.usecase
 
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.ArticleItemOrdering
+import com.mzagorscak.spiza.domain.model.findByText
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import kotlinx.coroutines.flow.Flow
 
@@ -37,8 +38,7 @@ class AddArticleItemUseCaseImpl(
     ): Boolean {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return false
-        val normalizedText = trimmed.lowercase()
-        val existingItem = currentItems.firstOrNull { it.text.trim().lowercase() == normalizedText }
+        val existingItem = currentItems.findByText(trimmed)
         val pending = currentItems.filterNot { it.isChecked || it.id == existingItem?.id }
         when {
             existingItem == null -> {
