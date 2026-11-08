@@ -119,7 +119,7 @@ internal class HouseholdRepositoryImpl(
         val joinKey = userJoinKey.trim().lowercase()
         if (JOIN_KEY_PATTERN.matches(joinKey).not()) return false
 
-        return dataSource.addMemberToHousehold(householdId, joinKey)
+        return dataSource.addMemberToHousehold(householdId = householdId, userJoinKey = joinKey)
     }
 
     override suspend fun removeMemberFromHousehold(
@@ -130,7 +130,7 @@ internal class HouseholdRepositoryImpl(
             ?: recordNonAuthenticatedError(message = "User tried to remove member $memberId from household with id $householdId")
                 .let { return }
 
-        dataSource.removeMemberFromHousehold(householdId, memberId)
+        dataSource.removeMemberFromHousehold(householdId = householdId, memberId = memberId)
     }
 
     override suspend fun deleteHousehold(householdId: String) {
@@ -197,7 +197,10 @@ internal class HouseholdRepositoryImpl(
             return null
         }
 
-        val id = withTimeoutOrNull(CREATE_TIMEOUT_MS.milliseconds) { dataSource.createHousehold(ownerId, name, description) }
+        val id =
+            withTimeoutOrNull(CREATE_TIMEOUT_MS.milliseconds) {
+                dataSource.createHousehold(ownerId = ownerId, name = name, description = description)
+            }
         if (constraintsManager.canUserCreateOrJoinHousehold(householdCount + 1).not() && id != null) {
             dataSource.deleteHouseholdJoinKey(ownerId)
             refreshHouseholdJoinKey()
@@ -216,7 +219,9 @@ internal class HouseholdRepositoryImpl(
 
         // Like create, the update only completes once the server acknowledged it, which never happens offline.
         // Firestore already applied it locally and syncs it later, so a timeout is not a failure.
-        withTimeoutOrNull(UPDATE_TIMEOUT_MS.milliseconds) { dataSource.updateHousehold(householdId, name, description) }
+        withTimeoutOrNull(UPDATE_TIMEOUT_MS.milliseconds) {
+            dataSource.updateHousehold(householdId = householdId, name = name, description = description)
+        }
             ?: crashLogger.logWarning(message = "Updating household $householdId timed out, it will sync when online")
     }
 
@@ -238,31 +243,31 @@ internal class HouseholdRepositoryImpl(
             return
         }
 
-        dataSource.addItem(householdId, text, position)
+        dataSource.addItem(householdId = householdId, text = text, position = position)
     }
 
     override suspend fun updateItemText(
         householdId: String,
         itemId: String,
         text: String,
-    ) = dataSource.updateItemText(householdId, itemId, text)
+    ) = dataSource.updateItemText(householdId = householdId, itemId = itemId, text = text)
 
     override suspend fun setItemChecked(
         householdId: String,
         itemId: String,
         isChecked: Boolean,
-    ) = dataSource.setItemChecked(householdId, itemId, isChecked)
+    ) = dataSource.setItemChecked(householdId = householdId, itemId = itemId, isChecked = isChecked)
 
     override suspend fun moveItem(
         householdId: String,
         itemId: String,
         position: Double,
-    ) = dataSource.moveItem(householdId, itemId, position)
+    ) = dataSource.moveItem(householdId = householdId, itemId = itemId, position = position)
 
     override suspend fun deleteItem(
         householdId: String,
         itemId: String,
-    ) = dataSource.deleteItem(householdId, itemId)
+    ) = dataSource.deleteItem(householdId = householdId, itemId = itemId)
 
     override suspend fun clearCheckedItems(householdId: String) = dataSource.clearCheckedItems(householdId)
 
