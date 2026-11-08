@@ -285,6 +285,39 @@ class AddLoyaltyCardViewModelImplTest {
         }
 
     @Test
+    fun onSaveClick_reportsTheCardSaved_onceItIsStored() =
+        runTest {
+            val viewModel = viewModel()
+            viewModel.onCardNameChange("Shop")
+            viewModel.scanTwice(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
+
+            viewModel.onSaveClick()
+
+            val state = viewModel.state().value
+            assertThat(state.isSaved).isTrue()
+            assertThat(state.isSaving).isFalse()
+            assertThat(state.isSaveEnabled).isFalse()
+            assertThat(repository.cards.value).hasSize(1)
+        }
+
+    @Test
+    fun onSaveClick_savesOnce_whileASaveIsInProgress() =
+        runTest {
+            repository.neverCompleteWrites = true
+            val viewModel = viewModel()
+            viewModel.onCardNameChange("Shop")
+            viewModel.scanTwice(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
+
+            viewModel.onSaveClick()
+            viewModel.onSaveClick()
+
+            assertThat(repository.addedCards).hasSize(1)
+            assertThat(viewModel.state().value.isSaving).isTrue()
+            assertThat(viewModel.state().value.isSaved).isFalse()
+            assertThat(viewModel.state().value.isSaveEnabled).isFalse()
+        }
+
+    @Test
     fun checkPermission_requestsAndStoresReturnedStatus_whenCameraIsNotGranted() {
         permissions.checkStatus = PermissionStatus.NotGranted
         permissions.requestStatus = PermissionStatus.Denied
@@ -421,9 +454,8 @@ class AddLoyaltyCardViewModelImplTest {
             assertThat(repository.addedCards).isEmpty()
         }
 
-    // TODO(error-handling): user is not informed
     @Test
-    fun onSaveClick_recordsTheFailure_whenSavingFails() =
+    fun onSaveClick_showsTheErrorAndKeepsTheScreenOpen_whenSavingFails() =
         runTest {
             val failure = IllegalStateException("db closed")
             repository.writeFailure = failure
@@ -433,6 +465,13 @@ class AddLoyaltyCardViewModelImplTest {
 
             viewModel.onSaveClick()
 
+            val state = viewModel.state().value
+            assertThat(state.hasError).isTrue()
+            assertThat(state.isSaved).isFalse()
+            assertThat(state.isSaving).isFalse()
+            // The form is kept so the user can save again.
+            assertThat(state.cardName).isEqualTo("Shop")
+            assertThat(state.isSaveEnabled).isTrue()
             assertThat(repository.cards.value).isEmpty()
             assertThat(
                 crashLogger.exceptions
@@ -440,6 +479,21 @@ class AddLoyaltyCardViewModelImplTest {
                     .cause
                     ?.message,
             ).isEqualTo(failure.message)
+        }
+
+    @Test
+    fun onErrorShown_clearsTheError_afterAFailedSave() =
+        runTest {
+            repository.writeFailure = IllegalStateException("db closed")
+            val viewModel = viewModel()
+            viewModel.onCardNameChange("Shop")
+            viewModel.scanTwice(ScannedCode(value = "4006381333931", format = LoyaltyCardFormat.Ean13))
+            viewModel.onSaveClick()
+
+            viewModel.onErrorShown()
+
+            assertThat(viewModel.state().value.hasError).isFalse()
+            assertThat(viewModel.state().value.isSaveEnabled).isTrue()
         }
 
     @Test

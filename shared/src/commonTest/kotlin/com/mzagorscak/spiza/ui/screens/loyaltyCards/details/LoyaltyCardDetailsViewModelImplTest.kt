@@ -1,9 +1,12 @@
 package com.mzagorscak.spiza.ui.screens.loyaltyCards.details
 
+import app.cash.turbine.Event
 import app.cash.turbine.test
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
@@ -55,7 +58,7 @@ class LoyaltyCardDetailsViewModelImplTest {
         }
 
     @Test
-    fun deleteCard_deletesThisCard_withoutReportingItMissing() =
+    fun deleteCard_deletesThisCardAndReportsItDeleted_withoutReportingItMissing() =
         runTest {
             repository.cards.value = listOf(card(id = 1L), card(id = 2L))
             val viewModel = viewModel(cardId = 1L)
@@ -65,10 +68,35 @@ class LoyaltyCardDetailsViewModelImplTest {
 
                 viewModel.deleteCard()
 
-                // The screen closes itself after deleting, so the card disappearing must not show the "missing" state.
-                assertThat(awaitItem()).isEqualTo(LoyaltyCardDetailsState(card = null, isLoading = false, isCardMissing = false))
+                val states = cancelAndConsumeRemainingEvents().filterIsInstance<Event.Item<LoyaltyCardDetailsState>>().map { it.value }
+                assertThat(states).isNotEmpty()
+                // The screen closes itself once deleted, so the card disappearing must never show the "missing" state.
+                assertThat(states.any { it.isCardMissing }).isFalse()
+                assertThat(states.last())
+                    .isEqualTo(LoyaltyCardDetailsState(card = null, isLoading = false, isCardMissing = false, isDeleted = true))
             }
             assertThat(repository.cards.value.map { it.id }).containsExactly(2L)
+        }
+
+    @Test
+    fun deleteCard_deletesOnce_whileADeleteIsInProgress() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            repository.neverCompleteWrites = true
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+
+                viewModel.deleteCard()
+                viewModel.deleteCard()
+
+                val state = expectMostRecentItem()
+                assertThat(state.isDeleting).isTrue()
+                assertThat(state.isDeleted).isFalse()
+                assertThat(state.card?.id).isEqualTo(1L)
+            }
+            assertThat(repository.deletedIds).containsExactly(1L)
         }
 
     // region Error handling
@@ -102,21 +130,22 @@ class LoyaltyCardDetailsViewModelImplTest {
             ).isEqualTo(failure.message)
         }
 
-    // TODO(error-handling): user is not informed
     @Test
-    fun deleteCard_keepsTheCardAndRecordsTheFailure_whenTheDeleteFails() =
+    fun deleteCard_showsTheErrorAndKeepsTheCard_whenTheDeleteFails() =
         runTest {
             val failure = IllegalStateException("db closed")
-            repository.cards.value = listOf(card(id = 1L))
+            val stored = card(id = 1L)
+            repository.cards.value = listOf(stored)
             repository.writeFailure = failure
             val viewModel = viewModel(cardId = 1L)
 
             viewModel.state().test {
-                assertThat(expectMostRecentItem().card?.id).isEqualTo(1L)
+                expectMostRecentItem()
 
                 viewModel.deleteCard()
 
-                expectNoEvents()
+                assertThat(expectMostRecentItem())
+                    .isEqualTo(LoyaltyCardDetailsState(card = stored.toPresentable(), isLoading = false, hasError = true))
             }
             assertThat(
                 crashLogger.exceptions
@@ -124,6 +153,40 @@ class LoyaltyCardDetailsViewModelImplTest {
                     .cause
                     ?.message,
             ).isEqualTo(failure.message)
+        }
+
+    @Test
+    fun onErrorShown_clearsTheError_afterAFailedDelete() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            repository.writeFailure = IllegalStateException("db closed")
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+                viewModel.deleteCard()
+
+                viewModel.onErrorShown()
+
+                assertThat(expectMostRecentItem().hasError).isFalse()
+            }
+        }
+
+    @Test
+    fun state_isCardMissing_whenTheCardDisappearsAfterAFailedDelete() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            repository.writeFailure = IllegalStateException("db closed")
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+                viewModel.deleteCard()
+
+                repository.cards.value = emptyList()
+
+                assertThat(expectMostRecentItem().isCardMissing).isTrue()
+            }
         }
 
     // endregion

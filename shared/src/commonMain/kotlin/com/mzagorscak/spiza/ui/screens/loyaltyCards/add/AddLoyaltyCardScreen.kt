@@ -13,8 +13,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +44,7 @@ import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.loyalty_cards_add_card_name_label
 import spiza.shared.generated.resources.loyalty_cards_add_card_name_placeholder
@@ -58,6 +62,18 @@ fun AddLoyaltyCardScreen(
     callbacks: AddLoyaltyCardScreenCallbacks,
     modifier: Modifier = Modifier,
 ) {
+    LaunchedEffect(state.isSaved) {
+        if (state.isSaved) callbacks.onSaved()
+    }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = if (state.hasError) stringResource(Res.string.error_generic) else null
+    LaunchedEffect(state.hasError) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            callbacks.onErrorShown()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopBar(
@@ -75,6 +91,7 @@ fun AddLoyaltyCardScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier.fillMaxSize(),
     ) { paddingValues ->
         Column(
@@ -187,6 +204,8 @@ data class AddLoyaltyCardScreenCallbacks(
     val onImageCodeDecoded: (ScannedCode?) -> Unit,
     val onScanAgainClick: () -> Unit,
     val onSaveClick: () -> Unit,
+    val onSaved: () -> Unit,
+    val onErrorShown: () -> Unit,
     val onRequestPermission: () -> Unit,
     val onOpenSettings: () -> Unit,
 )

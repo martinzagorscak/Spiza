@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.fakes
 
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.repository.LoyaltyCardRepository
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
@@ -9,7 +10,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Every write is recorded as an attempt **before** [writeFailure] / [shortcutFailure] apply; successful writes update [cards]
+ * Every write is recorded as an attempt **before** [writeFailure] / [neverCompleteWrites] / [shortcutFailure] apply; successful writes update [cards]
  * like the Room table (a new card gets the next id when it has none and comes first, like the newest-first query).
  */
 class FakeLoyaltyCardRepository : LoyaltyCardRepository {
@@ -21,6 +22,9 @@ class FakeLoyaltyCardRepository : LoyaltyCardRepository {
 
     /** Thrown by [addCard] / [deleteCard] when set. */
     var writeFailure: Exception? = null
+
+    /** [addCard] / [deleteCard] never complete, like a write still in progress. */
+    var neverCompleteWrites = false
 
     /** Thrown by [addShortcut] / [removeShortcut] when set. */
     var shortcutFailure: Exception? = null
@@ -55,15 +59,20 @@ class FakeLoyaltyCardRepository : LoyaltyCardRepository {
 
     override suspend fun addCard(card: LoyaltyCard) {
         addedCards += card
-        writeFailure?.let { throw it }
+        write()
         val stored = if (card.id == 0L) card.copy(id = (cards.value.maxOfOrNull { it.id } ?: 0L) + 1) else card
         cards.value = listOf(stored) + cards.value.filterNot { it.id == stored.id }
     }
 
     override suspend fun deleteCard(id: Long) {
         deletedIds += id
-        writeFailure?.let { throw it }
+        write()
         cards.value = cards.value.filterNot { it.id == id }
+    }
+
+    private suspend fun write() {
+        writeFailure?.let { throw it }
+        if (neverCompleteWrites) awaitCancellation()
     }
 
     // Mirrors the single conditional UPDATE in LoyaltyCardDao.addShortcutWithinLimit (covered on the real database).

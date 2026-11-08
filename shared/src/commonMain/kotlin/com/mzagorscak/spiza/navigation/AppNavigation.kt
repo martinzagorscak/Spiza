@@ -413,8 +413,9 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     onDeleteClick = {
                                         performHapticFeedback(hapticFeedback)
                                         viewModel.deleteCard()
-                                        backStack.popIfTop(key)
                                     },
+                                    onDeleted = { backStack.popIfTop(key) },
+                                    onErrorShown = viewModel::onErrorShown,
                                 )
                             },
                         )
@@ -453,8 +454,9 @@ fun AppNavigation(isSignedIn: Boolean) {
                                     onSaveClick = {
                                         viewModel.onSaveClick()
                                         performHapticFeedback(hapticFeedback)
-                                        backStack.popIfTop(Route.AddLoyaltyCard)
                                     },
+                                    onSaved = { backStack.popIfTop(Route.AddLoyaltyCard) },
+                                    onErrorShown = viewModel::onErrorShown,
                                     onRequestPermission = viewModel::requestPermission,
                                     onOpenSettings = viewModel::openSettings,
                                 )

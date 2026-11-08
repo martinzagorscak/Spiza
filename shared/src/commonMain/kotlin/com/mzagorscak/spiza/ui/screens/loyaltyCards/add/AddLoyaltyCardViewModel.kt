@@ -22,9 +22,14 @@ data class AddLoyaltyCardState(
     val inputType: InputType = InputType.Camera,
     val scanStatus: ScanStatus = ScanStatus.Scanning,
     val permissionStatus: PermissionStatus? = null,
+    val isSaving: Boolean = false,
+    /** One-shot: the card was stored, the screen closes. */
+    val isSaved: Boolean = false,
+    /** Transient: the save failed; shown once and cleared with `onErrorShown()`. */
+    val hasError: Boolean = false,
 ) {
     val isSaveEnabled: Boolean
-        get() = cardName.isNotBlank() && isCodeValid
+        get() = cardName.isNotBlank() && isCodeValid && isSaving.not() && isSaved.not()
 
     val showCodeError: Boolean
         get() = codeText.isNotBlank() && isCodeValid.not()
@@ -75,6 +80,8 @@ abstract class AddLoyaltyCardViewModel : ViewModel() {
     abstract fun onScanAgainClick()
 
     abstract fun onSaveClick()
+
+    abstract fun onErrorShown()
 
     abstract fun checkPermission()
 

@@ -145,7 +145,13 @@ internal class AddLoyaltyCardViewModelImpl(
         val currentState = state.value
         if (currentState.isSaveEnabled.not()) return
         val isScanned = currentState.scanStatus == AddLoyaltyCardState.ScanStatus.Scanned
-        launchSafely(crashLogger = crashLogger, context = "Saving loyalty card failed") {
+        state.update { it.copy(isSaving = true, hasError = false) }
+        launchSafely(
+            crashLogger = crashLogger,
+            context = "Saving loyalty card failed",
+            // The form stays filled in so the user can retry instead of losing the card.
+            onError = { state.update { it.copy(isSaving = false, hasError = true) } },
+        ) {
             addLoyaltyCardUseCase(
                 LoyaltyCard(
                     name = currentState.cardName.trim(),
@@ -155,7 +161,12 @@ internal class AddLoyaltyCardViewModelImpl(
                     format = currentState.format,
                 ),
             )
+            state.update { it.copy(isSaving = false, isSaved = true) }
         }
+    }
+
+    override fun onErrorShown() {
+        state.update { it.copy(hasError = false) }
     }
 
     override fun checkPermission() {

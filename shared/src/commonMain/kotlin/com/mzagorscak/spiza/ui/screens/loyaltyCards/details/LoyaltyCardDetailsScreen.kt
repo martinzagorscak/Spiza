@@ -10,7 +10,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +40,7 @@ import com.mzagorscak.spiza.ui.theme.padding400
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
+import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.loyalty_card_details_card_missing
@@ -53,6 +57,18 @@ fun LoyaltyCardDetailsScreen(
     modifier: Modifier = Modifier,
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.isDeleted) {
+        if (state.isDeleted) callbacks.onDeleted()
+    }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = if (state.hasError) stringResource(Res.string.error_generic) else null
+    LaunchedEffect(state.hasError) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            callbacks.onErrorShown()
+        }
+    }
 
     KeepScreenBrightness()
 
@@ -76,6 +92,7 @@ fun LoyaltyCardDetailsScreen(
                         IconButton(
                             resource = Res.drawable.ic_trash,
                             onClick = { showDeleteDialog = true },
+                            isEnabled = state.isDeleting.not(),
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
                                 size = IconButtonSize.Medium,
@@ -86,6 +103,7 @@ fun LoyaltyCardDetailsScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier
             .fillMaxSize()
             .keepScreenOn(),
@@ -121,6 +139,7 @@ fun LoyaltyCardDetailsScreen(
                     Button(
                         label = stringResource(Res.string.loyalty_card_details_delete_button),
                         onClick = { showDeleteDialog = true },
+                        isEnabled = state.isDeleting.not(),
                         appearance = ButtonAppearance(
                             variant = ButtonVariant.Secondary,
                             size = ButtonSize.Large,
@@ -154,4 +173,6 @@ fun LoyaltyCardDetailsScreen(
 data class LoyaltyCardDetailsScreenCallbacks(
     val onBackClick: () -> Unit,
     val onDeleteClick: () -> Unit,
+    val onDeleted: () -> Unit,
+    val onErrorShown: () -> Unit,
 )
