@@ -1,11 +1,16 @@
 package com.mzagorscak.spiza.domain.usecase
 
+import assertk.all
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isLessThan
 import com.mzagorscak.spiza.fakes.FakeHouseholdRepository
 import com.mzagorscak.spiza.fakes.item
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 private const val HOUSEHOLD_ID = "household-1"
 
@@ -25,37 +30,13 @@ class HouseholdItemsUseCasesTest {
             AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, "  butter ", currentItems)
 
             val added = repository.addedItems.single()
-            assertEquals("butter", added.text)
-            assertTrue(
-                added.position > 2048.0 && added.position < 4096.0,
-                "Position must follow the last pending item, ignoring checked ones",
-            )
-            assertEquals(3, added.currentItemsCount)
-        }
-
-    @Test
-    fun addItem_ignoresBlankText() =
-        runTest {
-            AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, "   ", emptyList())
-
-            assertTrue(repository.addedItems.isEmpty())
-        }
-
-    @Test
-    fun addItem_ignoresTextAlreadyOnTheList() =
-        runTest {
-            AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, " milk", listOf(item(id = "1", text = "milk", position = 1.0)))
-
-            assertTrue(repository.addedItems.isEmpty())
-        }
-
-    @Test
-    fun updateText_deletesItem_whenTextIsBlank() =
-        runTest {
-            UpdateArticleItemTextUseCaseImpl(repository)(HOUSEHOLD_ID, "milk", "  ")
-
-            assertEquals(listOf("milk"), repository.deletedItems)
-            assertTrue(repository.updatedTexts.isEmpty())
+            assertThat(added.text).isEqualTo("butter")
+            // Position must follow the last pending item, ignoring checked ones.
+            assertThat(added.position).all {
+                isGreaterThan(2048.0)
+                isLessThan(4096.0)
+            }
+            assertThat(added.currentItemsCount).isEqualTo(3)
         }
 
     @Test
@@ -63,7 +44,16 @@ class HouseholdItemsUseCasesTest {
         runTest {
             UpdateArticleItemTextUseCaseImpl(repository)(HOUSEHOLD_ID, "milk", " oat milk ")
 
-            assertEquals(listOf("milk" to "oat milk"), repository.updatedTexts)
+            assertThat(repository.updatedTexts).containsExactly("milk" to "oat milk")
+        }
+
+    @Test
+    fun updateText_deletesItem_whenTextIsBlank() =
+        runTest {
+            UpdateArticleItemTextUseCaseImpl(repository)(HOUSEHOLD_ID, "milk", "  ")
+
+            assertThat(repository.deletedItems).containsExactly("milk")
+            assertThat(repository.updatedTexts).isEmpty()
         }
 
     @Test
@@ -79,6 +69,26 @@ class HouseholdItemsUseCasesTest {
 
             MoveArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, itemId = "moved", toIndex = 1, currentItems = currentItems)
 
-            assertEquals(listOf("moved" to 1.5), repository.movedItems)
+            assertThat(repository.movedItems).containsExactly("moved" to 1.5)
         }
+
+    // region Error handling
+
+    @Test
+    fun addItem_ignoresBlankText() =
+        runTest {
+            AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, "   ", emptyList())
+
+            assertThat(repository.addedItems).isEmpty()
+        }
+
+    @Test
+    fun addItem_ignoresTextAlreadyOnTheList() =
+        runTest {
+            AddArticleItemUseCaseImpl(repository)(HOUSEHOLD_ID, " milk", listOf(item(id = "1", text = "milk", position = 1.0)))
+
+            assertThat(repository.addedItems).isEmpty()
+        }
+
+    // endregion
 }

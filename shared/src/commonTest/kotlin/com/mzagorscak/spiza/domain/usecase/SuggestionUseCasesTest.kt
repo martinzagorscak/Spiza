@@ -1,10 +1,11 @@
 package com.mzagorscak.spiza.domain.usecase
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
 import com.mzagorscak.spiza.fakes.FakeSuggestionRepository
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 private const val TIMESTAMP_MS = 1_700_000_000_000L
 
@@ -16,9 +17,9 @@ class SuggestionUseCasesTest {
         runTest {
             AddOrUpdateSuggestionUseCaseImpl(repository)(name = "  Fresh Milk ", timestamp = TIMESTAMP_MS)
 
-            assertEquals(listOf("Fresh Milk"), repository.savedNames)
-            assertEquals(listOf("fresh milk"), repository.savedNormalizedNames)
-            assertEquals(listOf(TIMESTAMP_MS), repository.savedTimestamps)
+            assertThat(repository.saved).containsExactly(
+                FakeSuggestionRepository.Saved(name = "Fresh Milk", normalizedName = "fresh milk", timestamp = TIMESTAMP_MS),
+            )
         }
 
     @Test
@@ -29,6 +30,6 @@ class SuggestionUseCasesTest {
             addOrUpdate(name = "", timestamp = TIMESTAMP_MS)
             addOrUpdate(name = "   ", timestamp = TIMESTAMP_MS)
 
-            assertTrue(repository.savedNames.isEmpty())
+            assertThat(repository.saved).isEmpty()
         }
 }

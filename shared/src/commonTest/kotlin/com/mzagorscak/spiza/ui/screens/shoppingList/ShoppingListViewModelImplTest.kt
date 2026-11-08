@@ -1,7 +1,17 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
+import com.mzagorscak.spiza.domain.model.ShoppingItemSuggestion
 import com.mzagorscak.spiza.domain.usecase.AddArticleItemUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.AddOrUpdateSuggestionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanAddItemToHouseholdUseCaseImpl
@@ -25,18 +35,18 @@ import com.mzagorscak.spiza.fakes.FakeSuggestionRepository
 import com.mzagorscak.spiza.fakes.FakeUserRepository
 import com.mzagorscak.spiza.fakes.household
 import com.mzagorscak.spiza.fakes.item
+import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
+import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShoppingListViewModelImplTest {
@@ -57,6 +67,17 @@ class ShoppingListViewModelImplTest {
 
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
+
+    private fun suggestion(
+        id: Long,
+        name: String,
+    ) = ShoppingItemSuggestion(id = id, name = name, normalizedName = name.lowercase(), useCount = 1, lastUsedAt = 0L)
+
+    private fun ShoppingListViewModel.content(): ShoppingListState.Body.Content {
+        val body = bodyState().value
+        assertThat(body).isInstanceOf<ShoppingListState.Body.Content>()
+        return body as ShoppingListState.Body.Content
+    }
 
     private fun viewModel() =
         ShoppingListViewModelImpl(
@@ -80,12 +101,111 @@ class ShoppingListViewModelImplTest {
         )
 
     @Test
-    fun body_splitsItemsIntoPendingAndDone() =
+    fun header_showsCurrentHousehold_otherHouseholds_andThatAnotherCanBeCreated() =
         runTest {
-            val body = assertIs<ShoppingListState.Body.Content>(viewModel().bodyState().value)
+            households.households.value =
+                listOf(household(id = "household-1", name = "Home"), household(id = "household-2", name = "Cottage"))
 
-            assertEquals(listOf("milk"), body.pendingItems.map { it.id })
-            assertEquals(listOf("bread"), body.doneItems.map { it.id })
+            val header = viewModel().headerState().value
+
+            assertThat(header).isEqualTo(
+                ShoppingListState.Header(
+                    currentHouseholdName = "Home",
+                    otherHouseholds = listOf(PresentableSimpleHousehold(id = "household-2", name = "Cottage")),
+                    canUserCreateHousehold = true,
+                ),
+            )
+        }
+
+    @Test
+    fun body_showsItemsOfCurrentHousehold_splitIntoPendingAndDone() =
+        runTest {
+            val body = viewModel().content()
+
+            assertThat(body.currentHouseholdId).isEqualTo("household-1")
+            assertThat(body.pendingItems.map { it.id }).containsExactly("milk")
+            assertThat(body.doneItems.map { it.id }).containsExactly("bread")
+            assertThat(body.canAddItemToHousehold).isTrue()
+            assertThat(body.areCheckedItemsCollapsed).isTrue()
+            assertThat(body.dialogState).isEqualTo(ShoppingListState.DialogState.Hidden)
+        }
+
+    @Test
+    fun body_disablesSuggestions_thatAreAlreadyOnTheList() =
+        runTest {
+            suggestions.suggestions.value =
+                listOf(suggestion(id = 1, name = "Milk"), suggestion(id = 2, name = "Bread"), suggestion(id = 3, name = "Eggs"))
+
+            val body = viewModel().content()
+
+            assertThat(body.suggestions).containsExactly(
+                PresentableShoppingItemSuggestion(id = 1, name = "Milk", isEnabled = false),
+                PresentableShoppingItemSuggestion(id = 2, name = "Bread", isEnabled = false),
+                PresentableShoppingItemSuggestion(id = 3, name = "Eggs", isEnabled = true),
+            )
+        }
+
+    @Test
+    fun body_showsNoHouseholdState_whenUserHasNoHousehold() =
+        runTest {
+            households.households.value = emptyList()
+
+            assertThat(viewModel().bodyState().value).isEqualTo(ShoppingListState.Body.NoHousehold)
+        }
+
+    @Test
+    fun newlyCreatedHousehold_isSelected_whenItAppearsAfterTheFirstLoad() =
+        runTest {
+            val viewModel = viewModel()
+
+            households.households.value += household(id = "household-new", name = "Cottage")
+
+            assertThat(settings.selectedId.value).isEqualTo("household-new")
+            assertThat(viewModel.content().currentHouseholdId).isEqualTo("household-new")
+            assertThat(viewModel.headerState().value.currentHouseholdName).isEqualTo("Cottage")
+        }
+
+    @Test
+    fun householdJoinedLater_isNotSelected_whenItIsOwnedBySomeoneElse() =
+        runTest {
+            val viewModel = viewModel()
+
+            households.households.value += household(id = "household-joined", name = "Friends", ownerId = "user-2")
+
+            assertThat(settings.selectedId.value).isNull()
+            assertThat(viewModel.headerState().value.currentHouseholdName).isEqualTo("Home")
+        }
+
+    @Test
+    fun onHouseholdSelected_savesSelection_andShowsThatHousehold() =
+        runTest {
+            households.households.value =
+                listOf(household(id = "household-1", name = "Home"), household(id = "household-2", name = "Cottage"))
+            val viewModel = viewModel()
+
+            viewModel.onHouseholdSelected("household-2")
+
+            assertThat(settings.selectedId.value).isEqualTo("household-2")
+            assertThat(viewModel.content().currentHouseholdId).isEqualTo("household-2")
+            assertThat(viewModel.headerState().value.currentHouseholdName).isEqualTo("Cottage")
+            assertThat(viewModel.headerState().value.otherHouseholds)
+                .containsExactly(PresentableSimpleHousehold(id = "household-1", name = "Home"))
+        }
+
+    @Test
+    fun itemWrites_goToTheSelectedHousehold() =
+        runTest {
+            households.households.value = listOf(household(id = "household-1"), household(id = "household-2"))
+            val viewModel = viewModel()
+            viewModel.onHouseholdSelected("household-2")
+
+            viewModel.onAddItem("Eggs")
+            viewModel.onItemTextChange(itemId = "milk", text = "Oat milk")
+            viewModel.onItemCheckedChange(itemId = "milk", isChecked = true)
+            viewModel.onItemMoved(itemId = "milk", toIndex = 0)
+            viewModel.onItemDelete("milk")
+
+            assertThat(households.itemWriteHouseholdIds).isEqualTo(List(5) { "household-2" })
         }
 
     @Test
@@ -95,8 +215,8 @@ class ShoppingListViewModelImplTest {
 
             viewModel().onAddItem("Eggs")
 
-            assertEquals(listOf("Eggs"), households.addedItems.map { it.text })
-            assertEquals(listOf("Eggs"), suggestions.savedNames)
+            assertThat(households.addedItems.map { it.text }).containsExactly("Eggs")
+            assertThat(suggestions.saved.map { it.name }).containsExactly("Eggs")
         }
 
     @Test
@@ -104,69 +224,175 @@ class ShoppingListViewModelImplTest {
         runTest {
             viewModel().onAddItem("Eggs")
 
-            assertEquals(listOf("Eggs"), households.addedItems.map { it.text })
-            assertTrue(suggestions.savedNames.isEmpty())
+            assertThat(households.addedItems.map { it.text }).containsExactly("Eggs")
+            assertThat(suggestions.saved).isEmpty()
+        }
+
+    @Test
+    fun addItem_showsNewItemAmongPendingItems_afterTheExistingOnes() =
+        runTest {
+            households.items.value += item(id = "eggs", text = "Eggs", position = 3072.0)
+            val viewModel = viewModel()
+
+            viewModel.onAddItem("Butter")
+
+            assertThat(viewModel.content().pendingItems.map { it.text }).containsExactly("Milk", "Eggs", "Butter")
         }
 
     @Test
     fun addItem_unchecksTheExistingDoneItem_insteadOfAddingADuplicate() =
         runTest {
-            viewModel().onAddItem(" bread ")
+            val viewModel = viewModel()
 
-            assertEquals(listOf("bread" to false), households.checkedChanges)
-            assertTrue(households.addedItems.isEmpty())
+            viewModel.onAddItem(" bread ")
+
+            assertThat(households.checkedChanges).containsExactly("bread" to false)
+            assertThat(households.addedItems).isEmpty()
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk", "bread")
+            assertThat(viewModel.content().doneItems).isEmpty()
         }
 
     @Test
-    fun addItem_movesTheExistingPendingItem_insteadOfAddingADuplicate() =
+    fun addItem_movesTheExistingPendingItemToTheEnd_insteadOfAddingADuplicate() =
         runTest {
-            viewModel().onAddItem("MILK")
+            households.items.value += item(id = "eggs", text = "Eggs", position = 3072.0)
+            val viewModel = viewModel()
 
-            assertEquals(listOf("milk"), households.movedItems.map { it.first })
-            assertTrue(households.addedItems.isEmpty())
+            viewModel.onAddItem("MILK")
+
+            assertThat(households.movedItems.map { it.first }).containsExactly("milk")
+            // Must be after the last other pending item.
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("eggs", "milk")
+            assertThat(households.addedItems).isEmpty()
         }
 
     @Test
-    fun failedWrite_showsWriteError_untilItIsShown() =
+    fun onItemTextChange_savesTrimmedText() =
         runTest {
-            households.writeFailure = DataException(DataException.Reason.PermissionDenied, "rejected by rules")
+            val viewModel = viewModel()
+
+            viewModel.onItemTextChange(itemId = "milk", text = " Oat milk ")
+
+            assertThat(households.updatedTexts).containsExactly("milk" to "Oat milk")
+            assertThat(viewModel.content().pendingItems.map { it.text }).containsExactly("Oat milk")
+        }
+
+    @Test
+    fun onItemCheckedChange_savesTheCheckedState() =
+        runTest {
+            val viewModel = viewModel()
+
+            viewModel.onItemCheckedChange(itemId = "milk", isChecked = true)
+
+            assertThat(households.checkedChanges).containsExactly("milk" to true)
+            assertThat(viewModel.content().pendingItems).isEmpty()
+            assertThat(viewModel.content().doneItems.map { it.id }).containsExactly("milk", "bread")
+        }
+
+    @Test
+    fun onItemMoved_savesPositionAmongTheShownPendingItems() =
+        runTest {
+            households.items.value += item(id = "eggs", text = "Eggs", position = 3072.0)
+            val viewModel = viewModel()
+
+            viewModel.onItemMoved(itemId = "eggs", toIndex = 0)
+
+            assertThat(households.movedItems.map { it.first }).containsExactly("eggs")
+            // Must be before milk, the first pending item.
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("eggs", "milk")
+        }
+
+    @Test
+    fun onItemDelete_deletesTheItem() =
+        runTest {
             val viewModel = viewModel()
 
             viewModel.onItemDelete("milk")
 
-            val body = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-            assertEquals(ShoppingListState.ContentErrorState.WriteError, body.contentErrorState)
-            assertEquals(1, logger.exceptions.size, "A rejected write is a bug and must be recorded")
+            assertThat(households.deletedItems).containsExactly("milk")
+            assertThat(viewModel.content().pendingItems).isEmpty()
+        }
+
+    @Test
+    fun onCheckedItemsCollapse_togglesTheCheckedItemsSection() =
+        runTest {
+            val viewModel = viewModel()
+
+            viewModel.onCheckedItemsCollapse()
+            assertThat(viewModel.content().areCheckedItemsCollapsed).isFalse()
+
+            viewModel.onCheckedItemsCollapse()
+            assertThat(viewModel.content().areCheckedItemsCollapsed).isTrue()
+        }
+
+    @Test
+    fun showClearCheckedItemsConfirmationDialog_showsTheConfirmation() =
+        runTest {
+            val viewModel = viewModel()
+
+            viewModel.showClearCheckedItemsConfirmationDialog()
+
+            assertThat(viewModel.content().dialogState).isEqualTo(ShoppingListState.DialogState.ClearCheckedItemsConfirmation)
+        }
+
+    @Test
+    fun dismissDialog_hidesTheConfirmation() =
+        runTest {
+            val viewModel = viewModel()
+            viewModel.showClearCheckedItemsConfirmationDialog()
+
+            viewModel.dismissDialog()
+
+            assertThat(viewModel.content().dialogState).isEqualTo(ShoppingListState.DialogState.Hidden)
+            assertThat(households.clearedHouseholds).isEmpty()
+        }
+
+    @Test
+    fun clearCheckedItems_collapsesSectionAndHidesDialog_thenClearsCheckedItemsOfCurrentHousehold() =
+        runTest {
+            val viewModel = viewModel()
+            viewModel.onCheckedItemsCollapse()
+            viewModel.showClearCheckedItemsConfirmationDialog()
+
+            viewModel.clearCheckedItems()
+
+            val body = viewModel.content()
+            assertThat(body.dialogState).isEqualTo(ShoppingListState.DialogState.Hidden)
+            assertThat(body.areCheckedItemsCollapsed).isTrue()
+            // Items are cleared only after the section has collapsed.
+            assertThat(households.clearedHouseholds).isEmpty()
+            assertThat(body.doneItems.map { it.id }).containsExactly("bread")
+
+            advanceUntilIdle()
+
+            assertThat(households.clearedHouseholds).containsExactly("household-1")
+            assertThat(viewModel.content().doneItems).isEmpty()
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
+        }
+
+    // region Error handling
+
+    @Test
+    fun failedWrite_showsWriteError_untilItIsShown() =
+        runTest {
+            val failure = DataException(DataException.Reason.PermissionDenied, "rejected by rules")
+            households.writeFailure = failure
+            val viewModel = viewModel()
+
+            viewModel.onItemDelete("milk")
+
+            assertThat(viewModel.content().contentErrorState).isEqualTo(ShoppingListState.ContentErrorState.WriteError)
+            // A rejected write is a bug and must be recorded.
+            assertThat(
+                logger.exceptions
+                    .single()
+                    .cause
+                    ?.message,
+            ).isEqualTo(failure.message)
 
             viewModel.onErrorShown()
 
-            val shown = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-            assertEquals(ShoppingListState.ContentErrorState.None, shown.contentErrorState)
-        }
-
-    @Test
-    fun failedStream_showsGenericError_andRetryRecovers() =
-        runTest {
-            households.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
-            val viewModel = viewModel()
-
-            assertEquals(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.Generic), viewModel.bodyState().value)
-
-            households.householdsFailure = null
-            viewModel.retry()
-
-            assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-        }
-
-    @Test
-    fun failedStream_showsQuotaExceededError_whenQuotaIsExceeded() =
-        runTest {
-            households.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
-
-            val body = viewModel().bodyState().value
-
-            assertEquals(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.QuotaExceeded), body)
-            assertEquals(1, logger.exceptions.size, "A used-up quota must be recorded, not only logged")
+            assertThat(viewModel.content().contentErrorState).isEqualTo(ShoppingListState.ContentErrorState.None)
         }
 
     @Test
@@ -177,27 +403,35 @@ class ShoppingListViewModelImplTest {
 
             viewModel.onItemDelete("milk")
 
-            val body = assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-            assertEquals(ShoppingListState.ContentErrorState.QuotaExceeded, body.contentErrorState)
+            assertThat(viewModel.content().contentErrorState).isEqualTo(ShoppingListState.ContentErrorState.QuotaExceeded)
         }
 
     @Test
-    fun noHouseholds_showsNoHouseholdState() =
+    fun failedStream_showsGenericError_andRetryRecovers() =
         runTest {
-            households.households.value = emptyList()
-
-            assertIs<ShoppingListState.Body.NoHousehold>(viewModel().bodyState().value)
-        }
-
-    @Test
-    fun newlyCreatedHousehold_isSelected_whenItAppearsAfterTheFirstLoad() =
-        runTest {
+            households.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
             val viewModel = viewModel()
 
-            households.households.value += household(id = "household-new", name = "Cottage")
+            assertThat(viewModel.bodyState().value)
+                .isEqualTo(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.Generic))
 
-            assertEquals("household-new", settings.selectedId.value)
-            assertIs<ShoppingListState.Body.Content>(viewModel.bodyState().value)
-            assertEquals("Cottage", viewModel.headerState().value.currentHouseholdName)
+            households.householdsFailure = null
+            viewModel.retry()
+
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
         }
+
+    @Test
+    fun failedStream_showsQuotaExceededError_whenQuotaIsExceeded() =
+        runTest {
+            households.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+
+            val body = viewModel().bodyState().value
+
+            assertThat(body).isEqualTo(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.QuotaExceeded))
+            // A used-up quota must be recorded, not only logged.
+            assertThat(logger.exceptions).hasSize(1)
+        }
+
+    // endregion
 }

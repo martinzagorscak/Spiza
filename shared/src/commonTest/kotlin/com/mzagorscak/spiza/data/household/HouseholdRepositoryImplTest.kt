@@ -1,5 +1,16 @@
 package com.mzagorscak.spiza.data.household
 
+import app.cash.turbine.test
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
+import assertk.assertions.prop
 import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
@@ -13,27 +24,24 @@ import com.mzagorscak.spiza.fakes.TEST_PROFILE
 import com.mzagorscak.spiza.fakes.TEST_USER
 import com.mzagorscak.spiza.fakes.householdDto
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
-
-private const val MAX_MEMBERS = 10
-private const val MAX_ITEMS = 100
-private const val MAX_HOUSEHOLDS = 3
 
 // The first subscription plus the repository's three retries.
 private const val SUBSCRIPTIONS_WITH_RETRIES = 4
+
+// The first count a rule rejects, so the tests follow the limits instead of copying them.
+private fun limitOf(isAllowed: (Int) -> Boolean): Int = generateSequence(0) { it + 1 }.first { isAllowed(it).not() }
 
 class HouseholdRepositoryImplTest {
     private val dataSource = FakeHouseholdDataSource()
     private val authService = FakeAuthService()
     private val userRepository = FakeUserRepository()
     private val logger = FakeCrashLogger()
+
+    private val maxHouseholds = limitOf(ConstraintsManagerImpl::canUserCreateOrJoinHousehold)
+    private val maxItems = limitOf(ConstraintsManagerImpl::canAddItemToHousehold)
+    private val maxMembers = limitOf(ConstraintsManagerImpl::canAddMemberToHousehold)
 
     private val repository =
         HouseholdRepositoryImpl(
@@ -51,78 +59,64 @@ class HouseholdRepositoryImplTest {
     }
 
     @Test
-    fun addMember_returnsFalseWithoutLookup_whenJoinKeyCanNotBeAKey() =
+    fun createHouseholdJoinKey_createsKeyOfCurrentUser_andEmitsItToObservers() =
         runTest {
-            listOf("", "   ", "a/b", "../x", "key with spaces").forEach { key ->
-                assertFalse(repository.addMemberToHousehold(householdId = "household-1", userJoinKey = key), "'$key' must be rejected")
+            repository.getHouseholdJoinKey().test {
+                assertThat(awaitItem()).isNull()
+
+                val key = repository.createHouseholdJoinKey()
+
+                assertThat(awaitItem()).isEqualTo(key)
+                assertThat(dataSource.joinKeys.toList()).containsExactly(key to TEST_USER.uid)
+                cancelAndIgnoreRemainingEvents()
             }
-            assertTrue(dataSource.addedMembers.isEmpty())
+        }
+
+    @Test
+    fun getHouseholdJoinKey_emitsStoredKeyOfSignedInUser_andNullAfterSignOut() =
+        runTest {
+            dataSource.joinKeys["other-key"] = "user-2"
+            dataSource.joinKeys["stored-key"] = TEST_USER.uid
+
+            repository.getHouseholdJoinKey().test {
+                assertThat(awaitItem()).isEqualTo("stored-key")
+
+                authService.user.value = null
+
+                assertThat(awaitItem()).isNull()
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertThat(dataSource.joinKeyRequestsOfUsers).containsExactly(TEST_USER.uid)
+        }
+
+    @Test
+    fun refreshHouseholdJoinKey_emitsTheStoredKeyAgain() =
+        runTest {
+            dataSource.joinKeys["old-key"] = TEST_USER.uid
+
+            repository.getHouseholdJoinKey().test {
+                assertThat(awaitItem()).isEqualTo("old-key")
+                // The key was replaced elsewhere (e.g. on another device); the one-shot read only sees it when read again.
+                dataSource.joinKeys.clear()
+                dataSource.joinKeys["new-key"] = TEST_USER.uid
+
+                repository.refreshHouseholdJoinKey()
+
+                assertThat(awaitItem()).isEqualTo("new-key")
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
     fun addMember_normalizesTheTypedKey_beforeLookingItUp() =
         runTest {
+            dataSource.households.value = listOf(householdDto())
+            dataSource.joinKeys["abc-123"] = "user-2"
+
             val isAdded = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "  ABC-123 ")
 
-            assertTrue(isAdded)
-            assertEquals(listOf("household-1" to "abc-123"), dataSource.addedMembers)
-        }
-
-    @Test
-    fun addMember_returnsFalseAndRecordsError_whenUserIsNotSignedIn() =
-        runTest {
-            authService.user.value = null
-
-            assertFalse(repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123"))
-            assertTrue(dataSource.addedMembers.isEmpty())
-            assertEquals(1, logger.exceptions.size)
-        }
-
-    @Test
-    fun addMember_returnsFalse_whenHouseholdIsFull() =
-        runTest {
-            observeHouseholds(householdDto(members = List(MAX_MEMBERS) { "user-$it" }))
-
-            assertFalse(repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123"))
-            assertTrue(dataSource.addedMembers.isEmpty())
-        }
-
-    @Test
-    fun addItem_doesNotWrite_whenHouseholdReachedTheItemLimit() =
-        runTest {
-            repository.addItem(householdId = "household-1", text = "milk", position = 1.0, currentItemsCount = MAX_ITEMS)
-
-            assertTrue(dataSource.addedItems.isEmpty())
-            assertEquals(1, logger.warnings.size)
-        }
-
-    @Test
-    fun createHousehold_returnsNullWithoutWriting_whenUserReachedTheHouseholdLimit() =
-        runTest {
-            observeHouseholds(*Array(MAX_HOUSEHOLDS) { householdDto(id = "household-$it") })
-
-            assertNull(repository.createHousehold(name = "Cottage", description = ""))
-            assertTrue(dataSource.createdHouseholds.isEmpty())
-        }
-
-    @Test
-    fun createHousehold_deletesOwnJoinKey_whenTheNewHouseholdReachesTheLimit() =
-        runTest {
-            observeHouseholds(*Array(MAX_HOUSEHOLDS - 1) { householdDto(id = "household-$it") })
-
-            assertEquals("household-new", repository.createHousehold(name = "Cottage", description = ""))
-            assertEquals(listOf(TEST_USER.uid), dataSource.deletedJoinKeysOfUsers)
-        }
-
-    @Test
-    fun updateHousehold_completesWithoutError_whenServerNeverAcknowledgesTheWrite() =
-        runTest {
-            dataSource.neverAcknowledgeWrites = true
-
-            repository.updateHousehold(householdId = "household-1", name = "Home", description = "")
-
-            assertTrue(logger.exceptions.isEmpty())
-            assertEquals(1, logger.warnings.size)
+            assertThat(isAdded).isTrue()
+            assertThat(dataSource.addedMembers).containsExactly("household-1" to "abc-123")
         }
 
     @Test
@@ -132,53 +126,68 @@ class HouseholdRepositoryImplTest {
             userRepository.users = listOf(TEST_PROFILE, other)
             dataSource.households.value = listOf(householdDto(members = listOf(TEST_USER.uid, "user-2")))
 
-            val household = repository.observeHouseholds().first().single()
-
-            assertEquals(listOf(TEST_PROFILE, other), household.members)
+            repository.observeHouseholds().test {
+                assertThat(awaitItem().single().members).containsExactly(TEST_PROFILE, other)
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
-    fun observeHouseholds_stillEmitsHouseholds_whenMemberProfilesCanNotBeLoaded() =
+    fun observeHouseholds_sortsHouseholdsByNameIgnoringCase() =
         runTest {
-            userRepository.getUsersFailure = DataException(DataException.Reason.Offline, "offline")
+            dataSource.households.value =
+                listOf(
+                    householdDto(id = "c", name = "cottage"),
+                    householdDto(id = "b", name = "Beach"),
+                    householdDto(id = "a", name = "apartment"),
+                )
+
+            repository.observeHouseholds().test {
+                assertThat(awaitItem().map { it.id }).containsExactly("a", "b", "c")
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun observeHouseholds_fetchesOnlyMembersThatAreNotLoadedYet() =
+        runTest {
+            val other = UserProfile(id = "user-2", name = "Ivo", email = null, photoUrl = null)
+            userRepository.users = listOf(TEST_PROFILE, other)
             dataSource.households.value = listOf(householdDto())
 
-            val households = repository.observeHouseholds().first()
+            repository.observeHouseholds().test {
+                awaitItem()
 
-            assertEquals(listOf("household-1"), households.map { it.id })
-            assertTrue(logger.exceptions.isEmpty())
+                dataSource.households.value = listOf(householdDto(members = listOf(TEST_USER.uid, "user-2")))
+
+                assertThat(awaitItem().single().members).containsExactly(TEST_PROFILE, other)
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertThat(userRepository.requestedUserIds).containsExactly(listOf(TEST_USER.uid), listOf("user-2"))
         }
 
     @Test
-    fun getHouseholdJoinKey_emitsNoKey_whenFetchingTheKeyFails() =
+    fun observeHouseholds_emitsNoHouseholdsWithoutListening_whenSignedOut() =
         runTest {
-            dataSource.joinKey = flow { throw DataException(DataException.Reason.Offline, "offline") }
+            authService.user.value = null
+            dataSource.households.value = listOf(householdDto())
 
-            assertNull(repository.getHouseholdJoinKey().first())
-            assertTrue(logger.exceptions.isEmpty())
+            repository.observeHouseholds().test {
+                assertThat(awaitItem()).isEmpty()
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertThat(dataSource.householdsSubscriptions).isEqualTo(0)
         }
 
     @Test
-    fun observeHouseholds_failsWithoutRetrying_whenQuotaIsExceeded() =
+    fun getCachedHouseholdCount_countsTheObservedHouseholds() =
         runTest {
-            dataSource.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+            observeHouseholds(householdDto(id = "household-1"), householdDto(id = "household-2"))
 
-            val error = assertFailsWith<DataException> { repository.observeHouseholds().first() }
-
-            assertEquals(DataException.Reason.QuotaExceeded, error.reason)
-            assertEquals(1, dataSource.householdsSubscriptions)
-            assertEquals(1, logger.warnings.size)
-        }
-
-    @Test
-    fun observeHouseholds_retriesBeforeFailing_whenListenerFailsForAnotherReason() =
-        runTest {
-            dataSource.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
-
-            val error = assertFailsWith<DataException> { repository.observeHouseholds().first() }
-
-            assertEquals(DataException.Reason.PermissionDenied, error.reason)
-            assertEquals(SUBSCRIPTIONS_WITH_RETRIES, dataSource.householdsSubscriptions)
+            repository.getCachedHouseholdCount().test {
+                assertThat(awaitItem()).isEqualTo(2)
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
@@ -192,9 +201,163 @@ class HouseholdRepositoryImplTest {
                     ArticleItemDto(id = "b", text = "b", isChecked = true, position = 1.5),
                 )
 
-            val items = repository.observeItems(householdId = "household-1").first()
+            repository.observeItems(householdId = "household-1").test {
+                assertThat(awaitItem().map { it.id }).containsExactly("a", "b", "c")
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 
-            assertEquals(listOf("a", "b", "c"), items.map { it.id })
+    @Test
+    fun createHousehold_createsHouseholdOwnedByCurrentUser_andKeepsJoinKeyBelowTheLimit() =
+        runTest {
+            dataSource.joinKeys["join-key"] = TEST_USER.uid
+
+            val id = repository.createHousehold(name = "Cottage", description = "Weekends")
+
+            assertThat(id).isEqualTo("household-new-1")
+            assertThat(dataSource.createdHouseholds).containsExactly(
+                FakeHouseholdDataSource.CreatedHousehold(ownerId = TEST_USER.uid, name = "Cottage", description = "Weekends"),
+            )
+            assertThat(dataSource.deletedJoinKeysOfUsers).isEmpty()
+        }
+
+    @Test
+    fun createHousehold_deletesOwnJoinKey_whenTheNewHouseholdReachesTheLimit() =
+        runTest {
+            observeHouseholds(*Array(maxHouseholds - 1) { householdDto(id = "household-$it") })
+            dataSource.joinKeys["join-key"] = TEST_USER.uid
+
+            val id = repository.createHousehold(name = "Cottage", description = "")
+
+            assertThat(id).isEqualTo("household-new-1")
+            assertThat(dataSource.deletedJoinKeysOfUsers).containsExactly(TEST_USER.uid)
+        }
+
+    @Test
+    fun updateHousehold_updatesTheHouseholdInTheDataSource() =
+        runTest {
+            repository.updateHousehold(householdId = "household-1", name = "Home", description = "Our flat")
+
+            assertThat(dataSource.updatedHouseholds).containsExactly(
+                FakeHouseholdDataSource.UpdatedHousehold(householdId = "household-1", name = "Home", description = "Our flat"),
+            )
+            assertThat(logger.warnings).isEmpty()
+        }
+
+    @Test
+    fun addItem_writesItemToTheDataSource_whenHouseholdIsBelowTheItemLimit() =
+        runTest {
+            repository.addItem(householdId = "household-1", text = "milk", position = 1024.0, currentItemsCount = maxItems - 1)
+
+            assertThat(dataSource.addedItems).containsExactly(
+                FakeHouseholdDataSource.AddedItem(householdId = "household-1", text = "milk", position = 1024.0),
+            )
+            assertThat(logger.warnings).isEmpty()
+        }
+
+    // region Error handling
+
+    @Test
+    fun createHouseholdJoinKey_returnsNullWithoutCreating_whenUserReachedTheHouseholdLimit() =
+        runTest {
+            observeHouseholds(*Array(maxHouseholds) { householdDto(id = "household-$it") })
+
+            val key = repository.createHouseholdJoinKey()
+
+            assertThat(key).isNull()
+            assertThat(dataSource.createdJoinKeysOfUsers).isEmpty()
+            assertThat(logger.warnings).hasSize(1)
+        }
+
+    @Test
+    fun getHouseholdJoinKey_emitsNoKey_whenFetchingTheKeyFails() =
+        runTest {
+            dataSource.joinKeyFailure = DataException(DataException.Reason.Offline, "offline")
+
+            repository.getHouseholdJoinKey().test {
+                assertThat(awaitItem()).isNull()
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertThat(logger.warnings).hasSize(1)
+            assertThat(logger.exceptions).isEmpty()
+        }
+
+    @Test
+    fun addMember_returnsFalseWithoutLookup_whenJoinKeyCanNotBeAKey() =
+        runTest {
+            val keys = listOf("", "   ", "a/b", "../x", "key with spaces")
+
+            val results = keys.associateWith { repository.addMemberToHousehold(householdId = "household-1", userJoinKey = it) }
+
+            assertThat(results).isEqualTo(keys.associateWith { false })
+            assertThat(dataSource.addedMembers).isEmpty()
+        }
+
+    @Test
+    fun addMember_returnsFalseAndRecordsError_whenUserIsNotSignedIn() =
+        runTest {
+            authService.user.value = null
+
+            val isAdded = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
+
+            assertThat(isAdded).isFalse()
+            assertThat(dataSource.addedMembers).isEmpty()
+            assertThat(logger.exceptions).hasSize(1)
+        }
+
+    @Test
+    fun addMember_returnsFalse_whenHouseholdIsFull() =
+        runTest {
+            observeHouseholds(householdDto(members = listOf(TEST_USER.uid) + List(maxMembers - 1) { "user-$it" }))
+            dataSource.joinKeys["abc-123"] = "user-new"
+
+            val isAdded = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
+
+            assertThat(isAdded).isFalse()
+            assertThat(dataSource.addedMembers).isEmpty()
+            assertThat(logger.warnings).hasSize(1)
+        }
+
+    @Test
+    fun observeHouseholds_stillEmitsHouseholds_whenMemberProfilesCanNotBeLoaded() =
+        runTest {
+            userRepository.getUsersFailure = DataException(DataException.Reason.Offline, "offline")
+            dataSource.households.value = listOf(householdDto())
+
+            repository.observeHouseholds().test {
+                assertThat(awaitItem().map { it.id }).containsExactly("household-1")
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertThat(logger.exceptions).isEmpty()
+        }
+
+    @Test
+    fun observeHouseholds_failsWithoutRetrying_whenQuotaIsExceeded() =
+        runTest {
+            dataSource.householdsFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+
+            repository.observeHouseholds().test {
+                assertThat(awaitError())
+                    .isInstanceOf<DataException>()
+                    .prop(DataException::reason)
+                    .isEqualTo(DataException.Reason.QuotaExceeded)
+            }
+            assertThat(dataSource.householdsSubscriptions).isEqualTo(1)
+            assertThat(logger.warnings).hasSize(1)
+        }
+
+    @Test
+    fun observeHouseholds_retriesBeforeFailing_whenListenerFailsForAnotherReason() =
+        runTest {
+            dataSource.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
+
+            repository.observeHouseholds().test {
+                assertThat(awaitError())
+                    .isInstanceOf<DataException>()
+                    .prop(DataException::reason)
+                    .isEqualTo(DataException.Reason.PermissionDenied)
+            }
+            assertThat(dataSource.householdsSubscriptions).isEqualTo(SUBSCRIPTIONS_WITH_RETRIES)
         }
 
     @Test
@@ -202,9 +365,56 @@ class HouseholdRepositoryImplTest {
         runTest {
             dataSource.itemsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
 
-            val error = assertFailsWith<DataException> { repository.observeItems(householdId = "household-1").first() }
-
-            assertEquals(DataException.Reason.PermissionDenied, error.reason)
-            assertEquals(SUBSCRIPTIONS_WITH_RETRIES, dataSource.itemsSubscriptions)
+            repository.observeItems(householdId = "household-1").test {
+                assertThat(awaitError())
+                    .isInstanceOf<DataException>()
+                    .prop(DataException::reason)
+                    .isEqualTo(DataException.Reason.PermissionDenied)
+            }
+            assertThat(dataSource.itemsSubscriptions).isEqualTo(SUBSCRIPTIONS_WITH_RETRIES)
         }
+
+    @Test
+    fun createHousehold_returnsNullWithoutWriting_whenUserReachedTheHouseholdLimit() =
+        runTest {
+            observeHouseholds(*Array(maxHouseholds) { householdDto(id = "household-$it") })
+
+            val id = repository.createHousehold(name = "Cottage", description = "")
+
+            assertThat(id).isNull()
+            assertThat(dataSource.createdHouseholds).isEmpty()
+        }
+
+    @Test
+    fun updateHousehold_completesWithoutError_whenServerNeverAcknowledgesTheWrite() =
+        runTest {
+            dataSource.neverAcknowledgeWrites = true
+
+            repository.updateHousehold(householdId = "household-1", name = "Home", description = "")
+
+            assertThat(logger.exceptions).isEmpty()
+            assertThat(logger.warnings).hasSize(1)
+        }
+
+    @Test
+    fun addItem_doesNotWrite_whenHouseholdReachedTheItemLimit() =
+        runTest {
+            repository.addItem(householdId = "household-1", text = "milk", position = 1.0, currentItemsCount = maxItems)
+
+            assertThat(dataSource.addedItems).isEmpty()
+            assertThat(logger.warnings).hasSize(1)
+        }
+
+    @Test
+    fun addItem_doesNotWriteAndRecordsError_whenUserIsNotSignedIn() =
+        runTest {
+            authService.user.value = null
+
+            repository.addItem(householdId = "household-1", text = "milk", position = 1.0, currentItemsCount = 0)
+
+            assertThat(dataSource.addedItems).isEmpty()
+            assertThat(logger.exceptions).hasSize(1)
+        }
+
+    // endregion
 }

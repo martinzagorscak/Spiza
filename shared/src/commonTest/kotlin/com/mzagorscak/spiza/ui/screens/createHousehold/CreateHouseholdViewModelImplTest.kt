@@ -1,5 +1,12 @@
 package com.mzagorscak.spiza.ui.screens.createHousehold
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCaseImpl
@@ -14,9 +21,6 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CreateHouseholdViewModelImplTest {
@@ -44,20 +48,93 @@ class CreateHouseholdViewModelImplTest {
         }
 
     @Test
+    fun init_prefillsTheHousehold_whenEditing() =
+        runTest {
+            val scenario = HouseholdScenario.Edit(householdId = "household-1", householdName = "Home", householdDescription = "Flat")
+
+            val state = viewModel(scenario).state().value
+
+            assertThat(state).isEqualTo(CreateHouseholdState(id = "household-1", name = "Home", description = "Flat"))
+            assertThat(state.isEditScenario).isTrue()
+        }
+
+    @Test
+    fun onNameChange_acceptsNameUpToTheMaxLength() =
+        runTest {
+            val viewModel = viewModel()
+            val maxName = "a".repeat(CreateHouseholdState.MAX_NAME_LENGTH)
+
+            viewModel.onNameChange(maxName)
+
+            assertThat(viewModel.state().value.name).isEqualTo(maxName)
+            assertThat(viewModel.state().value.canSubmit).isTrue()
+        }
+
+    @Test
+    fun createHousehold_createsHouseholdWithTypedNameAndDescription() =
+        runTest {
+            val viewModel = viewModel()
+            viewModel.onNameChange("Home")
+            viewModel.onDescriptionChange("Our flat")
+
+            viewModel.createHousehold()
+
+            assertThat(households.createdHouseholds).containsExactly("Home" to "Our flat")
+            val state = viewModel.state().value
+            assertThat(state.isCreated).isTrue()
+            assertThat(state.isSubmitting).isFalse()
+            assertThat(state.errorState).isEqualTo(CreateHouseholdState.ErrorState.None)
+        }
+
+    @Test
+    fun createHousehold_updatesTheEditedHousehold_insteadOfCreatingANewOne() =
+        runTest {
+            val scenario = HouseholdScenario.Edit(householdId = "household-1", householdName = "Home", householdDescription = "")
+
+            val state = submittedViewModel(scenario).state().value
+
+            assertThat(state.isCreated).isTrue()
+            assertThat(households.updatedHouseholds).containsExactly(
+                FakeHouseholdRepository.UpdatedHousehold(householdId = "household-1", name = "Home", description = ""),
+            )
+            assertThat(households.createdHouseholds).isEmpty()
+        }
+
+    // region Error handling
+
+    @Test
+    fun onNameChange_ignoresName_whenItIsLongerThanTheMaxLength() =
+        runTest {
+            val viewModel = viewModel()
+            val maxName = "a".repeat(CreateHouseholdState.MAX_NAME_LENGTH)
+            viewModel.onNameChange(maxName)
+
+            viewModel.onNameChange(maxName + "a")
+
+            assertThat(viewModel.state().value.name).isEqualTo(maxName)
+        }
+
+    @Test
     fun createHousehold_setsQuotaExceededError_untilTheNameIsEdited() =
         runTest {
-            households.writeFailure = DataException(DataException.Reason.QuotaExceeded, "quota")
+            val failure = DataException(DataException.Reason.QuotaExceeded, "quota")
+            households.writeFailure = failure
             val viewModel = submittedViewModel()
 
             val failed = viewModel.state().value
-            assertEquals(CreateHouseholdState.ErrorState.QuotaExceeded, failed.errorState)
-            assertFalse(failed.isSubmitting)
-            assertFalse(failed.isCreated)
-            assertEquals(1, logger.exceptions.size)
+            assertThat(failed.errorState).isEqualTo(CreateHouseholdState.ErrorState.QuotaExceeded)
+            assertThat(failed.isSubmitting).isFalse()
+            assertThat(failed.isCreated).isFalse()
+            assertThat(
+                logger.exceptions
+                    .single()
+                    .cause
+                    ?.message,
+            ).isEqualTo(failure.message)
 
             viewModel.onNameChange("Home 2")
 
-            assertEquals(CreateHouseholdState.ErrorState.None, viewModel.state().value.errorState)
+            assertThat(viewModel.state().value.errorState).isEqualTo(CreateHouseholdState.ErrorState.None)
         }
 
     @Test
@@ -67,8 +144,8 @@ class CreateHouseholdViewModelImplTest {
 
             val state = submittedViewModel().state().value
 
-            assertEquals(CreateHouseholdState.ErrorState.Generic, state.errorState)
-            assertFalse(state.isSubmitting)
+            assertThat(state.errorState).isEqualTo(CreateHouseholdState.ErrorState.Generic)
+            assertThat(state.isSubmitting).isFalse()
         }
 
     @Test
@@ -80,20 +157,35 @@ class CreateHouseholdViewModelImplTest {
             households.writeFailure = null
             viewModel.createHousehold()
 
-            assertEquals(CreateHouseholdState.ErrorState.None, viewModel.state().value.errorState)
-            assertTrue(viewModel.state().value.isCreated)
-            assertEquals(listOf("Home"), households.createdHouseholds)
+            assertThat(viewModel.state().value.errorState).isEqualTo(CreateHouseholdState.ErrorState.None)
+            assertThat(viewModel.state().value.isCreated).isTrue()
+            // The failed attempt and the successful retry.
+            assertThat(households.createdHouseholds).containsExactly("Home" to "", "Home" to "")
         }
 
     @Test
-    fun createHousehold_updatesTheEditedHousehold_insteadOfCreatingANewOne() =
+    fun createHousehold_doesNotSubmit_whenNameIsBlank() =
         runTest {
-            val scenario = HouseholdScenario.Edit(householdId = "household-1", householdName = "Home", householdDescription = "")
+            val viewModel = viewModel()
+            viewModel.onNameChange("   ")
 
-            val state = submittedViewModel(scenario).state().value
+            viewModel.createHousehold()
 
-            assertTrue(state.isCreated)
-            assertEquals(listOf("household-1" to "Home"), households.updatedHouseholds)
-            assertTrue(households.createdHouseholds.isEmpty())
+            assertThat(households.createdHouseholds).isEmpty()
+            assertThat(viewModel.state().value.isCreated).isFalse()
         }
+
+    @Test
+    fun createHousehold_createsOnlyOnce_whenSubmittedAgainWhileSubmitting() =
+        runTest {
+            households.neverCompleteWrites = true
+            val viewModel = submittedViewModel()
+            assertThat(viewModel.state().value.isSubmitting).isTrue()
+
+            viewModel.createHousehold()
+
+            assertThat(households.createdHouseholds).hasSize(1)
+        }
+
+    // endregion
 }

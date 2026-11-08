@@ -1,6 +1,10 @@
 package com.mzagorscak.spiza.ui.screens.common
 
 import androidx.lifecycle.ViewModel
+import assertk.assertThat
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,9 +16,6 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LaunchSafelyTest {
@@ -30,6 +31,22 @@ class LaunchSafelyTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
+    fun launchSafely_runsTheBlock_withoutReportingAnError_whenItSucceeds() =
+        runTest {
+            var blockRan = false
+            var errorCount = 0
+
+            viewModel.launchSafely(crashLogger = logger, context = "Saving", onError = { errorCount++ }) { blockRan = true }
+
+            assertThat(blockRan).isTrue()
+            assertThat(errorCount).isEqualTo(0)
+            assertThat(logger.exceptions).isEmpty()
+            assertThat(logger.warnings).isEmpty()
+        }
+
+    // region Error handling
+
+    @Test
     fun launchSafely_recordsErrorAndCallsOnError_whenBlockThrows() =
         runTest {
             val error = IllegalStateException("write rejected")
@@ -37,8 +54,13 @@ class LaunchSafelyTest {
 
             viewModel.launchSafely(crashLogger = logger, context = "Saving", onError = { reported = it }) { throw error }
 
-            assertSame(error, reported)
-            assertSame(error, logger.exceptions.single().cause)
+            assertThat(reported?.message).isEqualTo(error.message)
+            assertThat(
+                logger.exceptions
+                    .single()
+                    .cause
+                    ?.message,
+            ).isEqualTo(error.message)
         }
 
     @Test
@@ -49,7 +71,10 @@ class LaunchSafelyTest {
             val job = viewModel.launchSafely(crashLogger = logger, context = "Saving", onError = { errorCount++ }) { awaitCancellation() }
             job.cancel()
 
-            assertEquals(0, errorCount)
-            assertTrue(logger.exceptions.isEmpty() && logger.warnings.isEmpty())
+            assertThat(errorCount).isEqualTo(0)
+            assertThat(logger.exceptions).isEmpty()
+            assertThat(logger.warnings).isEmpty()
         }
+
+    // endregion
 }

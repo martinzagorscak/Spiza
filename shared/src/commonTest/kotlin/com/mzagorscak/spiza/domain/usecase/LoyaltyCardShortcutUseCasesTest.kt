@@ -1,5 +1,9 @@
 package com.mzagorscak.spiza.domain.usecase
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
@@ -7,9 +11,9 @@ import com.mzagorscak.spiza.domain.model.ShortcutToggleResult
 import com.mzagorscak.spiza.fakes.FakeLoyaltyCardRepository
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class LoyaltyCardShortcutUseCasesTest {
+    private val limit = ConstraintsManagerImpl.maxLoyaltyCardShortcuts
     private val repository = FakeLoyaltyCardRepository()
     private val toggle = ToggleLoyaltyCardShortcutUseCaseImpl(repository = repository, constraintsManager = ConstraintsManagerImpl)
 
@@ -18,8 +22,12 @@ class LoyaltyCardShortcutUseCasesTest {
         runTest {
             repository.cards.value = listOf(card(id = 1L))
 
-            assertEquals(ShortcutToggleResult.Enabled, toggle(1L))
-            assertEquals(listOf(1L), repository.shortcutIds())
+            val result = toggle(1L)
+
+            assertThat(result).isEqualTo(ShortcutToggleResult.Enabled)
+            assertThat(repository.shortcutIds()).containsExactly(1L)
+            // The limit is enforced by the repository's atomic write, so the use case must hand it the business limit.
+            assertThat(repository.addedShortcuts).containsExactly(1L to limit)
         }
 
     @Test
@@ -27,33 +35,54 @@ class LoyaltyCardShortcutUseCasesTest {
         runTest {
             repository.cards.value = listOf(card(id = 1L, isShortcut = true))
 
-            assertEquals(ShortcutToggleResult.Disabled, toggle(1L))
-            assertEquals(emptyList(), repository.shortcutIds())
+            assertThat(toggle(1L)).isEqualTo(ShortcutToggleResult.Disabled)
+            assertThat(repository.shortcutIds()).isEmpty()
         }
 
-    @Test
-    fun toggle_blocksPinningBeyondTheLimit_andChangesNothing() =
-        runTest {
-            repository.cards.value = (1L..3L).map { card(id = it, isShortcut = true) } + card(id = 4L)
+    // region Error handling
 
-            assertEquals(ShortcutToggleResult.LimitReached(limit = 3), toggle(4L))
-            assertEquals(listOf(1L, 2L, 3L), repository.shortcutIds())
+    @Test
+    fun toggle_reportsLimitReached_whenTheRepositoryRefusesToPinAnExistingCard() =
+        runTest {
+            val pinned = (1L..limit.toLong()).toList()
+            repository.cards.value = pinned.map { card(id = it, isShortcut = true) } + card(id = 100L)
+
+            val result = toggle(100L)
+
+            assertThat(result).isEqualTo(ShortcutToggleResult.LimitReached(limit = limit))
         }
 
     @Test
     fun toggle_stillUnpinsWhenTheLimitIsReached() =
         runTest {
-            repository.cards.value = (1L..3L).map { card(id = it, isShortcut = true) }
+            val pinned = (1L..limit.toLong()).toList()
+            repository.cards.value = pinned.map { card(id = it, isShortcut = true) }
 
-            assertEquals(ShortcutToggleResult.Disabled, toggle(2L))
-            assertEquals(listOf(1L, 3L), repository.shortcutIds())
+            val result = toggle(1L)
+
+            assertThat(result).isEqualTo(ShortcutToggleResult.Disabled)
+            assertThat(repository.shortcutIds()).isEqualTo(pinned - 1L)
         }
 
     @Test
     fun toggle_reportsAMissingCard() =
         runTest {
-            assertEquals(ShortcutToggleResult.CardNotFound, toggle(42L))
+            assertThat(toggle(42L)).isEqualTo(ShortcutToggleResult.CardNotFound)
         }
+
+    @Test
+    fun toggle_reportsAMissingCard_whenItIsDeletedBeforeItCouldBePinned() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            repository.beforeAddShortcut = { repository.cards.value = emptyList() }
+
+            val result = toggle(1L)
+
+            assertThat(result).isEqualTo(ShortcutToggleResult.CardNotFound)
+            assertThat(repository.addedShortcuts).containsExactly(1L to limit)
+        }
+
+    // endregion
 
     private fun FakeLoyaltyCardRepository.shortcutIds(): List<Long> = cards.value.filter { it.isShortcut }.map { it.id }
 

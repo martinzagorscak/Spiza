@@ -1,5 +1,10 @@
 package com.mzagorscak.spiza.ui.components.barcode
 
+import assertk.assertThat
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.DecodeHintType
@@ -8,9 +13,6 @@ import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 private const val PIXELS_PER_MODULE = 4
 private const val LINEAR_HEIGHT_PX = 80
@@ -30,7 +32,9 @@ class BarcodeRoundTripTest {
         expectedText: String = content,
         extraHints: Map<DecodeHintType, Any> = emptyMap(),
     ) {
-        val matrix = assertNotNull(encodeBarcode(content = content, format = format), "Could not encode $content as $format")
+        val matrix = encodeBarcode(content = content, format = format)
+        assertThat(matrix, name = "$content as $format").isNotNull()
+        if (matrix == null) return
         val hints = mapOf(
             DecodeHintType.POSSIBLE_FORMATS to listOf(expectedFormat),
             DecodeHintType.TRY_HARDER to true,
@@ -38,8 +42,8 @@ class BarcodeRoundTripTest {
 
         val result = MultiFormatReader().decode(matrix.toBinaryBitmap(), hints)
 
-        assertEquals(expectedFormat, result.barcodeFormat)
-        assertEquals(expectedText, result.text)
+        assertThat(result.barcodeFormat).isEqualTo(expectedFormat)
+        assertThat(result.text).isEqualTo(expectedText)
     }
 
     @Test
@@ -100,7 +104,7 @@ class BarcodeRoundTripTest {
         field.isAccessible = true
         val reference = (field.get(null) as Array<*>).map { (it as IntArray).joinToString("") }
 
-        assertEquals(reference, CODE_128_PATTERNS)
+        assertThat(CODE_128_PATTERNS).isEqualTo(reference)
     }
 
     @Test
@@ -160,7 +164,7 @@ class BarcodeRoundTripTest {
         )
         val keepGuards = mapOf<DecodeHintType, Any>(DecodeHintType.RETURN_CODABAR_START_END to true)
 
-        assertEquals(LoyaltyCardFormat.entries.toSet(), samples.keys)
+        assertThat(samples.keys).isEqualTo(LoyaltyCardFormat.entries.toSet())
         samples.forEach { (format, sample) ->
             assertRoundTrip(sample.first, format, sample.second, extraHints = keepGuards)
         }
@@ -170,23 +174,25 @@ class BarcodeRoundTripTest {
     fun linearCodes_roundTrip_atTheMaximumAcceptedLength() {
         assertRoundTrip("A".repeat(80), LoyaltyCardFormat.Code128, BarcodeFormat.CODE_128)
         assertRoundTrip("12".repeat(40), LoyaltyCardFormat.Code128, BarcodeFormat.CODE_128)
-        assertNull(encodeBarcode(content = "A".repeat(81), format = LoyaltyCardFormat.Code128))
+        assertThat(encodeBarcode(content = "A".repeat(81), format = LoyaltyCardFormat.Code128)).isNull()
     }
 
     @Test
     fun twoDimensionalCodes_encode_theLongestAcceptedContent() {
         // The validator accepts up to 1000 characters: anything it accepts must also render, or the saved card shows no code.
         val longest = "1234567890".repeat(100)
-        listOf(LoyaltyCardFormat.QrCode, LoyaltyCardFormat.Aztec, LoyaltyCardFormat.Pdf417).forEach { format ->
-            assertNotNull(encodeBarcode(content = longest, format = format), "$format could not encode 1000 characters")
-        }
+        val formats = listOf(LoyaltyCardFormat.QrCode, LoyaltyCardFormat.Aztec, LoyaltyCardFormat.Pdf417)
+
+        val unencodable = formats.filter { encodeBarcode(content = longest, format = it) == null }
+
+        assertThat(unencodable).isEmpty()
     }
 
     @Test
     fun encodeBarcode_returnsNull_whenContentIsInvalidForTheFormat() {
-        assertNull(encodeBarcode(content = "4006381333932", format = LoyaltyCardFormat.Ean13))
-        assertNull(encodeBarcode(content = "lowercase", format = LoyaltyCardFormat.Code39))
-        assertNull(encodeBarcode(content = "", format = LoyaltyCardFormat.QrCode))
+        assertThat(encodeBarcode(content = "4006381333932", format = LoyaltyCardFormat.Ean13)).isNull()
+        assertThat(encodeBarcode(content = "lowercase", format = LoyaltyCardFormat.Code39)).isNull()
+        assertThat(encodeBarcode(content = "", format = LoyaltyCardFormat.QrCode)).isNull()
     }
 }
 

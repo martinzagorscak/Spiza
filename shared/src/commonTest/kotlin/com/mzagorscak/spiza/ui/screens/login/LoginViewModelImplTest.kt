@@ -1,5 +1,10 @@
 package com.mzagorscak.spiza.ui.screens.login
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.hasSize
+import assertk.assertions.isEqualTo
+import com.mzagorscak.spiza.auth.AuthProvider
 import com.mzagorscak.spiza.auth.AuthResult
 import com.mzagorscak.spiza.domain.usecase.SignInUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
@@ -13,11 +18,11 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelImplTest {
     private val userRepository = FakeUserRepository()
+    private val logger = FakeCrashLogger()
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -25,16 +30,31 @@ class LoginViewModelImplTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() = LoginViewModelImpl(signIn = SignInUseCaseImpl(userRepository), crashLogger = FakeCrashLogger())
+    private fun viewModel() = LoginViewModelImpl(signIn = SignInUseCaseImpl(userRepository), crashLogger = logger)
 
     @Test
-    fun signIn_keepsLoading_whenSuccessful() =
+    fun signIn_signsInWithGoogleAndKeepsLoading_whenSuccessful() =
         runTest {
             val viewModel = viewModel()
 
             viewModel.signInWithGoogle()
 
-            assertEquals(LoginState(isLoading = true), viewModel.state().value)
+            // Navigation reacts to the auth state, so the screen keeps loading until it is replaced.
+            assertThat(viewModel.state().value).isEqualTo(LoginState(isLoading = true))
+            assertThat(userRepository.signInProviders).containsExactly(AuthProvider.Google)
+        }
+
+    // region Error handling
+
+    @Test
+    fun signIn_isNotStartedTwice_whenTappedAgainWhileLoading() =
+        runTest {
+            val viewModel = viewModel()
+            viewModel.signInWithGoogle()
+
+            viewModel.signInWithGoogle()
+
+            assertThat(userRepository.signInProviders).hasSize(1)
         }
 
     @Test
@@ -45,7 +65,7 @@ class LoginViewModelImplTest {
 
             viewModel.signInWithGoogle()
 
-            assertEquals(LoginState(), viewModel.state().value)
+            assertThat(viewModel.state().value).isEqualTo(LoginState())
         }
 
     @Test
@@ -55,9 +75,29 @@ class LoginViewModelImplTest {
             val viewModel = viewModel()
 
             viewModel.signInWithGoogle()
-            assertEquals(LoginState(hasError = true), viewModel.state().value)
+            assertThat(viewModel.state().value).isEqualTo(LoginState(hasError = true))
 
             viewModel.onLoginErrorShown()
-            assertEquals(LoginState(), viewModel.state().value)
+            assertThat(viewModel.state().value).isEqualTo(LoginState())
         }
+
+    @Test
+    fun signIn_showsErrorAndRecordsIt_whenSignInThrows() =
+        runTest {
+            val failure = IllegalStateException("credential manager crashed")
+            userRepository.signInFailure = failure
+            val viewModel = viewModel()
+
+            viewModel.signInWithGoogle()
+
+            assertThat(viewModel.state().value).isEqualTo(LoginState(hasError = true))
+            assertThat(
+                logger.exceptions
+                    .single()
+                    .cause
+                    ?.message,
+            ).isEqualTo(failure.message)
+        }
+
+    // endregion
 }

@@ -1,5 +1,12 @@
 package com.mzagorscak.spiza.ui.components.barcode
 
+import assertk.assertThat
+import assertk.assertions.each
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.CoreGraphics.CGBitmapContextCreate
@@ -13,11 +20,6 @@ import platform.CoreGraphics.CGImageAlphaInfo
 import platform.CoreGraphics.CGImageRelease
 import platform.CoreGraphics.CGRectMake
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 // Core Image cannot create a context in the headless simulator test process, so rendering the symbols themselves is verified in the app.
 @OptIn(ExperimentalForeignApi::class)
@@ -35,22 +37,24 @@ class TwoDimensionalBarcodeEncoderIosTest {
         CGContextSetGrayFillColor(context, 0.0, 1.0)
         CGContextFillRect(context, CGRectMake(0.0, height - 1.0, width.toDouble(), 1.0))
         CGContextFillRect(context, CGRectMake(0.0, 0.0, 1.0, height.toDouble()))
-        val image = assertNotNull(CGBitmapContextCreateImage(context))
+        val image = CGBitmapContextCreateImage(context)
+        assertThat(image).isNotNull()
+        if (image == null) return
 
         val matrix = image.toBarcodeMatrix()
 
         CGImageRelease(image)
         CGContextRelease(context)
         CGColorSpaceRelease(colorSpace)
-        assertEquals(width, matrix.width)
-        assertEquals(height, matrix.height)
-        assertTrue((0 until width).all { matrix.isDark(x = it, y = 0) })
-        assertTrue(matrix.isDark(x = 0, y = height - 1))
-        assertFalse(matrix.isDark(x = width - 1, y = height - 1))
+        assertThat(matrix.width).isEqualTo(width)
+        assertThat(matrix.height).isEqualTo(height)
+        assertThat((0 until width).map { matrix.isDark(x = it, y = 0) }).each { it.isTrue() }
+        assertThat(matrix.isDark(x = 0, y = height - 1)).isTrue()
+        assertThat(matrix.isDark(x = width - 1, y = height - 1)).isFalse()
     }
 
     @Test
     fun encode_returnsNull_forLinearFormats() {
-        assertNull(encodeTwoDimensionalBarcode(content = "4006381333931", format = LoyaltyCardFormat.Ean13))
+        assertThat(encodeTwoDimensionalBarcode(content = "4006381333931", format = LoyaltyCardFormat.Ean13)).isNull()
     }
 }

@@ -1,18 +1,22 @@
 package com.mzagorscak.spiza.data.shortcuts
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import com.mzagorscak.spiza.domain.model.AppLanguage
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
+import com.mzagorscak.spiza.fakes.FakeAppShortcutsPublisher
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
-import com.mzagorscak.spiza.shortcuts.AppShortcutsPublisher
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class AppShortcutsRepositoryImplTest {
-    private val publisher = RecordingPublisher()
+    private val publisher = FakeAppShortcutsPublisher()
     private val logger = FakeCrashLogger()
     private val repository = AppShortcutsRepositoryImpl(publisher = publisher, crashLogger = logger)
 
@@ -23,7 +27,13 @@ class AppShortcutsRepositoryImplTest {
 
             repository.syncLoyaltyCardShortcuts(allCards = flowOf(cards), language = flowOf(AppLanguage.English))
 
-            assertEquals(listOf(Published(cardIds = listOf(1L, 3L), existingCardIds = setOf(1L, 2L, 3L))), publisher.published)
+            assertThat(publisher.published).containsExactly(
+                FakeAppShortcutsPublisher.Published(
+                    cardIds = listOf(1L, 3L),
+                    existingCardIds = setOf(1L, 2L, 3L),
+                    language = AppLanguage.English,
+                ),
+            )
         }
 
     @Test
@@ -37,7 +47,7 @@ class AppShortcutsRepositoryImplTest {
                 language = flowOf(AppLanguage.English),
             )
 
-            assertEquals(1, publisher.published.size)
+            assertThat(publisher.published).hasSize(1)
         }
 
     @Test
@@ -48,45 +58,57 @@ class AppShortcutsRepositoryImplTest {
                 language = flowOf(AppLanguage.English, AppLanguage.Croatian),
             )
 
-            assertEquals(listOf(AppLanguage.English, AppLanguage.Croatian), publisher.languages)
+            assertThat(publisher.published.map { it.language }).containsExactly(AppLanguage.English, AppLanguage.Croatian)
+        }
+
+    // region Error handling
+
+    @Test
+    fun sync_publishesNothing_whenShortcutsAreNotSupported() =
+        runTest {
+            val unsupportedPublisher = FakeAppShortcutsPublisher(isSupported = false)
+            val unsupported = AppShortcutsRepositoryImpl(publisher = unsupportedPublisher, crashLogger = logger)
+
+            unsupported.syncLoyaltyCardShortcuts(
+                allCards = flowOf(listOf(card(id = 1L, isShortcut = true))),
+                language = flowOf(AppLanguage.English),
+            )
+
+            assertThat(unsupportedPublisher.published).isEmpty()
+        }
+
+    @Test
+    fun sync_recordsAFailingCardsStream_insteadOfThrowing() =
+        runTest {
+            val failure = IllegalStateException("db corrupted")
+
+            repository.syncLoyaltyCardShortcuts(
+                allCards = flow { throw failure },
+                language = flowOf(AppLanguage.English),
+            )
+
+            val recorded = logger.exceptions.single()
+            assertThat(recorded.cause?.message).isEqualTo(failure.message)
+            assertThat(publisher.published).isEmpty()
         }
 
     @Test
     fun sync_recordsPublishFailures_andKeepsSyncing() =
         runTest {
-            publisher.failure = IllegalStateException("launcher unavailable")
+            val failure = IllegalStateException("launcher unavailable")
+            publisher.publishFailure = failure
 
             repository.syncLoyaltyCardShortcuts(
                 allCards = flowOf(listOf(card(id = 1L, isShortcut = true)), listOf(card(id = 1L))),
                 language = flowOf(AppLanguage.English),
             )
 
-            assertEquals(2, logger.exceptions.size)
-            assertTrue(publisher.published.isEmpty())
+            // The second snapshot is still published after the first one failed.
+            assertThat(publisher.published.map { it.cardIds }).containsExactly(listOf(1L), emptyList<Long>())
+            assertThat(logger.exceptions.map { it.cause?.message }).containsExactly(failure.message, failure.message)
         }
 
-    private data class Published(
-        val cardIds: List<Long>,
-        val existingCardIds: Set<Long>,
-    )
-
-    private class RecordingPublisher : AppShortcutsPublisher {
-        val published = mutableListOf<Published>()
-        val languages = mutableListOf<AppLanguage>()
-        var failure: Exception? = null
-
-        override val isSupported: Boolean = true
-
-        override suspend fun publishLoyaltyCards(
-            cards: List<LoyaltyCard>,
-            existingCardIds: Set<Long>,
-            language: AppLanguage,
-        ) {
-            failure?.let { throw it }
-            published += Published(cardIds = cards.map { it.id }, existingCardIds = existingCardIds)
-            languages += language
-        }
-    }
+    // endregion
 
     private fun card(
         id: Long,

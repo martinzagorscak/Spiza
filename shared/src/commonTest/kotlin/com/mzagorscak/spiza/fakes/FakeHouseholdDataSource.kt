@@ -8,12 +8,21 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
+/**
+ * In-memory Firestore. Every write is recorded as an attempt **before** [writeFailure] / [neverAcknowledgeWrites] apply;
+ * successful writes are reflected in [households], [items] and [joinKeys] like the real collections.
+ */
 class FakeHouseholdDataSource : HouseholdDataSource {
+    /** Every household document; [observeHouseholds] emits those the user has joined, like the `array-contains` query. */
     val households = MutableStateFlow<List<HouseholdDto>>(emptyList())
+
+    /** Items of every household (the fake ignores the household id), in stored order: Firestore does not sort them. */
     val items = MutableStateFlow<List<ArticleItemDto>>(emptyList())
-    var joinKey: Flow<String?> = flowOf(null)
+
+    /** `joinKeys/{joinKey}` -> userId. A user has at most one key. */
+    val joinKeys = mutableMapOf<String, String>()
 
     /** When set, [observeHouseholds] fails with it on every subscription (like a rejected Firestore listener). */
     var householdsFailure: Throwable? = null
@@ -21,54 +30,129 @@ class FakeHouseholdDataSource : HouseholdDataSource {
     /** When set, [observeItems] fails with it on every subscription. */
     var itemsFailure: Throwable? = null
 
+    /** When set, [getHouseholdJoinKey] fails with it on every subscription. */
+    var joinKeyFailure: Throwable? = null
+
+    /** When set, every write throws it (like a write rejected by the rules). */
+    var writeFailure: Throwable? = null
+
+    /** Writes never complete, like Firestore writes while offline (they wait for a server acknowledgement). */
+    var neverAcknowledgeWrites = false
+
     /** How many times each listener was subscribed to (every retry subscribes again). */
     var householdsSubscriptions = 0
     var itemsSubscriptions = 0
 
-    /** Writes never complete, like Firestore writes while offline. */
-    var neverAcknowledgeWrites = false
-
-    val addedMembers = mutableListOf<Pair<String, String>>()
-    val addedItems = mutableListOf<String>()
-    val createdHouseholds = mutableListOf<String>()
+    /** The user id of every [getHouseholdJoinKey] subscription (every refresh reads the key again). */
+    val joinKeyRequestsOfUsers = mutableListOf<String>()
+    val createdJoinKeysOfUsers = mutableListOf<String>()
     val deletedJoinKeysOfUsers = mutableListOf<String>()
 
+    /** householdId to the join key as it was passed in. */
+    val addedMembers = mutableListOf<Pair<String, String>>()
+
+    data class CreatedHousehold(
+        val ownerId: String,
+        val name: String,
+        val description: String,
+    )
+
+    val createdHouseholds = mutableListOf<CreatedHousehold>()
+
+    data class UpdatedHousehold(
+        val householdId: String,
+        val name: String,
+        val description: String,
+    )
+
+    val updatedHouseholds = mutableListOf<UpdatedHousehold>()
+
+    data class AddedItem(
+        val householdId: String,
+        val text: String,
+        val position: Double,
+    )
+
+    val addedItems = mutableListOf<AddedItem>()
+
+    val clearedHouseholds = mutableListOf<String>()
+
+    private var nextJoinKey = 0
+    private var nextItemId = 0
+    private var nextHouseholdId = 0
+
     private suspend fun write() {
+        writeFailure?.let { throw it }
         if (neverAcknowledgeWrites) awaitCancellation()
     }
 
+    private fun updateHouseholdDto(
+        householdId: String,
+        change: (HouseholdDto) -> HouseholdDto,
+    ) {
+        households.value = households.value.map { if (it.id == householdId) change(it) else it }
+    }
+
+    private fun updateItem(
+        itemId: String,
+        change: (ArticleItemDto) -> ArticleItemDto,
+    ) {
+        items.value = items.value.map { if (it.id == itemId) change(it) else it }
+    }
+
     override suspend fun createHouseholdJoinKey(userId: String): String {
+        createdJoinKeysOfUsers += userId
         write()
-        return "join-key"
+        val joinKey = "join-key-${++nextJoinKey}"
+        joinKeys.values.removeAll { it == userId }
+        joinKeys[joinKey] = userId
+        return joinKey
     }
 
     override suspend fun deleteHouseholdJoinKey(userId: String) {
         deletedJoinKeysOfUsers += userId
+        write()
+        joinKeys.values.removeAll { it == userId }
     }
 
-    override fun getHouseholdJoinKey(userId: String): Flow<String?> = joinKey
+    // A one-shot read like the real `get()`: a changed key is only seen by the next subscription.
+    override fun getHouseholdJoinKey(userId: String): Flow<String?> =
+        flow {
+            joinKeyRequestsOfUsers += userId
+            joinKeyFailure?.let { throw it }
+            emit(joinKeys.entries.firstOrNull { it.value == userId }?.key)
+        }
 
     override suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
     ): Boolean {
-        write()
         addedMembers += householdId to userJoinKey
+        val userId = joinKeys[userJoinKey] ?: return false
+        write()
+        updateHouseholdDto(householdId) { it.copy(joinedMembers = (it.joinedMembers + userId).distinct()) }
+        joinKeys.remove(userJoinKey)
         return true
     }
 
     override suspend fun removeMemberFromHousehold(
         householdId: String,
         memberId: String,
-    ) = write()
+    ) {
+        write()
+        updateHouseholdDto(householdId) { it.copy(joinedMembers = it.joinedMembers - memberId) }
+    }
 
-    override suspend fun deleteHousehold(householdId: String) = write()
+    override suspend fun deleteHousehold(householdId: String) {
+        write()
+        households.value = households.value.filterNot { it.id == householdId }
+    }
 
     override fun observeHouseholds(userId: String): Flow<List<HouseholdDto>> =
         flow {
             householdsSubscriptions++
             householdsFailure?.let { throw it }
-            emitAll(households)
+            emitAll(households.map { all -> all.filter { userId in it.joinedMembers } })
         }
 
     override fun observeItems(householdId: String): Flow<List<ArticleItemDto>> =
@@ -83,48 +167,72 @@ class FakeHouseholdDataSource : HouseholdDataSource {
         name: String,
         description: String,
     ): String {
+        createdHouseholds += CreatedHousehold(ownerId = ownerId, name = name, description = description)
         write()
-        createdHouseholds += name
-        return "household-new"
+        val id = "household-new-${++nextHouseholdId}"
+        households.value +=
+            HouseholdDto(id = id, name = name, description = description, ownerId = ownerId, joinedMembers = listOf(ownerId))
+        return id
     }
 
     override suspend fun updateHousehold(
         householdId: String,
         name: String,
         description: String,
-    ) = write()
+    ) {
+        updatedHouseholds += UpdatedHousehold(householdId = householdId, name = name, description = description)
+        write()
+        updateHouseholdDto(householdId) { it.copy(name = name, description = description) }
+    }
 
     override suspend fun addItem(
         householdId: String,
         text: String,
         position: Double,
     ) {
+        addedItems += AddedItem(householdId = householdId, text = text, position = position)
         write()
-        addedItems += text
+        items.value += ArticleItemDto(id = "item-new-${++nextItemId}", text = text, isChecked = false, position = position)
     }
 
     override suspend fun updateItemText(
         householdId: String,
         itemId: String,
         text: String,
-    ) = write()
+    ) {
+        write()
+        updateItem(itemId) { it.copy(text = text) }
+    }
 
     override suspend fun setItemChecked(
         householdId: String,
         itemId: String,
         isChecked: Boolean,
-    ) = write()
+    ) {
+        write()
+        updateItem(itemId) { it.copy(isChecked = isChecked) }
+    }
 
     override suspend fun moveItem(
         householdId: String,
         itemId: String,
         position: Double,
-    ) = write()
+    ) {
+        write()
+        updateItem(itemId) { it.copy(position = position) }
+    }
 
     override suspend fun deleteItem(
         householdId: String,
         itemId: String,
-    ) = write()
+    ) {
+        write()
+        items.value = items.value.filterNot { it.id == itemId }
+    }
 
-    override suspend fun clearCheckedItems(householdId: String) = write()
+    override suspend fun clearCheckedItems(householdId: String) {
+        clearedHouseholds += householdId
+        write()
+        items.value = items.value.filterNot { it.isChecked }
+    }
 }

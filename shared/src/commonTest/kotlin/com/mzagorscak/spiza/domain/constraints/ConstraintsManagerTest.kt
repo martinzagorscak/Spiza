@@ -1,8 +1,9 @@
 package com.mzagorscak.spiza.domain.constraints
 
+import assertk.assertThat
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 private const val HOUSEHOLDS_PER_USER_CONTRAINT: Int = 3
 private const val ITEMS_PER_HOUSEHOLD_CONSTRAINT: Int = 100
@@ -13,22 +14,22 @@ class ConstraintsManagerTest {
 
     @Test
     fun canUserCreateOrJoinHousehold_isTrueOnlyBelowTheLimit() {
-        assertTrue(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT - 1))
-        assertFalse(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT))
-        assertFalse(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT + 1))
+        assertThat(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT - 1)).isTrue()
+        assertThat(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT)).isFalse()
+        assertThat(constraintsManager.canUserCreateOrJoinHousehold(HOUSEHOLDS_PER_USER_CONTRAINT + 1)).isFalse()
     }
 
     @Test
     fun canAddItemToHousehold_isTrueOnlyBelowTheLimit() {
-        assertTrue(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT - 1))
-        assertFalse(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT))
-        assertFalse(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT + 1))
+        assertThat(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT - 1)).isTrue()
+        assertThat(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT)).isFalse()
+        assertThat(constraintsManager.canAddItemToHousehold(ITEMS_PER_HOUSEHOLD_CONSTRAINT + 1)).isFalse()
     }
 
     @Test
     fun canAddMemberToHousehold_isTrueOnlyBelowTheLimit() {
-        assertTrue(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT - 1))
-        assertFalse(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT))
-        assertFalse(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT + 1))
+        assertThat(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT - 1)).isTrue()
+        assertThat(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT)).isFalse()
+        assertThat(constraintsManager.canAddMemberToHousehold(MEMBERS_PER_HOUSEHOLD_CONSTRAINT + 1)).isFalse()
     }
 }

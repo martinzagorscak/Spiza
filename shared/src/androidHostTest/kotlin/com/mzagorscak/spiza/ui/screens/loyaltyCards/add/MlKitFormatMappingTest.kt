@@ -1,10 +1,11 @@
 package com.mzagorscak.spiza.ui.screens.loyaltyCards.add
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class MlKitFormatMappingTest {
     @Test
@@ -24,12 +25,12 @@ class MlKitFormatMappingTest {
             Barcode.FORMAT_PDF417,
         ).map(::mlKitFormatToLoyaltyCardFormat)
 
-        assertEquals(LoyaltyCardFormat.entries, scannable)
+        assertThat(scannable).isEqualTo(LoyaltyCardFormat.entries)
     }
 
     @Test
     fun unsupportedSymbologies_mapToNull() {
-        assertNull(mlKitFormatToLoyaltyCardFormat(Barcode.FORMAT_DATA_MATRIX))
-        assertNull(mlKitFormatToLoyaltyCardFormat(Barcode.FORMAT_UNKNOWN))
+        assertThat(mlKitFormatToLoyaltyCardFormat(Barcode.FORMAT_DATA_MATRIX)).isNull()
+        assertThat(mlKitFormatToLoyaltyCardFormat(Barcode.FORMAT_UNKNOWN)).isNull()
     }
 }
