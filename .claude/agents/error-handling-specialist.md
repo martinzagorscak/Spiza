@@ -3,6 +3,9 @@ name: error-handling-specialist
 description: Adds or hardens error handling in a Spiza flow — data source exceptions, repository guards/retries/timeouts, ViewModel guarded writes and stream catch, UI error/retry states and Crashlytics logging. Use when a feature fails silently, crashes on network/auth errors, or when asked to "add error handling" to a screen or flow.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: inherit
+skills:
+  - add-error-handling
+  - write-unit-tests
 ---
 
 You make Spiza flows robust according to `.claude/rules/error-handling.md`. Always build on the helpers `launchSafely`, `catchAndRecord`, `recordError` and `DataException`; `SettingsViewModelImpl`, `ShoppingListViewModelImpl` and `HouseholdRepositoryImpl` are the reference implementations.

@@ -10,14 +10,16 @@ Talk to the user in **Croatian**; write code, comments, commit messages and stri
 | What | Command |
 |---|---|
 | Unit tests (fast, JVM) | `./gradlew :shared:testAndroidHostTest` |
-| Unit tests (iOS simulator) | `./gradlew :shared:iosSimulatorArm64Test` |
+| Unit tests (iOS simulator, incl. Room database tests) | `./gradlew :shared:iosSimulatorArm64Test` |
+| Test coverage report | `./gradlew :shared:koverHtmlReport` → `shared/build/reports/kover/html/index.html` |
 | Lint check | `./gradlew ktlintCheck` |
 | Lint autofix | `./gradlew ktlintFormat` |
 | Android debug build | `./gradlew :androidApp:assembleDebug` |
 | iOS app | open `iosApp/` in Xcode (cannot be run from CLI here) |
 
 Definition of done for any code change: **ktlintCheck passes, testAndroidHostTest passes, assembleDebug compiles.**
-If you touched `iosMain` or a bridge, also run `:shared:iosSimulatorArm64Test` (it compiles the iOS targets).
+If you touched `iosMain`, a bridge, Room, `iosTest` or `databaseTest`, also run `:shared:iosSimulatorArm64Test` (it compiles the iOS targets and runs the Room database and migration tests).
+If you touched `firestore.rules`, also run `cd firestore-tests && npm test`. Before a release, run the Android device tests too (`:shared:connectedAndroidDeviceTest`).
 
 ## Module map
 
@@ -46,7 +48,11 @@ shared/src/
   commonMain/composeResources/  values/strings.xml (EN) + values-hr/strings.xml (HR), drawables, lottie files
   androidMain/         Firestore*/Android* implementations, actuals
   iosMain/             Ios*DataSource (wraps Swift bridges), Ios*Bridge interfaces, actuals
-  commonTest/          shared unit tests (kotlin-test)
+  commonTest/          shared unit tests + fakes/ (AssertK, Turbine) — run on JVM and iOS
+  databaseTest/        Room DAO/repository + migration tests on a real database — run on iOS and Android device
+  androidHostTest/     Android-only JVM tests;  androidDeviceTest/ / iosTest/  platform actuals for databaseTest
+shared/schemas/        exported Room schemas (committed, never regenerated)
+firestore-tests/       Firestore security rules tests (Node + emulator)
 ```
 
 ## Architecture in one paragraph
@@ -67,12 +73,14 @@ Detailed rules live in `.claude/rules/` and are loaded automatically. Read them 
 - Any change to collections, fields, document shape or who may write them **must update `firestore.rules` in the same change**, keep Android and Swift
   identical, and end with a note to the user that the rules need to be deployed (old app versions keep using the deployed rules).
 - Rules reject unknown fields (`keys().hasOnly`) — adding a field without updating the rules makes every write fail with permission denied.
+- Every rules change is covered by the emulator tests in `firestore-tests/` (`cd firestore-tests && npm test`) — see `/firestore-rules-tests`.
 
 ## Workflows (skills)
 
 - `/new-feature` — implement a feature end-to-end through all layers
 - `/add-screen` — new screen + route + ViewModel + DI + strings
 - `/write-unit-tests` — tests for use cases, repositories, ViewModels, mappers
+- `/firestore-rules-tests` — security rules tests against the Firestore emulator
 - `/fix-bug` — reproduce → failing test → minimal fix → verify
 - `/add-error-handling` — harden a flow (data → repo → VM → UI error state)
 - `/room-change` — Room entity/DAO/schema change, safely
@@ -92,5 +100,5 @@ Detailed rules live in `.claude/rules/` and are loaded automatically. Read them 
 - Every new `Route` must be registered in `routeSerializersModule` (Route.kt).
 - Every new UseCase/Repository/ViewModel must be registered in the matching Koin module.
 - Firestore schema or permission changes ⇒ update `firestore.rules` (see above).
-- Room schema (`data/local/SpizaDatabase.kt`) is `version = 3` with `exportSchema = false`: any entity change needs a version bump **and** a migration in `SpizaDatabaseMigrations.kt` — see `/room-change`.
+- Room schema (`data/local/SpizaDatabase.kt`) is `version = 3` with `exportSchema = true` (schemas committed in `shared/schemas/`): any entity change needs a version bump, a migration in `SpizaDatabaseMigrations.kt` **and** a migration test in `databaseTest` — see `/room-change`.
 - Keep changes minimal and in the existing style; do not refactor unrelated code in the same change.

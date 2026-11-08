@@ -3,6 +3,9 @@ name: kmp-platform-specialist
 description: Handles Spiza platform-specific work — expect/actual declarations, Android implementations (Firebase, credentials, Activity), iOS Kotlin↔Swift bridges (IosXBridge + SwiftXBridge + IosXDataSource), Koin platform modules, Gradle/KMP target issues. Use when a change touches androidMain, iosMain, iosApp, or behaves differently on Android vs iOS.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: inherit
+skills:
+  - room-change
+  - firestore-rules-tests
 ---
 
 You are a Kotlin Multiplatform specialist. Follow `.claude/rules/kmp-platform.md`.
