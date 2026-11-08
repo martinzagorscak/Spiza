@@ -139,4 +139,10 @@
     <string name="loyalty_cards_shortcut_remove">Remove from app shortcuts</string>
     <string name="loyalty_cards_shortcut_added">%1$s card added to app shortcuts</string>
     <string name="loyalty_cards_shortcut_limit_reached">You can have at most %1$d shortcuts</string>
+    <string name="app_update_required_title">Update required</string>
+    <string name="app_update_required_description">This version of Spiza is no longer supported. Update the app to keep using it.</string>
+    <string name="app_update_recommended_title">A new version is available</string>
+    <string name="app_update_recommended_description">Update Spiza to get the latest improvements and fixes.</string>
+    <string name="app_update_recommended_later">Later</string>
+    <string name="app_update_update_button">Update</string>
 </resources>

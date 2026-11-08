@@ -139,4 +139,10 @@
     <string name="loyalty_cards_shortcut_remove">Ukloni iz prečaca aplikacije</string>
     <string name="loyalty_cards_shortcut_added">Kartica %1$s dodana je u prečace aplikacije</string>
     <string name="loyalty_cards_shortcut_limit_reached">Možete imati najviše %1$d prečaca</string>
+    <string name="app_update_required_title">Potrebno je ažuriranje</string>
+    <string name="app_update_required_description">Ova verzija Spize više nije podržana. Ažuriraj aplikaciju za nastavak korištenja.</string>
+    <string name="app_update_recommended_title">Dostupna je nova verzija</string>
+    <string name="app_update_recommended_description">Ažuriraj Spizu i iskoristi najnovija poboljšanja i ispravke.</string>
+    <string name="app_update_recommended_later">Kasnije</string>
+    <string name="app_update_update_button">Ažuriraj</string>
 </resources>

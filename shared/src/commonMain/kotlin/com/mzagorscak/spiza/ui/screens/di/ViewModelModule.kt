@@ -2,6 +2,8 @@ package com.mzagorscak.spiza.ui.screens.di
 
 import com.mzagorscak.spiza.ui.screens.app.AppViewModel
 import com.mzagorscak.spiza.ui.screens.app.AppViewModelImpl
+import com.mzagorscak.spiza.ui.screens.appUpdate.AppUpdateViewModel
+import com.mzagorscak.spiza.ui.screens.appUpdate.AppUpdateViewModelImpl
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModel
 import com.mzagorscak.spiza.ui.screens.createHousehold.CreateHouseholdViewModelImpl
 import com.mzagorscak.spiza.ui.screens.createHousehold.HouseholdScenario
@@ -35,6 +37,13 @@ val viewModelModule = module {
             getCurrentThemeMode = get(),
             getCurrentAppLanguage = get(),
             getCurrentUserProfile = get(),
+            crashLogger = get(),
+        )
+    }
+    viewModel<AppUpdateViewModel> {
+        AppUpdateViewModelImpl(
+            getAppUpdateStatus = get(),
+            dismissRecommendedUpdate = get(),
             crashLogger = get(),
         )
     }
