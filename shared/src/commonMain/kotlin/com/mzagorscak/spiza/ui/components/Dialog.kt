@@ -28,7 +28,6 @@ fun Dialog(
     description: String,
     dismissCTA: CTA,
     confirmCTA: CTA,
-    // Outside tap / back; defaults to the dismiss CTA. Separate when the CTA has a lasting effect the gesture must not have.
     onDismissRequest: () -> Unit = dismissCTA.onClick,
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
