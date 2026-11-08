@@ -30,8 +30,9 @@ internal class AppUpdateViewModelImpl(
             launchSafely(
                 crashLogger = crashLogger,
                 context = "Checking app update failed",
-                // Fail open: a failed check must never block the user.
-                onError = { state.update { it.copy(status = AppUpdateStatus.UpToDate) } },
+                // The last known status stays: a failed first check fails open (the initial state is UpToDate), and a failed
+                // re-check must not lift a required update that was already shown.
+                onError = {},
             ) {
                 val status = getAppUpdateStatus()
                 state.update { it.copy(status = status.unlessHidden()) }

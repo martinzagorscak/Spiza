@@ -135,6 +135,21 @@ class AppUpdateViewModelImplTest {
         }
 
     @Test
+    fun onAppStarted_keepsTheRequiredUpdate_andRecordsTheFailure_whenARecheckFails() =
+        runTest {
+            val failure = IllegalStateException("boom")
+            requireUpdate()
+            val viewModel = viewModel()
+            viewModel.onAppStarted()
+            repository.versionConfigFailure = failure
+
+            viewModel.onAppStarted()
+
+            assertThat(viewModel.state().value.status).isEqualTo(AppUpdateStatus.UpdateRequired)
+            assertThat(crashLogger.exceptions).single().transform { it.cause?.message }.isEqualTo(failure.message)
+        }
+
+    @Test
     fun onDismissRecommended_keepsTheDialogClosed_andRecordsTheFailure_whenSavingFails() =
         runTest {
             val failure = IllegalStateException("disk full")
