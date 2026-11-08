@@ -42,6 +42,10 @@ import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteSuggestionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCase
 import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.DismissRecommendedUpdateUseCase
+import com.mzagorscak.spiza.domain.usecase.DismissRecommendedUpdateUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.GetAppUpdateStatusUseCase
+import com.mzagorscak.spiza.domain.usecase.GetAppUpdateStatusUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetCurrentAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.GetCurrentAppLanguageUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetCurrentThemeModeUseCase
@@ -195,4 +199,8 @@ val domainModule =
                 appShortcutsRepository = get(),
             )
         }
+
+        // App Update Use Cases
+        single<GetAppUpdateStatusUseCase> { GetAppUpdateStatusUseCaseImpl(repository = get()) }
+        single<DismissRecommendedUpdateUseCase> { DismissRecommendedUpdateUseCaseImpl(repository = get()) }
     }
