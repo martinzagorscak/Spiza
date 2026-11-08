@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 kotlin {
@@ -94,6 +95,11 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+// Exported schemas (committed) are what migration tests open old database versions from.
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 ktlint {

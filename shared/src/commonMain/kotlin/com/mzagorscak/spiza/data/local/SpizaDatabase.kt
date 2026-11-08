@@ -15,7 +15,7 @@ import com.mzagorscak.spiza.data.suggestion.model.SuggestionEntity
         LoyaltyCardEntity::class,
     ],
     version = 3,
-    exportSchema = false,
+    exportSchema = true,
 )
 @ConstructedBy(SpizaDatabaseConstructor::class)
 abstract class SpizaDatabase : RoomDatabase() {

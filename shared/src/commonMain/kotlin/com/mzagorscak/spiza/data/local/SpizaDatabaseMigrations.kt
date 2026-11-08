@@ -26,7 +26,12 @@ internal val MIGRATION_1_2 =
         }
     }
 
-/** 2 → 3: loyalty cards can be app shortcuts; existing cards are not. */
+/**
+ * 2 → 3: loyalty cards can be app shortcuts; existing cards are not.
+ *
+ * SQLite needs the DEFAULT to add a NOT NULL column to existing rows; 3.json has none because the entity declares none,
+ * and Room's validation ignores the difference, so fresh and upgraded installs differ only in this DDL detail.
+ */
 internal val MIGRATION_2_3 =
     object : Migration(2, 3) {
         override fun migrate(connection: SQLiteConnection) {
