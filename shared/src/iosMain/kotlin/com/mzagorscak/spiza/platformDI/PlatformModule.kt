@@ -10,6 +10,8 @@ import com.mzagorscak.spiza.data.household.IosHouseholdDataSource
 import com.mzagorscak.spiza.data.local.SpizaDatabase
 import com.mzagorscak.spiza.data.local.getIosSpizaDatabaseBuilder
 import com.mzagorscak.spiza.data.local.getSpizaDatabase
+import com.mzagorscak.spiza.data.remoteConfig.IosRemoteConfigDataSource
+import com.mzagorscak.spiza.data.remoteConfig.RemoteConfigDataSource
 import com.mzagorscak.spiza.data.user.IosUserDataSource
 import com.mzagorscak.spiza.data.user.UserDataSource
 import com.mzagorscak.spiza.shortcuts.AppShortcutsPublisher
@@ -28,6 +30,7 @@ actual fun platformModule(): Module =
         }
         single<UserDataSource> { IosUserDataSource(bridge = get()) }
         single<HouseholdDataSource> { IosHouseholdDataSource(bridge = get()) }
+        single<RemoteConfigDataSource> { IosRemoteConfigDataSource(bridge = get()) }
         single<SpizaDatabase> {
             val builder = getIosSpizaDatabaseBuilder()
             getSpizaDatabase(builder)

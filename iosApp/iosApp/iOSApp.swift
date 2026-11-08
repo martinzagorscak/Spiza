@@ -35,7 +35,8 @@ struct iOSApp: App {
             crashLoggerBridge: SwiftCrashLoggerBridge(),
             authBridge: SwiftAuthBridge(),
             userBridge: SwiftUserBridge(),
-            householdBridge: SwiftHouseholdBridge())
+            householdBridge: SwiftHouseholdBridge(),
+            remoteConfigBridge: SwiftRemoteConfigBridge())
     }
 
     var body: some Scene {
