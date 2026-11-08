@@ -5,6 +5,7 @@ import com.mzagorscak.spiza.data.user.model.UserProfileDto
 interface UserDataSource {
     suspend fun saveUserProfile(profile: UserProfileDto)
 
+    /** Profiles of [userIds] in the same order, without duplicates; ids without a profile document are skipped. */
     suspend fun getUsers(userIds: List<String>): List<UserProfileDto>
 }
 

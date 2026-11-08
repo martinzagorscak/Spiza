@@ -83,8 +83,9 @@ service cloud.firestore {
                     && userId == request.auth.uid
                     && request.resource.data.keys().hasOnly(['name', 'email', 'photoUrl']);
 
-      // Needed to show household members' names and photos.
-      allow read: if isSignedIn();
+      // Needed to show household members' names and photos. Profiles are fetched by id only, and the ids are known only
+      // to household co-members and join-key holders; listing is denied so nobody can enumerate profiles and emails.
+      allow get: if isSignedIn();
     }
 
     // Join keys are document ids: joinKeys/{joinKey} -> { userId }. A key is an unguessable UUID, so knowing it is

@@ -24,6 +24,7 @@ class FakeUserDataSource : UserDataSource {
 
     override suspend fun getUsers(userIds: List<String>): List<UserProfileDto> {
         getUsersFailure?.let { throw it }
-        return users.filter { it.id in userIds }
+        // Like the real data sources: one fetch per id, in the requested order, missing profiles skipped.
+        return userIds.distinct().mapNotNull { id -> users.firstOrNull { it.id == id } }
     }
 }

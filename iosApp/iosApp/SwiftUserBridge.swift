@@ -29,17 +29,50 @@ final class SwiftUserBridge: NSObject, IosUserBridge {
             onComplete([], nil)
             return
         }
-        users.whereField(FieldPath.documentID(), in: userIds).getDocuments { snapshot, error in
-            let profiles = snapshot?.documents.map { $0.toUserProfileDto() } ?? []
-            onComplete(profiles, error?.toBridgeError())
+        // One get per id: the rules deny listing users, so a whereField(FieldPath.documentID(), in:) query would be rejected.
+        // Same as FirestoreUserDataSource.getUsers: deduplicated ids, input order kept, missing profiles skipped, first error wins.
+        var uniqueIds: [String] = []
+        for userId in userIds where !uniqueIds.contains(userId) {
+            uniqueIds.append(userId)
+        }
+
+        let lock = NSLock()
+        let group = DispatchGroup()
+        var snapshots = [DocumentSnapshot?](repeating: nil, count: uniqueIds.count)
+        var firstError: Error?
+
+        for (index, userId) in uniqueIds.enumerated() {
+            group.enter()
+            users.document(userId).getDocument { snapshot, error in
+                lock.lock()
+                if let error = error {
+                    if firstError == nil { firstError = error }
+                } else {
+                    snapshots[index] = snapshot
+                }
+                lock.unlock()
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) {
+            if let error = firstError {
+                onComplete([], error.toBridgeError())
+                return
+            }
+            let profiles = snapshots
+                .compactMap { $0 }
+                .filter { $0.exists }
+                .map { $0.toUserProfileDto() }
+            onComplete(profiles, nil)
         }
     }
 }
 
-extension QueryDocumentSnapshot {
+extension DocumentSnapshot {
     fileprivate func toUserProfileDto() -> UserProfileDto {
         let fields = UserFields.shared
-        let data = self.data()
+        let data = self.data() ?? [:]
         return UserProfileDto(
             id: documentID,
             name: data[fields.NAME] as? String,

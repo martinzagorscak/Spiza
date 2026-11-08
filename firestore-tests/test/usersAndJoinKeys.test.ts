@@ -46,12 +46,13 @@ describe("users", () => {
     await assertSucceeds(getDoc(doc(asUser(env, OWNER), "users", MEMBER)));
   });
 
-  // Same query as FirestoreUserDataSource.getUsers for the member list of a household.
-  it("allows a signed-in user to fetch several profiles by id", async () => {
+  // Same as FirestoreUserDataSource.getUsers / SwiftUserBridge.getUsers for the member list of a household: one get per id,
+  // including ids without a profile document (skipped by the app).
+  it("allows a signed-in user to fetch several profiles by id, one document at a time", async () => {
     await seed(env, (db) => setDoc(doc(db, "users", MEMBER), profile));
     const db = asUser(env, OWNER);
 
-    await assertSucceeds(getDocs(query(collection(db, "users"), where(documentId(), "in", [MEMBER, OWNER]))));
+    await assertSucceeds(Promise.all([getDoc(doc(db, "users", MEMBER)), getDoc(doc(db, "users", OWNER))]));
   });
 
   // region Error handling
@@ -69,6 +70,22 @@ describe("users", () => {
     await seed(env, (db) => setDoc(doc(db, "users", MEMBER), profile));
 
     await assertFails(updateDoc(doc(asUser(env, MEMBER), "users", MEMBER), { name: "Someone else" }));
+  });
+
+  // Listing would let anyone enumerate every profile and email.
+  it("rejects listing profiles", async () => {
+    await seed(env, (db) => setDoc(doc(db, "users", MEMBER), profile));
+    const db = asUser(env, OWNER);
+
+    await assertFails(getDocs(collection(db, "users")));
+  });
+
+  // The query older builds used; it is a list, so it is denied even for ids the caller knows.
+  it("rejects querying profiles by id", async () => {
+    await seed(env, (db) => setDoc(doc(db, "users", MEMBER), profile));
+    const db = asUser(env, OWNER);
+
+    await assertFails(getDocs(query(collection(db, "users"), where(documentId(), "in", [MEMBER, OWNER]))));
   });
 
   it("rejects signed-out users", async () => {

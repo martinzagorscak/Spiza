@@ -2,9 +2,11 @@ package com.mzagorscak.spiza.data.user
 
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mzagorscak.spiza.data.user.model.UserProfileDto
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
 
 class FirestoreUserDataSource(
@@ -26,14 +28,15 @@ class FirestoreUserDataSource(
 
     override suspend fun getUsers(userIds: List<String>): List<UserProfileDto> {
         if (userIds.isEmpty()) return emptyList()
-        return users
-            .whereIn(FieldPath.documentId(), userIds)
-            .get()
-            .await()
-            .documents
-            .mapNotNull {
-                it.toUserProfileDto()
-            }
+        // One get per id: the rules deny listing users, so a whereIn(documentId()) query would be rejected.
+        return coroutineScope {
+            userIds
+                .distinct()
+                .map { userId -> async { users.document(userId).get().await() } }
+                .awaitAll()
+                .filter { it.exists() }
+                .map { it.toUserProfileDto() }
+        }
     }
 }
 
