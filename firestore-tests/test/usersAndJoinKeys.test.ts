@@ -55,6 +55,13 @@ describe("users", () => {
     await assertSucceeds(Promise.all([getDoc(doc(db, "users", MEMBER)), getDoc(doc(db, "users", OWNER))]));
   });
 
+  // Last step of account deletion.
+  it("allows a user to delete their own profile", async () => {
+    await seed(env, (db) => setDoc(doc(db, "users", MEMBER), profile));
+
+    await assertSucceeds(deleteDoc(doc(asUser(env, MEMBER), "users", MEMBER)));
+  });
+
   // region Error handling
 
   it("rejects creating someone else's profile", async () => {
@@ -88,9 +95,16 @@ describe("users", () => {
     await assertFails(getDocs(query(collection(db, "users"), where(documentId(), "in", [MEMBER, OWNER]))));
   });
 
+  it("rejects deleting someone else's profile", async () => {
+    await seed(env, (db) => setDoc(doc(db, "users", MEMBER), profile));
+
+    await assertFails(deleteDoc(doc(asUser(env, OWNER), "users", MEMBER)));
+  });
+
   it("rejects signed-out users", async () => {
     await assertFails(getDoc(doc(asSignedOut(env), "users", MEMBER)));
     await assertFails(setDoc(doc(asSignedOut(env), "users", MEMBER), profile));
+    await assertFails(deleteDoc(doc(asSignedOut(env), "users", MEMBER)));
   });
 
   // endregion

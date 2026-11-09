@@ -86,6 +86,9 @@ service cloud.firestore {
       // Needed to show household members' names and photos. Profiles are fetched by id only, and the ids are known only
       // to household co-members and join-key holders; listing is denied so nobody can enumerate profiles and emails.
       allow get: if isSignedIn();
+
+      // Account deletion: users remove their own profile (and with it their name and email) as the last step.
+      allow delete: if isSignedIn() && userId == request.auth.uid;
     }
 
     // Join keys are document ids: joinKeys/{joinKey} -> { userId }. A key is an unguessable UUID, so knowing it is
