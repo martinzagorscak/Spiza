@@ -9,6 +9,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.mzagorscak.spiza.domain.loyaltyCard.LoyaltyCardCodes
+import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
 import com.mzagorscak.spiza.domain.model.PermissionStatus
 import com.mzagorscak.spiza.domain.model.PermissionType
@@ -16,9 +17,11 @@ import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardByIdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.NormalizeScannedLoyaltyCardCodeUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.OpenAppSettingsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.UpdateLoyaltyCardUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ValidateLoyaltyCardCodeUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import com.mzagorscak.spiza.fakes.FakeLoyaltyCardRepository
@@ -34,6 +37,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
+private const val STORED_CARD_ID = 7L
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddLoyaltyCardViewModelImplTest {
     private val repository = FakeLoyaltyCardRepository()
@@ -47,9 +52,12 @@ class AddLoyaltyCardViewModelImplTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() =
+    private fun viewModel(cardId: Long? = null) =
         AddLoyaltyCardViewModelImpl(
+            cardId = cardId,
+            getLoyaltyCardByIdUseCase = GetLoyaltyCardByIdUseCaseImpl(repository = repository),
             addLoyaltyCardUseCase = AddLoyaltyCardUseCaseImpl(repository = repository),
+            updateLoyaltyCardUseCase = UpdateLoyaltyCardUseCaseImpl(repository = repository),
             validateLoyaltyCardCodeUseCase = ValidateLoyaltyCardCodeUseCaseImpl(),
             canEnterLoyaltyCardCodeUseCase = CanEnterLoyaltyCardCodeUseCaseImpl(),
             detectLoyaltyCardFormatUseCase = DetectLoyaltyCardFormatUseCaseImpl(),
@@ -60,9 +68,43 @@ class AddLoyaltyCardViewModelImplTest {
             crashLogger = crashLogger,
         )
 
+    private fun storedCard(
+        codeText: String = "4006381333931",
+        format: LoyaltyCardFormat = LoyaltyCardFormat.Ean13,
+    ) = LoyaltyCard(
+        id = STORED_CARD_ID,
+        name = "Shop",
+        colorArgb = LoyaltyCardColors.palette.last { it != LoyaltyCardColors.defaultColor }.toArgb(),
+        codeText = codeText,
+        format = format,
+        isShortcut = true,
+    )
+
     private fun AddLoyaltyCardViewModelImpl.scanTwice(code: ScannedCode) {
         onCodeScanned(code)
         onCodeScanned(code)
+    }
+
+    @Test
+    fun init_prefillsTheFormInManualEntry_whenEditingACard() {
+        val card = storedCard()
+        repository.cards.value = listOf(card)
+
+        val viewModel = viewModel(cardId = card.id)
+        viewModel.checkPermission()
+
+        val state = viewModel.state().value
+        assertThat(state.isEditing).isTrue()
+        assertThat(state.cardName).isEqualTo(card.name)
+        assertThat(state.selectedColor.toArgb()).isEqualTo(card.colorArgb)
+        assertThat(state.codeText).isEqualTo(card.codeText)
+        assertThat(state.format).isEqualTo(card.format)
+        assertThat(state.isFormatSelectedManually).isTrue()
+        assertThat(state.isCodeValid).isTrue()
+        assertThat(state.isSaveEnabled).isTrue()
+        // The camera is not opened: the card already has a code.
+        assertThat(state.inputType).isEqualTo(AddLoyaltyCardState.InputType.Manual)
+        assertThat(permissions.requestedPermissions).isEmpty()
     }
 
     @Test
@@ -318,6 +360,27 @@ class AddLoyaltyCardViewModelImplTest {
         }
 
     @Test
+    fun onSaveClick_updatesTheCardWithItsIdAndExactCode_whenEditing() =
+        runTest {
+            // Stored scanned content may end in a control character; it must survive an edit that does not touch the code.
+            val card = storedCard(codeText = "]C1 0104012345\u001D", format = LoyaltyCardFormat.Code128)
+            repository.cards.value = listOf(card)
+            val viewModel = viewModel(cardId = card.id)
+
+            viewModel.onCardNameChange("  New name  ")
+            viewModel.onSaveClick()
+
+            val updated = repository.updatedCards.single()
+            assertThat(updated.id).isEqualTo(card.id)
+            assertThat(updated.name).isEqualTo("New name")
+            assertThat(updated.colorArgb).isEqualTo(card.colorArgb)
+            assertThat(updated.codeText).isEqualTo(card.codeText)
+            assertThat(updated.format).isEqualTo(card.format)
+            assertThat(repository.addedCards).isEmpty()
+            assertThat(viewModel.state().value.isSaved).isTrue()
+        }
+
+    @Test
     fun checkPermission_requestsAndStoresReturnedStatus_whenCameraIsNotGranted() {
         permissions.checkStatus = PermissionStatus.NotGranted
         permissions.requestStatus = PermissionStatus.Denied
@@ -373,6 +436,35 @@ class AddLoyaltyCardViewModelImplTest {
     }
 
     // region Error handling
+
+    @Test
+    fun init_closesTheScreen_whenTheCardToEditNoLongerExists() {
+        val viewModel = viewModel(cardId = STORED_CARD_ID)
+
+        val state = viewModel.state().value
+        assertThat(state.isCardMissing).isTrue()
+        assertThat(state.isSaveEnabled).isFalse()
+        assertThat(crashLogger.warnings).hasSize(1)
+    }
+
+    @Test
+    fun init_showsTheError_whenLoadingTheCardToEditFails() {
+        val failure = IllegalStateException("db closed")
+        repository.readFailure = failure
+
+        val viewModel = viewModel(cardId = STORED_CARD_ID)
+
+        val state = viewModel.state().value
+        assertThat(state.hasError).isTrue()
+        assertThat(state.isCardMissing).isFalse()
+        assertThat(state.isSaveEnabled).isFalse()
+        assertThat(
+            crashLogger.exceptions
+                .single()
+                .cause
+                ?.message,
+        ).isEqualTo(failure.message)
+    }
 
     @Test
     fun onCodeChange_rejectsInput_overTheMaximumLength() {

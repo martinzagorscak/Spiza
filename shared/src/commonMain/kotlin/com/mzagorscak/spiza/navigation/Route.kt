@@ -38,8 +38,11 @@ sealed interface Route : NavKey {
         val cardId: Long,
     ) : Route
 
+    /** Adds a new card, or edits the card with [cardId] when it is set. */
     @Serializable
-    data object AddLoyaltyCard : Route
+    data class AddLoyaltyCard(
+        val cardId: Long? = null,
+    ) : Route
 }
 
 // Every new Route must be registered here so the back stack can be saved/restored on all platforms.

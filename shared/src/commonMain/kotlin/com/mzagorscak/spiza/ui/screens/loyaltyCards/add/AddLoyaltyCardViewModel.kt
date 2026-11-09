@@ -11,8 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * [codeText] is kept exactly as scanned (no trimming) while [scanStatus] is [ScanStatus.Scanned];
  * typed codes are trimmed before validation and saving.
+ * [isEditing] means the screen edits an existing card instead of adding one.
  */
 data class AddLoyaltyCardState(
+    val isEditing: Boolean = false,
     val cardName: String = "",
     val selectedColor: Color = LoyaltyCardColors.defaultColor,
     val codeText: String = "",
@@ -25,8 +27,10 @@ data class AddLoyaltyCardState(
     val isSaving: Boolean = false,
     /** One-shot: the card was stored, the screen closes. */
     val isSaved: Boolean = false,
-    /** Transient: the save failed; shown once and cleared with `onErrorShown()`. */
+    /** Transient: the save (or loading the card to edit) failed; shown once and cleared with `onErrorShown()`. */
     val hasError: Boolean = false,
+    /** One-shot: the card to edit no longer exists, the screen closes. */
+    val isCardMissing: Boolean = false,
 ) {
     val isSaveEnabled: Boolean
         get() = cardName.isNotBlank() && isCodeValid && isSaving.not() && isSaved.not()

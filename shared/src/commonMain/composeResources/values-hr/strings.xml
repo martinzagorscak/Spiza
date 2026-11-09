@@ -125,6 +125,8 @@
     <string name="loyalty_cards_format_pdf_417">PDF417</string>
     <string name="loyalty_cards_add_preview_label">Pregled kartice</string>
     <string name="loyalty_cards_add_save_button">Spremi karticu</string>
+    <string name="loyalty_cards_edit_title">Uredi karticu vjernosti</string>
+    <string name="loyalty_cards_edit_save_button">Spremi promjene</string>
     <string name="loyalty_cards_add_camera_permission_title">Potrebna je dozvola za kameru</string>
     <string name="loyalty_cards_add_camera_permission_description">Dozvola za kameru je trajno odbijena. Omogućite je u postavkama uređaja.</string>
     <string name="loyalty_cards_add_camera_permission_cta">Otvori postavke</string>

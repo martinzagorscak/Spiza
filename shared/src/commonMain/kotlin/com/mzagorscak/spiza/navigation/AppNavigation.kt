@@ -431,7 +431,7 @@ private fun AppNavDisplay(
                                     },
                                     onAddLoyaltyCardClick = {
                                         performHapticFeedback(hapticFeedback)
-                                        backStack.add(Route.AddLoyaltyCard)
+                                        backStack.add(Route.AddLoyaltyCard())
                                     },
                                     onCardClick = { cardId ->
                                         performHapticFeedback(hapticFeedback)
@@ -461,6 +461,10 @@ private fun AppNavDisplay(
                                         performHapticFeedback(hapticFeedback)
                                         backStack.popIfTop(key)
                                     },
+                                    onEditClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        backStack.add(Route.AddLoyaltyCard(cardId = key.cardId))
+                                    },
                                     onDeleteClick = {
                                         performHapticFeedback(hapticFeedback)
                                         viewModel.deleteCard()
@@ -471,9 +475,9 @@ private fun AppNavDisplay(
                             },
                         )
                     }
-                    entry<Route.AddLoyaltyCard> {
+                    entry<Route.AddLoyaltyCard> { key ->
                         val controller = rememberPlatformPermissionsController()
-                        val viewModel = koinViewModel<AddLoyaltyCardViewModel>(parameters = { parametersOf(controller) })
+                        val viewModel = koinViewModel<AddLoyaltyCardViewModel>(parameters = { parametersOf(controller, key.cardId) })
                         val state by viewModel.state().collectAsStateWithLifecycle()
                         LaunchedEffect(controller) {
                             viewModel.checkPermission()
@@ -484,11 +488,11 @@ private fun AppNavDisplay(
                         }
                         AddLoyaltyCardScreen(
                             state = state,
-                            callbacks = remember {
+                            callbacks = remember(key) {
                                 AddLoyaltyCardScreenCallbacks(
                                     onBackClick = {
                                         performHapticFeedback(hapticFeedback)
-                                        backStack.popIfTop(Route.AddLoyaltyCard)
+                                        backStack.popIfTop(key)
                                     },
                                     onCardNameChange = viewModel::onCardNameChange,
                                     onColorSelect = viewModel::onColorSelect,
@@ -506,7 +510,8 @@ private fun AppNavDisplay(
                                         viewModel.onSaveClick()
                                         performHapticFeedback(hapticFeedback)
                                     },
-                                    onSaved = { backStack.popIfTop(Route.AddLoyaltyCard) },
+                                    onSaved = { backStack.popIfTop(key) },
+                                    onCardMissing = { backStack.popIfTop(key) },
                                     onErrorShown = viewModel::onErrorShown,
                                     onRequestPermission = viewModel::requestPermission,
                                     onOpenSettings = viewModel::openSettings,

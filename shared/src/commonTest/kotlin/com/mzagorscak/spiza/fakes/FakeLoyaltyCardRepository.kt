@@ -20,10 +20,13 @@ class FakeLoyaltyCardRepository : LoyaltyCardRepository {
     /** When set, [observeAll] / [observeById] fail with it (checked each time the stream is collected). */
     var observeFailure: Throwable? = null
 
-    /** Thrown by [addCard] / [deleteCard] when set. */
+    /** Thrown by [getById] when set. */
+    var readFailure: Exception? = null
+
+    /** Thrown by [addCard] / [updateCard] / [deleteCard] when set. */
     var writeFailure: Exception? = null
 
-    /** [addCard] / [deleteCard] never complete, like a write still in progress. */
+    /** [addCard] / [updateCard] / [deleteCard] never complete, like a write still in progress. */
     var neverCompleteWrites = false
 
     /** Thrown by [addShortcut] / [removeShortcut] when set. */
@@ -37,6 +40,9 @@ class FakeLoyaltyCardRepository : LoyaltyCardRepository {
 
     /** Every card passed to [addCard], as it was passed in. */
     val addedCards = mutableListOf<LoyaltyCard>()
+
+    /** Every card passed to [updateCard], as it was passed in. */
+    val updatedCards = mutableListOf<LoyaltyCard>()
     val deletedIds = mutableListOf<Long>()
 
     /** Card id to the limit of every [addShortcut] call. */
@@ -55,13 +61,23 @@ class FakeLoyaltyCardRepository : LoyaltyCardRepository {
             emitAll(cards.map { list -> list.firstOrNull { it.id == id } })
         }
 
-    override suspend fun getById(id: Long): LoyaltyCard? = cards.value.firstOrNull { it.id == id }
+    override suspend fun getById(id: Long): LoyaltyCard? {
+        readFailure?.let { throw it }
+        return cards.value.firstOrNull { it.id == id }
+    }
 
     override suspend fun addCard(card: LoyaltyCard) {
         addedCards += card
         write()
         val stored = if (card.id == 0L) card.copy(id = (cards.value.maxOfOrNull { it.id } ?: 0L) + 1) else card
         cards.value = listOf(stored) + cards.value.filterNot { it.id == stored.id }
+    }
+
+    // Like the UPDATE query: an unknown id changes nothing, and the position and shortcut state are kept.
+    override suspend fun updateCard(card: LoyaltyCard) {
+        updatedCards += card
+        write()
+        cards.value = cards.value.map { if (it.id == card.id) card.copy(isShortcut = it.isShortcut) else it }
     }
 
     override suspend fun deleteCard(id: Long) {

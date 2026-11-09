@@ -55,6 +55,8 @@ import spiza.shared.generated.resources.loyalty_cards_add_input_type_manual
 import spiza.shared.generated.resources.loyalty_cards_add_preview_label
 import spiza.shared.generated.resources.loyalty_cards_add_save_button
 import spiza.shared.generated.resources.loyalty_cards_add_title
+import spiza.shared.generated.resources.loyalty_cards_edit_save_button
+import spiza.shared.generated.resources.loyalty_cards_edit_title
 
 @Composable
 fun AddLoyaltyCardScreen(
@@ -64,6 +66,9 @@ fun AddLoyaltyCardScreen(
 ) {
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) callbacks.onSaved()
+    }
+    LaunchedEffect(state.isCardMissing) {
+        if (state.isCardMissing) callbacks.onCardMissing()
     }
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = if (state.hasError) stringResource(Res.string.error_generic) else null
@@ -77,7 +82,9 @@ fun AddLoyaltyCardScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = stringResource(Res.string.loyalty_cards_add_title),
+                title = stringResource(
+                    if (state.isEditing) Res.string.loyalty_cards_edit_title else Res.string.loyalty_cards_add_title,
+                ),
                 leadingContent = {
                     IconButton(
                         resource = Res.drawable.ic_back,
@@ -179,7 +186,9 @@ fun AddLoyaltyCardScreen(
             }
 
             Button(
-                label = stringResource(Res.string.loyalty_cards_add_save_button),
+                label = stringResource(
+                    if (state.isEditing) Res.string.loyalty_cards_edit_save_button else Res.string.loyalty_cards_add_save_button,
+                ),
                 onClick = callbacks.onSaveClick,
                 isEnabled = state.isSaveEnabled,
                 appearance = ButtonAppearance(
@@ -205,6 +214,7 @@ data class AddLoyaltyCardScreenCallbacks(
     val onScanAgainClick: () -> Unit,
     val onSaveClick: () -> Unit,
     val onSaved: () -> Unit,
+    val onCardMissing: () -> Unit,
     val onErrorShown: () -> Unit,
     val onRequestPermission: () -> Unit,
     val onOpenSettings: () -> Unit,

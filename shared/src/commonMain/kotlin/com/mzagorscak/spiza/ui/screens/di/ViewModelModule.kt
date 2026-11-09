@@ -114,9 +114,12 @@ val viewModelModule = module {
             crashLogger = get(),
         )
     }
-    viewModel<AddLoyaltyCardViewModel> { (controller: PermissionsController) ->
+    viewModel<AddLoyaltyCardViewModel> { (controller: PermissionsController, cardId: Long?) ->
         AddLoyaltyCardViewModelImpl(
+            cardId = cardId,
+            getLoyaltyCardByIdUseCase = get(),
             addLoyaltyCardUseCase = get(),
+            updateLoyaltyCardUseCase = get(),
             validateLoyaltyCardCodeUseCase = get(),
             canEnterLoyaltyCardCodeUseCase = get(),
             detectLoyaltyCardFormatUseCase = get(),

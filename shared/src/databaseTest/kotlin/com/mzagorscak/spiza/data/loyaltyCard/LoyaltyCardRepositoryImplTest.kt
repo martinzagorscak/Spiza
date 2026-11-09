@@ -28,6 +28,7 @@ import kotlin.time.Clock
 
 private const val COLOR_ARGB = 0xFF336699.toInt()
 private const val CODE_TEXT = "4006381333931"
+private const val OTHER_COLOR_ARGB = 0xFF993366.toInt()
 
 class LoyaltyCardRepositoryImplTest {
     private lateinit var database: SpizaDatabase
@@ -131,6 +132,38 @@ class LoyaltyCardRepositoryImplTest {
                     codeText = CODE_TEXT,
                     format = LoyaltyCardFormat.Ean13,
                     createdAt = stored.createdAt,
+                    isShortcut = true,
+                ),
+            )
+        }
+
+    @Test
+    fun updateCard_changesTheEditableFields_andKeepsCreationTimeAndShortcut() =
+        runTest {
+            store(
+                entity(id = 1L, name = "Old", createdAt = 100L, isShortcut = true),
+                entity(id = 2L, name = "Newer", createdAt = 200L),
+            )
+
+            repository.updateCard(
+                LoyaltyCard(
+                    id = 1L,
+                    name = "Renamed",
+                    colorArgb = OTHER_COLOR_ARGB,
+                    codeText = "96385074",
+                    format = LoyaltyCardFormat.Ean8,
+                ),
+            )
+
+            assertThat(database.loyaltyCardDao().getAll().first()).containsExactly(
+                entity(id = 2L, name = "Newer", createdAt = 200L),
+                LoyaltyCardEntity(
+                    id = 1L,
+                    name = "Renamed",
+                    colorArgb = OTHER_COLOR_ARGB,
+                    codeText = "96385074",
+                    format = LoyaltyCardFormat.Ean8,
+                    createdAt = 100L,
                     isShortcut = true,
                 ),
             )

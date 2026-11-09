@@ -51,6 +51,16 @@ class AddLoyaltyCardUseCaseImpl(
     override suspend operator fun invoke(card: LoyaltyCard) = repository.addCard(card)
 }
 
+interface UpdateLoyaltyCardUseCase {
+    suspend operator fun invoke(card: LoyaltyCard)
+}
+
+class UpdateLoyaltyCardUseCaseImpl(
+    private val repository: LoyaltyCardRepository,
+) : UpdateLoyaltyCardUseCase {
+    override suspend operator fun invoke(card: LoyaltyCard) = repository.updateCard(card)
+}
+
 interface DeleteLoyaltyCardUseCase {
     suspend operator fun invoke(id: Long)
 }

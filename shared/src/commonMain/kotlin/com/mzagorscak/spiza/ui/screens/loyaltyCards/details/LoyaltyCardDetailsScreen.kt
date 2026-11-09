@@ -42,6 +42,7 @@ import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
+import spiza.shared.generated.resources.ic_edit
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.loyalty_card_details_card_missing
 import spiza.shared.generated.resources.loyalty_card_details_delete_button
@@ -89,6 +90,16 @@ fun LoyaltyCardDetailsScreen(
                 },
                 trailingContent = {
                     if (state.card != null) {
+                        IconButton(
+                            resource = Res.drawable.ic_edit,
+                            onClick = callbacks.onEditClick,
+                            isEnabled = state.isDeleting.not(),
+                            appearance = IconButtonAppearance(
+                                variant = IconButtonVariant.IconBased,
+                                size = IconButtonSize.Medium,
+                                tintColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                        )
                         IconButton(
                             resource = Res.drawable.ic_trash,
                             onClick = { showDeleteDialog = true },
@@ -172,6 +183,7 @@ fun LoyaltyCardDetailsScreen(
 
 data class LoyaltyCardDetailsScreenCallbacks(
     val onBackClick: () -> Unit,
+    val onEditClick: () -> Unit,
     val onDeleteClick: () -> Unit,
     val onDeleted: () -> Unit,
     val onErrorShown: () -> Unit,

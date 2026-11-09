@@ -125,6 +125,8 @@
     <string name="loyalty_cards_format_pdf_417">PDF417</string>
     <string name="loyalty_cards_add_preview_label">Card preview</string>
     <string name="loyalty_cards_add_save_button">Save loyalty card</string>
+    <string name="loyalty_cards_edit_title">Edit loyalty card</string>
+    <string name="loyalty_cards_edit_save_button">Save changes</string>
     <string name="loyalty_cards_add_camera_permission_title">Camera Permission Required</string>
     <string name="loyalty_cards_add_camera_permission_description">Camera permission is permanently denied. Please enable it in your device settings.</string>
     <string name="loyalty_cards_add_camera_permission_cta">Open Settings</string>

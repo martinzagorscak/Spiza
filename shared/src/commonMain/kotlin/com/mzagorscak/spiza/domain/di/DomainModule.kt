@@ -112,6 +112,8 @@ import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.UpdateLoyaltyCardUseCase
+import com.mzagorscak.spiza.domain.usecase.UpdateLoyaltyCardUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ValidateLoyaltyCardCodeUseCase
 import com.mzagorscak.spiza.domain.usecase.ValidateLoyaltyCardCodeUseCaseImpl
 import org.koin.dsl.module
@@ -183,6 +185,7 @@ val domainModule =
         single<ObserveLoyaltyCardByIdUseCase> { ObserveLoyaltyCardByIdUseCaseImpl(repository = get()) }
         single<GetLoyaltyCardByIdUseCase> { GetLoyaltyCardByIdUseCaseImpl(repository = get()) }
         single<AddLoyaltyCardUseCase> { AddLoyaltyCardUseCaseImpl(repository = get()) }
+        single<UpdateLoyaltyCardUseCase> { UpdateLoyaltyCardUseCaseImpl(repository = get()) }
         single<DeleteLoyaltyCardUseCase> { DeleteLoyaltyCardUseCaseImpl(repository = get()) }
         single<ValidateLoyaltyCardCodeUseCase> { ValidateLoyaltyCardCodeUseCaseImpl() }
         single<CanEnterLoyaltyCardCodeUseCase> { CanEnterLoyaltyCardCodeUseCaseImpl() }

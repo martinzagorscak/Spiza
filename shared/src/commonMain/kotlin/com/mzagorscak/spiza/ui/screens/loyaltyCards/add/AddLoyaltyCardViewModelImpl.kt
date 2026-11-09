@@ -12,18 +12,25 @@ import com.mzagorscak.spiza.domain.usecase.AddLoyaltyCardUseCase
 import com.mzagorscak.spiza.domain.usecase.CanEnterLoyaltyCardCodeUseCase
 import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
 import com.mzagorscak.spiza.domain.usecase.DetectLoyaltyCardFormatUseCase
+import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardByIdUseCase
 import com.mzagorscak.spiza.domain.usecase.NormalizeScannedLoyaltyCardCodeUseCase
 import com.mzagorscak.spiza.domain.usecase.OpenAppSettingsUseCase
 import com.mzagorscak.spiza.domain.usecase.RequestPermissionUseCase
+import com.mzagorscak.spiza.domain.usecase.UpdateLoyaltyCardUseCase
 import com.mzagorscak.spiza.domain.usecase.ValidateLoyaltyCardCodeUseCase
+import com.mzagorscak.spiza.ui.model.toPresentable
 import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+/** [cardId] is the card to edit, or `null` to add a new card. */
 internal class AddLoyaltyCardViewModelImpl(
+    private val cardId: Long?,
+    private val getLoyaltyCardByIdUseCase: GetLoyaltyCardByIdUseCase,
     private val addLoyaltyCardUseCase: AddLoyaltyCardUseCase,
+    private val updateLoyaltyCardUseCase: UpdateLoyaltyCardUseCase,
     private val validateLoyaltyCardCodeUseCase: ValidateLoyaltyCardCodeUseCase,
     private val canEnterLoyaltyCardCodeUseCase: CanEnterLoyaltyCardCodeUseCase,
     private val detectLoyaltyCardFormatUseCase: DetectLoyaltyCardFormatUseCase,
@@ -33,12 +40,51 @@ internal class AddLoyaltyCardViewModelImpl(
     private val openAppSettingsUseCase: OpenAppSettingsUseCase,
     private val crashLogger: CrashLogger,
 ) : AddLoyaltyCardViewModel() {
-    private val state = MutableStateFlow(AddLoyaltyCardState())
+    private val state = MutableStateFlow(
+        AddLoyaltyCardState(
+            isEditing = cardId != null,
+            // An existing card already has a code, so editing starts without opening the camera.
+            inputType = if (cardId != null) AddLoyaltyCardState.InputType.Manual else AddLoyaltyCardState.InputType.Camera,
+        ),
+    )
 
     // A code is accepted only after two identical reads in a row: a single frame can be misread (e.g. a partly visible barcode).
     private var pendingScan: ScannedCode? = null
 
+    init {
+        cardId?.let(::loadCard)
+    }
+
     override fun state(): StateFlow<AddLoyaltyCardState> = state.asStateFlow()
+
+    private fun loadCard(id: Long) {
+        launchSafely(
+            crashLogger = crashLogger,
+            context = "Loading loyalty card to edit failed",
+            onError = { state.update { it.copy(hasError = true) } },
+        ) {
+            val card = getLoyaltyCardByIdUseCase(id)?.toPresentable()
+            if (card == null) {
+                // E.g. deleted while the screen was being opened; the details screen behind shows that it is gone.
+                crashLogger.logWarning("Loyalty card to edit not found (id: $id)")
+                state.update { it.copy(isCardMissing = true) }
+                return@launchSafely
+            }
+            state.update {
+                it.copy(
+                    cardName = card.name,
+                    selectedColor = card.color,
+                    codeText = card.codeText,
+                    format = card.format,
+                    isFormatSelectedManually = true,
+                    isCodeValid = isValid(value = card.codeText, format = card.format),
+                    // The stored code is exact content (a scanned code may end in control characters), so it is kept
+                    // untrimmed like a scanned one until the user edits it.
+                    scanStatus = AddLoyaltyCardState.ScanStatus.Scanned,
+                )
+            }
+        }
+    }
 
     override fun onCardNameChange(name: String) {
         state.update { it.copy(cardName = name) }
@@ -152,15 +198,15 @@ internal class AddLoyaltyCardViewModelImpl(
             // The form stays filled in so the user can retry instead of losing the card.
             onError = { state.update { it.copy(isSaving = false, hasError = true) } },
         ) {
-            addLoyaltyCardUseCase(
-                LoyaltyCard(
-                    name = currentState.cardName.trim(),
-                    colorArgb = currentState.selectedColor.toArgb(),
-                    // Scanned content may legitimately end in control characters (e.g. a GS1 separator), so it is never trimmed.
-                    codeText = if (isScanned) currentState.codeText else currentState.codeText.trim(),
-                    format = currentState.format,
-                ),
+            val card = LoyaltyCard(
+                id = cardId ?: 0L,
+                name = currentState.cardName.trim(),
+                colorArgb = currentState.selectedColor.toArgb(),
+                // Scanned content may legitimately end in control characters (e.g. a GS1 separator), so it is never trimmed.
+                codeText = if (isScanned) currentState.codeText else currentState.codeText.trim(),
+                format = currentState.format,
             )
+            if (cardId != null) updateLoyaltyCardUseCase(card) else addLoyaltyCardUseCase(card)
             state.update { it.copy(isSaving = false, isSaved = true) }
         }
     }
