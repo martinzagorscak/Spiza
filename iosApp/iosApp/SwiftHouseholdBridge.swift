@@ -72,35 +72,30 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         }
     }
 
-    func addMemberToHousehold(
-        householdId: String, userJoinKey: String,
-        onComplete: @escaping (KotlinBoolean, BridgeError?) -> Void,
-    ) {
-        let fields = HouseholdFields.shared
-        let joinKeyRef = joinKeys.document(userJoinKey)
-        joinKeyRef.getDocument { snapshot, error in
+    func getJoinKeyUserId(joinKey: String, onComplete: @escaping (String?, BridgeError?) -> Void) {
+        joinKeys.document(joinKey).getDocument { snapshot, error in
             if let error = error {
-                onComplete(false, error.toBridgeError())
-                return
-            }
-
-            guard let userId = snapshot?.data()?[fields.USER_ID] as? String else {
-                onComplete(false, nil)
-                return
-            }
-
-            // Adding the member and consuming their join key is one atomic write, so it never half-succeeds.
-            let batch = Firestore.firestore().batch()
-            batch.updateData([fields.JOINED_MEMBERS: FieldValue.arrayUnion([userId])], forDocument: self.households.document(householdId))
-            batch.deleteDocument(joinKeyRef)
-            batch.commit { error in
-                if let error = error {
-                    onComplete(false, error.toBridgeError())
-                } else {
-                    onComplete(KotlinBoolean(bool: true), nil)
-                }
+                onComplete(nil, error.toBridgeError())
+            } else {
+                onComplete(snapshot?.data()?[HouseholdFields.shared.USER_ID] as? String, nil)
             }
         }
+    }
+
+    // Adding the member and consuming their join key is one atomic write, so it never half-succeeds.
+    func addMemberToHousehold(
+        householdId: String,
+        userId: String,
+        joinKey: String,
+        onComplete: @escaping (BridgeError?) -> Void
+    ) {
+        let batch = Firestore.firestore().batch()
+        batch.updateData(
+            [HouseholdFields.shared.JOINED_MEMBERS: FieldValue.arrayUnion([userId])],
+            forDocument: households.document(householdId)
+        )
+        batch.deleteDocument(joinKeys.document(joinKey))
+        batch.commit(completion: completion(onComplete))
     }
 
     func removeMemberFromHousehold(householdId: String, memberId: String, onComplete: @escaping (BridgeError?) -> Void) {

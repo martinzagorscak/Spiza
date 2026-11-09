@@ -8,6 +8,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
+import com.mzagorscak.spiza.domain.model.AddMemberResult
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.domain.usecase.AddMemberToHouseholdUseCaseImpl
@@ -241,19 +242,31 @@ class HouseholdManagementViewModelImplTest {
         }
 
     @Test
-    fun addMemberToHousehold_setsUserNotFoundAndDismissesDialog_whenJoinKeyHasNoUser() =
+    fun addMemberToHousehold_setsMatchingErrorAndDismissesDialog_whenMemberIsNotAdded() =
         runTest {
-            households.addMemberResult = false
-            val viewModel = viewModel()
-            viewModel.showAddMemberToHouseholdDialog(householdId = "household-1")
-            viewModel.onDialogJoinKeyInputChanged("unknown-key")
+            val expectedErrors =
+                mapOf(
+                    AddMemberResult.KeyNotFound to HouseholdManagementScreenState.ErrorState.UserNotFound,
+                    AddMemberResult.OwnKey to HouseholdManagementScreenState.ErrorState.OwnJoinKey,
+                    AddMemberResult.AlreadyMember to HouseholdManagementScreenState.ErrorState.AlreadyMember,
+                    AddMemberResult.HouseholdFull to HouseholdManagementScreenState.ErrorState.HouseholdFull,
+                )
 
-            viewModel.addMemberToHousehold(householdId = "household-1")
+            val states =
+                expectedErrors.keys.associateWith { result ->
+                    households.addMemberResult = result
+                    val viewModel = viewModel()
+                    viewModel.showAddMemberToHouseholdDialog(householdId = "household-1")
+                    viewModel.onDialogJoinKeyInputChanged("abc-123")
 
-            val state = viewModel.state().value
-            assertThat(state.errorState).isEqualTo(HouseholdManagementScreenState.ErrorState.UserNotFound)
-            assertThat(state.dialogState).isEqualTo(HouseholdManagementScreenState.DialogState.Hidden)
-            assertThat(viewModel.dialogInput().value).isEqualTo("")
+                    viewModel.addMemberToHousehold(householdId = "household-1")
+
+                    Triple(viewModel.state().value.errorState, viewModel.state().value.dialogState, viewModel.dialogInput().value)
+                }
+
+            assertThat(states).isEqualTo(
+                expectedErrors.mapValues { (_, error) -> Triple(error, HouseholdManagementScreenState.DialogState.Hidden, "") },
+            )
         }
 
     @Test

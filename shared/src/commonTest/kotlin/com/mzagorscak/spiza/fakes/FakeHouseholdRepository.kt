@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.fakes
 
+import com.mzagorscak.spiza.domain.model.AddMemberResult
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.Household
@@ -33,10 +34,9 @@ class FakeHouseholdRepository : HouseholdRepository {
     var writeFailure: Throwable? = null
 
     /**
-     * What [addMemberToHousehold] returns; false means no user has that join key. The members of [households] are not changed:
-     * the fake can not know whose key it was.
+     * What [addMemberToHousehold] returns. The members of [households] are not changed: the fake can not know whose key it was.
      */
-    var addMemberResult = true
+    var addMemberResult: AddMemberResult = AddMemberResult.Added
 
     /**
      * Writes never complete, like a write that is still waiting for the server (a hanging call).
@@ -128,7 +128,7 @@ class FakeHouseholdRepository : HouseholdRepository {
     override suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
-    ): Boolean {
+    ): AddMemberResult {
         addedMembers += householdId to userJoinKey
         write()
         return addMemberResult

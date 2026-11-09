@@ -9,6 +9,7 @@ import com.mzagorscak.spiza.crash.recordError
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManager
+import com.mzagorscak.spiza.domain.model.AddMemberResult
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.Household
@@ -102,25 +103,29 @@ internal class HouseholdRepositoryImpl(
     override suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
-    ): Boolean {
-        authService.currentUser?.uid
+    ): AddMemberResult {
+        val currentUserId = authService.currentUser?.uid
             ?: recordNonAuthenticatedError(message = "User tried to add a member to household $householdId")
-                .let { return false }
+                .let { return AddMemberResult.KeyNotFound }
+
+        val household = cachedHouseholds.value[householdId]
 
         // Constraint verification
-        cachedHouseholds.value[householdId]?.let { household ->
-            if (constraintsManager.canAddMemberToHousehold(memberCount = household.joinedMembers.count()).not()) {
-                crashLogger.logWarning(
-                    message = "User tried to add member to household but the household has already reached the max number of members",
-                )
-                return false
-            }
+        if (household != null && constraintsManager.canAddMemberToHousehold(memberCount = household.joinedMembers.count()).not()) {
+            crashLogger.logWarning(
+                message = "User tried to add member to household but the household has already reached the max number of members",
+            )
+            return AddMemberResult.HouseholdFull
         }
 
         val joinKey = userJoinKey.trim().lowercase()
-        if (JOIN_KEY_PATTERN.matches(joinKey).not()) return false
+        if (JOIN_KEY_PATTERN.matches(joinKey).not()) return AddMemberResult.KeyNotFound
+        val userId = dataSource.getJoinKeyUserId(joinKey) ?: return AddMemberResult.KeyNotFound
+        if (userId == currentUserId) return AddMemberResult.OwnKey
+        if (household != null && userId in household.joinedMembers) return AddMemberResult.AlreadyMember
 
-        return dataSource.addMemberToHousehold(householdId = householdId, userJoinKey = joinKey)
+        dataSource.addMemberToHousehold(householdId = householdId, userId = userId, joinKey = joinKey)
+        return AddMemberResult.Added
     }
 
     override suspend fun removeMemberFromHousehold(

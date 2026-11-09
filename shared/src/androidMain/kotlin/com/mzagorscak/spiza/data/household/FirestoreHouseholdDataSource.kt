@@ -71,21 +71,25 @@ class FirestoreHouseholdDataSource(
             emit(joinKey)
         }
 
+    override suspend fun getJoinKeyUserId(joinKey: String): String? =
+        householdJoinKeys
+            .document(joinKey)
+            .get()
+            .await()
+            .getString(HouseholdFields.USER_ID)
+
     override suspend fun addMemberToHousehold(
         householdId: String,
-        userJoinKey: String,
-    ): Boolean {
-        val joinKeyDocument = householdJoinKeys.document(userJoinKey).get().await()
-        val userId = joinKeyDocument.getString(HouseholdFields.USER_ID) ?: return false
-
+        userId: String,
+        joinKey: String,
+    ) {
         // Adding the member and consuming their join key is one atomic write, so it never half-succeeds.
         firestore
             .batch()
             .update(households.document(householdId), HouseholdFields.JOINED_MEMBERS, arrayUnion(userId))
-            .delete(joinKeyDocument.reference)
+            .delete(householdJoinKeys.document(joinKey))
             .commit()
             .await()
-        return true
     }
 
     override suspend fun removeMemberFromHousehold(

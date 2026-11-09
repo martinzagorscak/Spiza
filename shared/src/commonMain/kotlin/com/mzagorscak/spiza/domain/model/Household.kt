@@ -36,3 +36,18 @@ sealed interface CreateHouseholdResult {
 
     data object InvalidName : CreateHouseholdResult
 }
+
+/** Outcome of adding a member by their join key; only [Added] consumes the key. */
+sealed interface AddMemberResult {
+    data object Added : AddMemberResult
+
+    /** No user has that key (or it can not be a key at all), or the user is not signed in. */
+    data object KeyNotFound : AddMemberResult
+
+    /** The key belongs to the signed-in user. */
+    data object OwnKey : AddMemberResult
+
+    data object AlreadyMember : AddMemberResult
+
+    data object HouseholdFull : AddMemberResult
+}

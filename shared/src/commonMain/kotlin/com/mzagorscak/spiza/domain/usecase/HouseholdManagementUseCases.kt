@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.domain.usecase
 
+import com.mzagorscak.spiza.domain.model.AddMemberResult
 import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.Household
 import com.mzagorscak.spiza.domain.model.HouseholdSelection
@@ -42,7 +43,7 @@ interface AddMemberToHouseholdUseCase {
     suspend operator fun invoke(
         householdId: String,
         userJoinKey: String,
-    ): Boolean
+    ): AddMemberResult
 }
 
 class AddMemberToHouseholdUseCaseImpl(
@@ -51,7 +52,7 @@ class AddMemberToHouseholdUseCaseImpl(
     override suspend operator fun invoke(
         householdId: String,
         userJoinKey: String,
-    ): Boolean = repository.addMemberToHousehold(householdId, userJoinKey)
+    ): AddMemberResult = repository.addMemberToHousehold(householdId = householdId, userJoinKey = userJoinKey)
 }
 
 interface RemoveMemberFromHouseholdUseCase {

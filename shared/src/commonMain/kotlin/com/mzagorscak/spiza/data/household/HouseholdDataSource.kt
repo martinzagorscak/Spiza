@@ -12,10 +12,14 @@ interface HouseholdDataSource {
 
     fun getHouseholdJoinKey(userId: String): Flow<String?>
 
+    suspend fun getJoinKeyUserId(joinKey: String): String?
+
+    /** Adds [userId] to the household and consumes their [joinKey] in one atomic write. */
     suspend fun addMemberToHousehold(
         householdId: String,
-        userJoinKey: String,
-    ): Boolean
+        userId: String,
+        joinKey: String,
+    )
 
     suspend fun removeMemberFromHousehold(
         householdId: String,

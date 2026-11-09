@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.domain.repository
 
+import com.mzagorscak.spiza.domain.model.AddMemberResult
 import com.mzagorscak.spiza.domain.model.ArticleItem
 import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.Household
@@ -15,7 +16,7 @@ interface HouseholdRepository {
     suspend fun addMemberToHousehold(
         householdId: String,
         userJoinKey: String,
-    ): Boolean
+    ): AddMemberResult
 
     suspend fun removeMemberFromHousehold(
         householdId: String,

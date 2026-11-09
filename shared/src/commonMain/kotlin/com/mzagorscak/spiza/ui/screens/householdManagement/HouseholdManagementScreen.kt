@@ -50,10 +50,13 @@ import spiza.shared.generated.resources.error_quota_exceeded_title
 import spiza.shared.generated.resources.household_management_add_member_dialog_confirm_label
 import spiza.shared.generated.resources.household_management_add_member_dialog_description
 import spiza.shared.generated.resources.household_management_add_member_dialog_title
+import spiza.shared.generated.resources.household_management_already_member_error
 import spiza.shared.generated.resources.household_management_delete_household_dialog_description
 import spiza.shared.generated.resources.household_management_delete_household_dialog_title_template
+import spiza.shared.generated.resources.household_management_household_full_error
 import spiza.shared.generated.resources.household_management_only_owner_can_delete_household_error
 import spiza.shared.generated.resources.household_management_only_owner_can_remove_other_members_error
+import spiza.shared.generated.resources.household_management_own_join_key_error
 import spiza.shared.generated.resources.household_management_remove_member_dialog_description
 import spiza.shared.generated.resources.household_management_remove_member_dialog_title_template
 import spiza.shared.generated.resources.household_management_user_not_found_error
@@ -83,6 +86,9 @@ fun HouseholdManagementScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = when (state.errorState) {
         HouseholdManagementScreenState.ErrorState.UserNotFound -> stringResource(Res.string.household_management_user_not_found_error)
+        HouseholdManagementScreenState.ErrorState.OwnJoinKey -> stringResource(Res.string.household_management_own_join_key_error)
+        HouseholdManagementScreenState.ErrorState.AlreadyMember -> stringResource(Res.string.household_management_already_member_error)
+        HouseholdManagementScreenState.ErrorState.HouseholdFull -> stringResource(Res.string.household_management_household_full_error)
         HouseholdManagementScreenState.ErrorState.OnlyOwnerCanRemoveOtherMembers -> stringResource(
             Res.string.household_management_only_owner_can_remove_other_members_error,
         )

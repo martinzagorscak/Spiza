@@ -6,15 +6,14 @@ import assertk.assertions.containsExactly
 import assertk.assertions.hasSize
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
-import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
-import assertk.assertions.isTrue
 import assertk.assertions.prop
 import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
+import com.mzagorscak.spiza.domain.model.AddMemberResult
 import com.mzagorscak.spiza.domain.model.CreateHouseholdResult
 import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.fakes.FakeAuthService
@@ -109,15 +108,18 @@ class HouseholdRepositoryImplTest {
         }
 
     @Test
-    fun addMember_normalizesTheTypedKey_beforeLookingItUp() =
+    fun addMember_addsTheKeyOwnerAndConsumesTheNormalizedKey_whenKeyBelongsToAnotherUser() =
         runTest {
-            dataSource.households.value = listOf(householdDto())
+            observeHouseholds(householdDto())
             dataSource.joinKeys["abc-123"] = "user-2"
 
-            val isAdded = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "  ABC-123 ")
+            val result = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "  ABC-123 ")
 
-            assertThat(isAdded).isTrue()
-            assertThat(dataSource.addedMembers).containsExactly("household-1" to "abc-123")
+            assertThat(result).isEqualTo(AddMemberResult.Added)
+            assertThat(dataSource.addedMembers).containsExactly(
+                FakeHouseholdDataSource.AddedMember(householdId = "household-1", userId = "user-2", joinKey = "abc-123"),
+            )
+            assertThat(dataSource.joinKeys).isEmpty()
         }
 
     @Test
@@ -284,37 +286,80 @@ class HouseholdRepositoryImplTest {
         }
 
     @Test
-    fun addMember_returnsFalseWithoutLookup_whenJoinKeyCanNotBeAKey() =
+    fun addMember_returnsKeyNotFoundWithoutLookup_whenJoinKeyCanNotBeAKey() =
         runTest {
             val keys = listOf("", "   ", "a/b", "../x", "key with spaces")
 
             val results = keys.associateWith { repository.addMemberToHousehold(householdId = "household-1", userJoinKey = it) }
 
-            assertThat(results).isEqualTo(keys.associateWith { false })
+            assertThat(results).isEqualTo(keys.associateWith { AddMemberResult.KeyNotFound })
+            assertThat(dataSource.joinKeyLookups).isEmpty()
             assertThat(dataSource.addedMembers).isEmpty()
         }
 
     @Test
-    fun addMember_returnsFalseAndRecordsError_whenUserIsNotSignedIn() =
+    fun addMember_returnsKeyNotFoundWithoutWriting_whenNoUserHasTheKey() =
+        runTest {
+            observeHouseholds(householdDto())
+
+            val result = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
+
+            assertThat(result).isEqualTo(AddMemberResult.KeyNotFound)
+            assertThat(dataSource.joinKeyLookups).containsExactly("abc-123")
+            assertThat(dataSource.addedMembers).isEmpty()
+        }
+
+    // Regression: the key used to be consumed although adding yourself changes nothing.
+    @Test
+    fun addMember_returnsOwnKeyAndKeepsTheKey_whenKeyBelongsToCurrentUser() =
+        runTest {
+            observeHouseholds(householdDto())
+            dataSource.joinKeys["abc-123"] = TEST_USER.uid
+
+            val result = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
+
+            assertThat(result).isEqualTo(AddMemberResult.OwnKey)
+            assertThat(dataSource.addedMembers).isEmpty()
+            assertThat(dataSource.joinKeys.toList()).containsExactly("abc-123" to TEST_USER.uid)
+        }
+
+    // Regression: the key used to be consumed although the user was already a member.
+    @Test
+    fun addMember_returnsAlreadyMemberAndKeepsTheKey_whenKeyOwnerIsAlreadyAMember() =
+        runTest {
+            observeHouseholds(householdDto(members = listOf(TEST_USER.uid, "user-2")))
+            dataSource.joinKeys["abc-123"] = "user-2"
+
+            val result = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
+
+            assertThat(result).isEqualTo(AddMemberResult.AlreadyMember)
+            assertThat(dataSource.addedMembers).isEmpty()
+            assertThat(dataSource.joinKeys.toList()).containsExactly("abc-123" to "user-2")
+        }
+
+    @Test
+    fun addMember_returnsKeyNotFoundAndRecordsError_whenUserIsNotSignedIn() =
         runTest {
             authService.user.value = null
 
-            val isAdded = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
+            val result = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
 
-            assertThat(isAdded).isFalse()
+            assertThat(result).isEqualTo(AddMemberResult.KeyNotFound)
+            assertThat(dataSource.joinKeyLookups).isEmpty()
             assertThat(dataSource.addedMembers).isEmpty()
             assertThat(logger.exceptions).hasSize(1)
         }
 
     @Test
-    fun addMember_returnsFalse_whenHouseholdIsFull() =
+    fun addMember_returnsHouseholdFullWithoutLookup_whenHouseholdIsFull() =
         runTest {
             observeHouseholds(householdDto(members = listOf(TEST_USER.uid) + List(maxMembers - 1) { "user-$it" }))
             dataSource.joinKeys["abc-123"] = "user-new"
 
-            val isAdded = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
+            val result = repository.addMemberToHousehold(householdId = "household-1", userJoinKey = "abc-123")
 
-            assertThat(isAdded).isFalse()
+            assertThat(result).isEqualTo(AddMemberResult.HouseholdFull)
+            assertThat(dataSource.joinKeyLookups).isEmpty()
             assertThat(dataSource.addedMembers).isEmpty()
             assertThat(logger.warnings).hasSize(1)
         }

@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.catchAndRecord
 import com.mzagorscak.spiza.crash.isQuotaExceeded
+import com.mzagorscak.spiza.domain.model.AddMemberResult
 import com.mzagorscak.spiza.domain.usecase.AddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanAddMemberToHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CanUserCreateHouseholdUseCase
@@ -65,13 +66,11 @@ internal class HouseholdManagementViewModelImpl(
     override fun addMemberToHousehold(householdId: String) {
         launchAction(context = "Adding household member failed") {
             if (joinKeyInputPublisher.value.isEmpty()) return@launchAction
-            val isSuccess = addMemberToHousehold(
+            val result = addMemberToHousehold(
                 householdId = householdId,
                 userJoinKey = joinKeyInputPublisher.value,
             )
-            if (isSuccess.not()) {
-                updateErrorState(HouseholdManagementScreenState.ErrorState.UserNotFound)
-            }
+            updateErrorState(result.toErrorState())
         }
         dismissDialog()
     }
@@ -192,6 +191,15 @@ internal class HouseholdManagementViewModelImpl(
         ) { block() }
     }
 }
+
+private fun AddMemberResult.toErrorState(): HouseholdManagementScreenState.ErrorState =
+    when (this) {
+        AddMemberResult.Added -> HouseholdManagementScreenState.ErrorState.None
+        AddMemberResult.KeyNotFound -> HouseholdManagementScreenState.ErrorState.UserNotFound
+        AddMemberResult.OwnKey -> HouseholdManagementScreenState.ErrorState.OwnJoinKey
+        AddMemberResult.AlreadyMember -> HouseholdManagementScreenState.ErrorState.AlreadyMember
+        AddMemberResult.HouseholdFull -> HouseholdManagementScreenState.ErrorState.HouseholdFull
+    }
 
 private fun Throwable.toErrorState(): HouseholdManagementScreenState.ErrorState =
     if (isQuotaExceeded()) {

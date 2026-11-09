@@ -89,6 +89,9 @@
     <string name="household_management_add_member_dialog_description">Enter the join key of the member you want to add to the household.</string>
     <string name="household_management_add_member_dialog_confirm_label">Add member</string>
     <string name="household_management_user_not_found_error">User with that join key does not exist</string>
+    <string name="household_management_own_join_key_error">You can not add yourself to the household</string>
+    <string name="household_management_already_member_error">That user is already a member of the household</string>
+    <string name="household_management_household_full_error">The household has reached the maximum number of members</string>
     <string name="household_management_only_owner_can_remove_other_members_error">Only the household owner can remove other members</string>
     <string name="household_management_only_owner_can_delete_household_error">Only the household owner can delete the household</string>
     <string name="household_management_delete_household_dialog_title_template">Delete %1$s</string>

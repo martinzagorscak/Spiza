@@ -33,10 +33,17 @@ interface IosHouseholdBridge {
         onComplete: (key: String?, error: BridgeError?) -> Unit,
     )
 
+    fun getJoinKeyUserId(
+        joinKey: String,
+        onComplete: (userId: String?, error: BridgeError?) -> Unit,
+    )
+
+    /** Adds [userId] to the household and deletes `joinKeys/{joinKey}` in one batch. */
     fun addMemberToHousehold(
         householdId: String,
-        userJoinKey: String,
-        onComplete: (isUserFound: Boolean, error: BridgeError?) -> Unit,
+        userId: String,
+        joinKey: String,
+        onComplete: (error: BridgeError?) -> Unit,
     )
 
     fun removeMemberFromHousehold(

@@ -48,8 +48,16 @@ class FakeHouseholdDataSource : HouseholdDataSource {
     val createdJoinKeysOfUsers = mutableListOf<String>()
     val deletedJoinKeysOfUsers = mutableListOf<String>()
 
-    /** householdId to the join key as it was passed in. */
-    val addedMembers = mutableListOf<Pair<String, String>>()
+    /** Every join key passed to [getJoinKeyUserId]. */
+    val joinKeyLookups = mutableListOf<String>()
+
+    data class AddedMember(
+        val householdId: String,
+        val userId: String,
+        val joinKey: String,
+    )
+
+    val addedMembers = mutableListOf<AddedMember>()
 
     data class CreatedHousehold(
         val ownerId: String,
@@ -123,16 +131,20 @@ class FakeHouseholdDataSource : HouseholdDataSource {
             emit(joinKeys.entries.firstOrNull { it.value == userId }?.key)
         }
 
+    override suspend fun getJoinKeyUserId(joinKey: String): String? {
+        joinKeyLookups += joinKey
+        return joinKeys[joinKey]
+    }
+
     override suspend fun addMemberToHousehold(
         householdId: String,
-        userJoinKey: String,
-    ): Boolean {
-        addedMembers += householdId to userJoinKey
-        val userId = joinKeys[userJoinKey] ?: return false
+        userId: String,
+        joinKey: String,
+    ) {
+        addedMembers += AddedMember(householdId = householdId, userId = userId, joinKey = joinKey)
         write()
         updateHouseholdDto(householdId) { it.copy(joinedMembers = (it.joinedMembers + userId).distinct()) }
-        joinKeys.remove(userJoinKey)
-        return true
+        joinKeys.remove(joinKey)
     }
 
     override suspend fun removeMemberFromHousehold(

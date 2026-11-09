@@ -38,6 +38,9 @@ data class HouseholdManagementScreenState(
     enum class ErrorState {
         None,
         UserNotFound,
+        OwnJoinKey,
+        AlreadyMember,
+        HouseholdFull,
         OnlyOwnerCanRemoveOtherMembers,
         OnlyOwnerCanDeleteHousehold,
         Generic,

@@ -53,19 +53,22 @@ class IosHouseholdDataSource(
             emit(key)
         }
 
-    override suspend fun addMemberToHousehold(
-        householdId: String,
-        userJoinKey: String,
-    ): Boolean =
+    override suspend fun getJoinKeyUserId(joinKey: String): String? =
         suspendCancellableCoroutine { continuation ->
-            bridge.addMemberToHousehold(householdId, userJoinKey) { isUserFound, error ->
+            bridge.getJoinKeyUserId(joinKey) { userId, error ->
                 if (error == null) {
-                    continuation.resume(isUserFound)
+                    continuation.resume(userId)
                 } else {
                     continuation.resumeWithException(error.toDataException())
                 }
             }
         }
+
+    override suspend fun addMemberToHousehold(
+        householdId: String,
+        userId: String,
+        joinKey: String,
+    ) = write { bridge.addMemberToHousehold(householdId, userId, joinKey, it) }
 
     override suspend fun removeMemberFromHousehold(
         householdId: String,
