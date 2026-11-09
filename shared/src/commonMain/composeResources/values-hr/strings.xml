@@ -137,6 +137,8 @@
     <string name="loyalty_card_details_delete_dialog_description">Jeste li sigurni da želite obrisati ovu karticu vjernosti? Ova se radnja ne može poništiti.</string>
     <string name="loyalty_card_details_delete_button">Obriši karticu</string>
     <string name="loyalty_card_details_card_missing">Ova kartica više ne postoji</string>
+    <string name="loyalty_card_details_shortcut_label">Prečac aplikacije</string>
+    <string name="loyalty_card_details_shortcut_description">Dugo pritisnite ikonu aplikacije Spiza i kartica se odmah otvara, spremna za skeniranje na blagajni, a prečac možete povući i na početni zaslon. Možete dodati najviše %1$d prečaca.</string>
     <string name="loyalty_cards_shortcut_add">Dodaj u prečace aplikacije</string>
     <string name="loyalty_cards_shortcut_remove">Ukloni iz prečaca aplikacije</string>
     <string name="loyalty_cards_shortcut_added">Kartica %1$s dodana je u prečace aplikacije</string>

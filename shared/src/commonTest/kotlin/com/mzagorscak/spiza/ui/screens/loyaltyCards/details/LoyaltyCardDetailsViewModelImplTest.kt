@@ -4,14 +4,19 @@ import app.cash.turbine.Event
 import app.cash.turbine.test
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
+import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
 import com.mzagorscak.spiza.domain.model.LoyaltyCard
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
+import com.mzagorscak.spiza.domain.usecase.CanUseAppShortcutsUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteLoyaltyCardUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardShortcutLimitUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardByIdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ToggleLoyaltyCardShortcutUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import com.mzagorscak.spiza.fakes.FakeLoyaltyCardRepository
 import com.mzagorscak.spiza.ui.model.toPresentable
@@ -36,12 +41,30 @@ class LoyaltyCardDetailsViewModelImplTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel(cardId: Long) =
-        LoyaltyCardDetailsViewModelImpl(
-            cardId = cardId,
-            observeLoyaltyCardByIdUseCase = ObserveLoyaltyCardByIdUseCaseImpl(repository = repository),
-            deleteLoyaltyCardUseCase = DeleteLoyaltyCardUseCaseImpl(repository = repository),
-            crashLogger = crashLogger,
+    private fun viewModel(
+        cardId: Long,
+        areShortcutsSupported: Boolean = true,
+    ) = LoyaltyCardDetailsViewModelImpl(
+        cardId = cardId,
+        observeLoyaltyCardByIdUseCase = ObserveLoyaltyCardByIdUseCaseImpl(repository = repository),
+        deleteLoyaltyCardUseCase = DeleteLoyaltyCardUseCaseImpl(repository = repository),
+        canUseAppShortcutsUseCase = object : CanUseAppShortcutsUseCase {
+            override fun invoke() = areShortcutsSupported
+        },
+        getLoyaltyCardShortcutLimitUseCase = GetLoyaltyCardShortcutLimitUseCaseImpl(constraintsManager = ConstraintsManagerImpl),
+        toggleLoyaltyCardShortcutUseCase = ToggleLoyaltyCardShortcutUseCaseImpl(
+            repository = repository,
+            constraintsManager = ConstraintsManagerImpl,
+        ),
+        crashLogger = crashLogger,
+    )
+
+    /** A loaded state with the shortcut support and limit the [viewModel] builder provides by default. */
+    private fun loadedState() =
+        LoyaltyCardDetailsState(
+            isLoading = false,
+            areShortcutsSupported = true,
+            shortcutLimit = ConstraintsManagerImpl.maxLoyaltyCardShortcuts,
         )
 
     @Test
@@ -53,7 +76,18 @@ class LoyaltyCardDetailsViewModelImplTest {
 
             viewModel.state().test {
                 assertThat(expectMostRecentItem())
-                    .isEqualTo(LoyaltyCardDetailsState(card = requested.toPresentable(), isLoading = false, isCardMissing = false))
+                    .isEqualTo(loadedState().copy(card = requested.toPresentable(), isCardMissing = false))
+            }
+        }
+
+    @Test
+    fun state_reportsShortcutsUnsupported_whenThePlatformHasNoShortcuts() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            val viewModel = viewModel(cardId = 1L, areShortcutsSupported = false)
+
+            viewModel.state().test {
+                assertThat(expectMostRecentItem().areShortcutsSupported).isFalse()
             }
         }
 
@@ -73,7 +107,7 @@ class LoyaltyCardDetailsViewModelImplTest {
                 // The screen closes itself once deleted, so the card disappearing must never show the "missing" state.
                 assertThat(states.any { it.isCardMissing }).isFalse()
                 assertThat(states.last())
-                    .isEqualTo(LoyaltyCardDetailsState(card = null, isLoading = false, isCardMissing = false, isDeleted = true))
+                    .isEqualTo(loadedState().copy(card = null, isCardMissing = false, isDeleted = true))
             }
             assertThat(repository.cards.value.map { it.id }).containsExactly(2L)
         }
@@ -99,7 +133,106 @@ class LoyaltyCardDetailsViewModelImplTest {
             assertThat(repository.deletedIds).containsExactly(1L)
         }
 
+    @Test
+    fun onToggleShortcut_pinsTheCardAndShowsTheAddedMessage_whenNotPinned() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L, name = "Shop"))
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+
+                viewModel.onToggleShortcut()
+
+                val state = expectMostRecentItem()
+                assertThat(state.card?.isShortcut).isEqualTo(true)
+                assertThat(state.shortcutMessage)
+                    .isEqualTo(LoyaltyCardDetailsState.ShortcutMessage.Added(cardName = "Shop"))
+            }
+        }
+
+    @Test
+    fun onToggleShortcut_unpinsTheCardWithoutAMessage_whenPinned() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L, isShortcut = true))
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+
+                viewModel.onToggleShortcut()
+
+                val state = expectMostRecentItem()
+                assertThat(state.card?.isShortcut).isEqualTo(false)
+                assertThat(state.shortcutMessage).isEqualTo(LoyaltyCardDetailsState.ShortcutMessage.None)
+            }
+            assertThat(repository.removedShortcutIds).containsExactly(1L)
+        }
+
+    @Test
+    fun onShortcutMessageShown_clearsTheMessage() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+                viewModel.onToggleShortcut()
+
+                viewModel.onShortcutMessageShown()
+
+                assertThat(expectMostRecentItem().shortcutMessage).isEqualTo(LoyaltyCardDetailsState.ShortcutMessage.None)
+            }
+        }
+
     // region Error handling
+
+    @Test
+    fun onToggleShortcut_keepsTheCardUnpinnedAndShowsTheLimit_whenTheLimitIsReached() =
+        runTest {
+            val limit = ConstraintsManagerImpl.maxLoyaltyCardShortcuts
+            val pinned = (1L..limit.toLong()).map { card(id = it, isShortcut = true) }
+            val target = card(id = 100L)
+            repository.cards.value = pinned + target
+            val viewModel = viewModel(cardId = target.id)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+
+                viewModel.onToggleShortcut()
+
+                val state = expectMostRecentItem()
+                assertThat(state.card?.isShortcut).isEqualTo(false)
+                assertThat(state.shortcutMessage)
+                    .isEqualTo(LoyaltyCardDetailsState.ShortcutMessage.LimitReached(limit = limit))
+            }
+            assertThat(crashLogger.exceptions).isEmpty()
+        }
+
+    @Test
+    fun onToggleShortcut_showsTheGenericErrorAndRecordsIt_whenTheToggleFails() =
+        runTest {
+            val failure = IllegalStateException("db closed")
+            repository.cards.value = listOf(card(id = 1L))
+            repository.shortcutFailure = failure
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+
+                viewModel.onToggleShortcut()
+
+                val state = expectMostRecentItem()
+                assertThat(state.card?.isShortcut).isEqualTo(false)
+                assertThat(state.shortcutMessage).isEqualTo(LoyaltyCardDetailsState.ShortcutMessage.GenericError)
+            }
+            assertThat(
+                crashLogger.exceptions
+                    .single()
+                    .cause
+                    ?.message,
+            ).isEqualTo(failure.message)
+        }
 
     @Test
     fun state_isCardMissing_whenTheCardDoesNotExist() =
@@ -120,7 +253,7 @@ class LoyaltyCardDetailsViewModelImplTest {
 
             viewModel.state().test {
                 assertThat(expectMostRecentItem())
-                    .isEqualTo(LoyaltyCardDetailsState(card = null, isLoading = false, isCardMissing = false))
+                    .isEqualTo(loadedState().copy(card = null, isCardMissing = false))
             }
             assertThat(
                 crashLogger.exceptions
@@ -145,7 +278,7 @@ class LoyaltyCardDetailsViewModelImplTest {
                 viewModel.deleteCard()
 
                 assertThat(expectMostRecentItem())
-                    .isEqualTo(LoyaltyCardDetailsState(card = stored.toPresentable(), isLoading = false, hasError = true))
+                    .isEqualTo(loadedState().copy(card = stored.toPresentable(), hasError = true))
             }
             assertThat(
                 crashLogger.exceptions
@@ -194,11 +327,13 @@ class LoyaltyCardDetailsViewModelImplTest {
     private fun card(
         id: Long,
         name: String = "Card",
+        isShortcut: Boolean = false,
     ) = LoyaltyCard(
         id = id,
         name = name,
         colorArgb = 0,
         codeText = "123",
         format = LoyaltyCardFormat.Code128,
+        isShortcut = isShortcut,
     )
 }

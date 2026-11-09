@@ -137,6 +137,8 @@
     <string name="loyalty_card_details_delete_dialog_description">Are you sure you want to delete this loyalty card? This action cannot be undone.</string>
     <string name="loyalty_card_details_delete_button">Delete card</string>
     <string name="loyalty_card_details_card_missing">This card no longer exists</string>
+    <string name="loyalty_card_details_shortcut_label">App shortcut</string>
+    <string name="loyalty_card_details_shortcut_description">Long-press the Spiza app icon to open this card instantly, ready to scan at checkout, or drag the shortcut onto your home screen. You can add up to %1$d shortcuts.</string>
     <string name="loyalty_cards_shortcut_add">Add to app shortcuts</string>
     <string name="loyalty_cards_shortcut_remove">Remove from app shortcuts</string>
     <string name="loyalty_cards_shortcut_added">%1$s card added to app shortcuts</string>

@@ -471,6 +471,11 @@ private fun AppNavDisplay(
                                     },
                                     onDeleted = { backStack.popIfTop(key) },
                                     onErrorShown = viewModel::onErrorShown,
+                                    onToggleShortcut = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.onToggleShortcut()
+                                    },
+                                    onShortcutMessageShown = viewModel::onShortcutMessageShown,
                                 )
                             },
                         )

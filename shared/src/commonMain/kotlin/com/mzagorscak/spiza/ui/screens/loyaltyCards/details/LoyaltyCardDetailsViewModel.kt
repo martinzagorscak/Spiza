@@ -14,7 +14,26 @@ data class LoyaltyCardDetailsState(
     val isDeleted: Boolean = false,
     /** Transient: the delete failed; shown once and cleared with [LoyaltyCardDetailsViewModel.onErrorShown]. */
     val hasError: Boolean = false,
-)
+    val areShortcutsSupported: Boolean = false,
+    /** How many cards can be pinned as app shortcuts at the same time. */
+    val shortcutLimit: Int = 0,
+    /** Transient: feedback for a shortcut toggle; cleared with [LoyaltyCardDetailsViewModel.onShortcutMessageShown]. */
+    val shortcutMessage: ShortcutMessage = ShortcutMessage.None,
+) {
+    sealed interface ShortcutMessage {
+        data object None : ShortcutMessage
+
+        data class Added(
+            val cardName: String,
+        ) : ShortcutMessage
+
+        data class LimitReached(
+            val limit: Int,
+        ) : ShortcutMessage
+
+        data object GenericError : ShortcutMessage
+    }
+}
 
 abstract class LoyaltyCardDetailsViewModel : ViewModel() {
     abstract fun state(): StateFlow<LoyaltyCardDetailsState>
@@ -22,4 +41,8 @@ abstract class LoyaltyCardDetailsViewModel : ViewModel() {
     abstract fun deleteCard()
 
     abstract fun onErrorShown()
+
+    abstract fun onToggleShortcut()
+
+    abstract fun onShortcutMessageShown()
 }

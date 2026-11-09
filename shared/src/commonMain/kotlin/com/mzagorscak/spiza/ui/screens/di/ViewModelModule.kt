@@ -143,6 +143,9 @@ val viewModelModule = module {
             cardId = cardId,
             observeLoyaltyCardByIdUseCase = get(),
             deleteLoyaltyCardUseCase = get(),
+            canUseAppShortcutsUseCase = get(),
+            getLoyaltyCardShortcutLimitUseCase = get(),
+            toggleLoyaltyCardShortcutUseCase = get(),
             crashLogger = get(),
         )
     }

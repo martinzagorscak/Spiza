@@ -56,6 +56,8 @@ import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardByIdUseCase
 import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardByIdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardShortcutLimitUseCase
+import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardShortcutLimitUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetUsersUseCase
 import com.mzagorscak.spiza.domain.usecase.GetUsersUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
@@ -195,6 +197,7 @@ val domainModule =
             ToggleLoyaltyCardShortcutUseCaseImpl(repository = get(), constraintsManager = get())
         }
         single<CanUseAppShortcutsUseCase> { CanUseAppShortcutsUseCaseImpl(repository = get()) }
+        single<GetLoyaltyCardShortcutLimitUseCase> { GetLoyaltyCardShortcutLimitUseCaseImpl(constraintsManager = get()) }
         single<SyncLoyaltyCardShortcutsUseCase> {
             SyncLoyaltyCardShortcutsUseCaseImpl(
                 loyaltyCardRepository = get(),

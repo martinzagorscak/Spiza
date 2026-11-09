@@ -3,8 +3,12 @@ package com.mzagorscak.spiza.ui.screens.loyaltyCards.details
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.catchAndRecord
+import com.mzagorscak.spiza.domain.model.ShortcutToggleResult
+import com.mzagorscak.spiza.domain.usecase.CanUseAppShortcutsUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteLoyaltyCardUseCase
+import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardShortcutLimitUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardByIdUseCase
+import com.mzagorscak.spiza.domain.usecase.ToggleLoyaltyCardShortcutUseCase
 import com.mzagorscak.spiza.ui.model.toPresentable
 import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,29 +22,38 @@ internal class LoyaltyCardDetailsViewModelImpl(
     private val cardId: Long,
     observeLoyaltyCardByIdUseCase: ObserveLoyaltyCardByIdUseCase,
     private val deleteLoyaltyCardUseCase: DeleteLoyaltyCardUseCase,
+    canUseAppShortcutsUseCase: CanUseAppShortcutsUseCase,
+    getLoyaltyCardShortcutLimitUseCase: GetLoyaltyCardShortcutLimitUseCase,
+    private val toggleLoyaltyCardShortcutUseCase: ToggleLoyaltyCardShortcutUseCase,
     private val crashLogger: CrashLogger,
 ) : LoyaltyCardDetailsViewModel() {
+    private val emptyState = LoyaltyCardDetailsState(
+        areShortcutsSupported = canUseAppShortcutsUseCase(),
+        shortcutLimit = getLoyaltyCardShortcutLimitUseCase(),
+    )
     private val deletion = MutableStateFlow(Deletion())
+    private val shortcutMessage = MutableStateFlow<LoyaltyCardDetailsState.ShortcutMessage>(LoyaltyCardDetailsState.ShortcutMessage.None)
 
     private val state: StateFlow<LoyaltyCardDetailsState> =
-        combine(observeLoyaltyCardByIdUseCase(cardId), deletion) { card, progress ->
+        combine(observeLoyaltyCardByIdUseCase(cardId), deletion, shortcutMessage) { card, progress, message ->
             // The card may disappear before the delete call returns, so it only counts as missing when this screen
             // is not deleting it; after a failed delete a later disappearance is reported again.
             val isDeletedHere = progress.isDeleting || progress.isDeleted
-            LoyaltyCardDetailsState(
+            emptyState.copy(
                 card = card?.toPresentable(),
                 isLoading = false,
                 isCardMissing = card == null && isDeletedHere.not(),
                 isDeleting = progress.isDeleting,
                 isDeleted = progress.isDeleted,
                 hasError = progress.hasError,
+                shortcutMessage = message,
             )
         }.catchAndRecord(crashLogger = crashLogger, context = "Loyalty card details stream failed") {
-            emit(LoyaltyCardDetailsState(isLoading = false))
+            emit(emptyState.copy(isLoading = false))
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = LoyaltyCardDetailsState(isLoading = true),
+            initialValue = emptyState,
         )
 
     override fun state(): StateFlow<LoyaltyCardDetailsState> = state
@@ -61,6 +74,31 @@ internal class LoyaltyCardDetailsViewModelImpl(
 
     override fun onErrorShown() {
         deletion.update { it.copy(hasError = false) }
+    }
+
+    override fun onToggleShortcut() {
+        launchSafely(
+            crashLogger = crashLogger,
+            context = "Toggling loyalty card shortcut failed",
+            onError = { shortcutMessage.value = LoyaltyCardDetailsState.ShortcutMessage.GenericError },
+        ) {
+            when (val result = toggleLoyaltyCardShortcutUseCase(cardId)) {
+                is ShortcutToggleResult.LimitReached ->
+                    shortcutMessage.value = LoyaltyCardDetailsState.ShortcutMessage.LimitReached(limit = result.limit)
+                ShortcutToggleResult.Enabled ->
+                    shortcutMessage.value = LoyaltyCardDetailsState.ShortcutMessage.Added(
+                        cardName = state.value.card
+                            ?.name
+                            .orEmpty(),
+                    )
+                // The pinned state is shown by the observed card; a card deleted meanwhile shows the "missing" state on its own.
+                ShortcutToggleResult.Disabled, ShortcutToggleResult.CardNotFound -> Unit
+            }
+        }
+    }
+
+    override fun onShortcutMessageShown() {
+        shortcutMessage.value = LoyaltyCardDetailsState.ShortcutMessage.None
     }
 
     private data class Deletion(

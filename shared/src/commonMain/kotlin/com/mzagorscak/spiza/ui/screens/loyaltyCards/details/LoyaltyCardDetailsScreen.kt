@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,24 +33,36 @@ import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
+import com.mzagorscak.spiza.ui.components.ListingItem
 import com.mzagorscak.spiza.ui.components.LoyaltyCard
+import com.mzagorscak.spiza.ui.components.ToggleButton
+import com.mzagorscak.spiza.ui.components.ToggleButtonVariant
 import com.mzagorscak.spiza.ui.components.TopBar
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.deviceSettings.KeepScreenBrightness
+import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardSharedTransition
+import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_edit
+import spiza.shared.generated.resources.ic_pin
+import spiza.shared.generated.resources.ic_pin_filled
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.loyalty_card_details_card_missing
 import spiza.shared.generated.resources.loyalty_card_details_delete_button
 import spiza.shared.generated.resources.loyalty_card_details_delete_dialog_description
 import spiza.shared.generated.resources.loyalty_card_details_delete_dialog_title
+import spiza.shared.generated.resources.loyalty_card_details_shortcut_description
+import spiza.shared.generated.resources.loyalty_card_details_shortcut_label
 import spiza.shared.generated.resources.loyalty_card_details_title
+import spiza.shared.generated.resources.loyalty_cards_shortcut_added
+import spiza.shared.generated.resources.loyalty_cards_shortcut_limit_reached
 
 @Composable
 fun LoyaltyCardDetailsScreen(
@@ -68,6 +82,21 @@ fun LoyaltyCardDetailsScreen(
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
             callbacks.onErrorShown()
+        }
+    }
+
+    val shortcutMessage = when (val message = state.shortcutMessage) {
+        is LoyaltyCardDetailsState.ShortcutMessage.Added ->
+            stringResource(Res.string.loyalty_cards_shortcut_added, message.cardName)
+        is LoyaltyCardDetailsState.ShortcutMessage.LimitReached ->
+            stringResource(Res.string.loyalty_cards_shortcut_limit_reached, message.limit)
+        LoyaltyCardDetailsState.ShortcutMessage.GenericError -> stringResource(Res.string.error_generic)
+        LoyaltyCardDetailsState.ShortcutMessage.None -> null
+    }
+    LaunchedEffect(state.shortcutMessage) {
+        shortcutMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            callbacks.onShortcutMessageShown()
         }
     }
 
@@ -147,6 +176,14 @@ fun LoyaltyCardDetailsScreen(
                             .fillMaxWidth(),
                     )
 
+                    if (state.areShortcutsSupported) {
+                        ShortcutSection(
+                            card = card,
+                            shortcutLimit = state.shortcutLimit,
+                            onToggleShortcut = callbacks.onToggleShortcut,
+                        )
+                    }
+
                     Button(
                         label = stringResource(Res.string.loyalty_card_details_delete_button),
                         onClick = { showDeleteDialog = true },
@@ -181,10 +218,57 @@ fun LoyaltyCardDetailsScreen(
     }
 }
 
+@Composable
+private fun ShortcutSection(
+    card: PresentableLoyaltyCard,
+    shortcutLimit: Int,
+    onToggleShortcut: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(padding200),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        ListingItem(
+            label = stringResource(Res.string.loyalty_card_details_shortcut_label),
+            onClick = onToggleShortcut,
+            leadingContent = {
+                Icon(
+                    painter = painterResource(if (card.isShortcut) Res.drawable.ic_pin_filled else Res.drawable.ic_pin),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            },
+            trailingContent = {
+                ToggleButton(
+                    checked = card.isShortcut,
+                    onCheckedChange = { onToggleShortcut() },
+                    variant = ToggleButtonVariant.Custom(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                        checkedBorderColor = MaterialTheme.colorScheme.primary,
+                        uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        uncheckedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                        uncheckedBorderColor = MaterialTheme.colorScheme.primary,
+                    ),
+                )
+            },
+        )
+        Text(
+            text = stringResource(Res.string.loyalty_card_details_shortcut_description, shortcutLimit),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = padding200),
+        )
+    }
+}
+
 data class LoyaltyCardDetailsScreenCallbacks(
     val onBackClick: () -> Unit,
     val onEditClick: () -> Unit,
     val onDeleteClick: () -> Unit,
     val onDeleted: () -> Unit,
     val onErrorShown: () -> Unit,
+    val onToggleShortcut: () -> Unit,
+    val onShortcutMessageShown: () -> Unit,
 )

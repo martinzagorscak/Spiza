@@ -128,6 +128,17 @@ class ToggleLoyaltyCardShortcutUseCaseImpl(
     }
 }
 
+/** The maximum number of loyalty cards that can be pinned as app shortcuts at the same time. */
+interface GetLoyaltyCardShortcutLimitUseCase {
+    operator fun invoke(): Int
+}
+
+class GetLoyaltyCardShortcutLimitUseCaseImpl(
+    private val constraintsManager: ConstraintsManager,
+) : GetLoyaltyCardShortcutLimitUseCase {
+    override operator fun invoke(): Int = constraintsManager.maxLoyaltyCardShortcuts
+}
+
 interface CanUseAppShortcutsUseCase {
     operator fun invoke(): Boolean
 }
