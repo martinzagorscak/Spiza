@@ -20,6 +20,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.mzagorscak.spiza.ui.components.FallbackState
+import com.mzagorscak.spiza.ui.components.IconButton
+import com.mzagorscak.spiza.ui.components.IconButtonAppearance
+import com.mzagorscak.spiza.ui.components.IconButtonSize
+import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.LoyaltyCard
 import com.mzagorscak.spiza.ui.components.TopBar
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
@@ -31,6 +35,7 @@ import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_add_loyalty_card
+import spiza.shared.generated.resources.ic_settings
 import spiza.shared.generated.resources.loyalty_cards_empty_description
 import spiza.shared.generated.resources.loyalty_cards_empty_title
 import spiza.shared.generated.resources.loyalty_cards_shortcut_added
@@ -64,6 +69,17 @@ fun LoyaltyCardsScreen(
         topBar = {
             TopBar(
                 title = stringResource(Res.string.loyalty_cards_title),
+                trailingContent = {
+                    IconButton(
+                        resource = Res.drawable.ic_settings,
+                        onClick = callbacks.onSettingsClick,
+                        appearance = IconButtonAppearance(
+                            variant = IconButtonVariant.IconBased,
+                            size = IconButtonSize.Medium,
+                            tintColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
+                    )
+                },
             )
         },
         bottomBar = {
@@ -130,6 +146,7 @@ fun LoyaltyCardsScreen(
 }
 
 data class LoyaltyCardsScreenCallbacks(
+    val onSettingsClick: () -> Unit,
     val onTabClick: (MainTab) -> Unit,
     val onAddLoyaltyCardClick: () -> Unit,
     val onCardClick: (Long) -> Unit,

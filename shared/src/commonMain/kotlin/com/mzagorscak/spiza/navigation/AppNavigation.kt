@@ -425,6 +425,10 @@ private fun AppNavDisplay(
                             ),
                             callbacks = remember {
                                 LoyaltyCardsScreenCallbacks(
+                                    onSettingsClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        backStack.add(Route.Settings)
+                                    },
                                     onTabClick = { tab ->
                                         performHapticFeedback(hapticFeedback)
                                         backStack.switchTab(tab)
