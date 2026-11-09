@@ -52,6 +52,7 @@ import spiza.shared.generated.resources.ic_right_chevron
 import spiza.shared.generated.resources.settings_copy_key
 import spiza.shared.generated.resources.settings_generate_key
 import spiza.shared.generated.resources.settings_household_management
+import spiza.shared.generated.resources.settings_how_to_use
 import spiza.shared.generated.resources.settings_key_copied
 import spiza.shared.generated.resources.settings_language_croatian
 import spiza.shared.generated.resources.settings_language_english
@@ -165,6 +166,22 @@ fun SettingsScreen(
                         IconButton(
                             resource = Res.drawable.ic_right_chevron,
                             onClick = callbacks.onShoppingItemsSavingClick,
+                            appearance = IconButtonAppearance(
+                                variant = IconButtonVariant.IconBased,
+                                size = IconButtonSize.Medium,
+                                tintColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                        )
+                    },
+                    showDivider = true,
+                )
+                ListingItem(
+                    label = stringResource(Res.string.settings_how_to_use),
+                    onClick = callbacks.onHowToUseClick,
+                    trailingContent = {
+                        IconButton(
+                            resource = Res.drawable.ic_right_chevron,
+                            onClick = callbacks.onHowToUseClick,
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
                                 size = IconButtonSize.Medium,
@@ -333,6 +350,7 @@ data class SettingsScreenCallbacks(
     val onLanguageSelected: (AppLanguage) -> Unit,
     val onHouseholdManagementClick: () -> Unit,
     val onShoppingItemsSavingClick: () -> Unit,
+    val onHowToUseClick: () -> Unit,
     val onSignOutClick: () -> Unit,
     val onErrorShown: () -> Unit,
 )
@@ -353,6 +371,7 @@ private fun SettingsScreenPreview() {
                 onLanguageSelected = {},
                 onHouseholdManagementClick = {},
                 onShoppingItemsSavingClick = {},
+                onHowToUseClick = {},
                 onSignOutClick = {},
                 onErrorShown = {},
             ),

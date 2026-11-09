@@ -34,6 +34,7 @@
     <string name="settings_section_general">General</string>
     <string name="settings_household_management">Household management</string>
     <string name="settings_shopping_items_saving">Shopping items saving</string>
+    <string name="settings_how_to_use">How to use Spiza</string>
     <string name="settings_shopping_items_saving_sorting_label">Sorted by:</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_asc">Alphabetical ascending</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_desc">Alphabetical descending</string>

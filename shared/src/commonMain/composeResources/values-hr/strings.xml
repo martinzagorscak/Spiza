@@ -34,6 +34,7 @@
     <string name="settings_section_general">Općenito</string>
     <string name="settings_household_management">Upravljanje kućanstvom</string>
     <string name="settings_shopping_items_saving">Spremanje artikala za kupnju</string>
+    <string name="settings_how_to_use">Kako koristiti Spizu</string>
     <string name="settings_shopping_items_saving_sorting_label">Sortirano po:</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_asc">Abecedno uzlazno</string>
     <string name="settings_shopping_items_saving_sorting_alphabetical_desc">Abecedno silazno</string>

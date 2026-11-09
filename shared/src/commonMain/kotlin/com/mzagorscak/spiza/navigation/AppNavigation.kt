@@ -327,6 +327,10 @@ private fun AppNavDisplay(
                                         performHapticFeedback(hapticFeedback)
                                         backStack.add(Route.SuggestionsSavingSettings)
                                     },
+                                    onHowToUseClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        backStack.add(Route.Onboarding(isReplay = true))
+                                    },
                                     onSignOutClick = {
                                         performHapticFeedback(hapticFeedback)
                                         viewModel.onSignOut()
