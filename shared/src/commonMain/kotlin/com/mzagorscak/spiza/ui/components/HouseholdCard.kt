@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.model.PresentableHousehold
 import com.mzagorscak.spiza.ui.model.PresentableHouseholdMember
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
+import com.mzagorscak.spiza.ui.theme.padding050
 import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding300
@@ -56,7 +57,7 @@ fun HouseholdCard(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = padding100, end = padding200)
+                .padding(start = padding100, end = if (nameTrailingContent != null) padding050 else padding200)
                 .padding(bottom = padding100),
         ) {
             Text(
