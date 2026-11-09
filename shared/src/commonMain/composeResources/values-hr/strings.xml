@@ -52,6 +52,8 @@
     <string name="settings_shopping_items_saving_add_suggestion_dialog_label">Naziv prijedloga</string>
     <string name="settings_shopping_items_saving_add_suggestion_dialog_confirm">Dodaj</string>
     <string name="settings_sign_out">Odjava</string>
+    <string name="login_app_title">Spiza</string>
+    <string name="login_tagline">Zajednički popis za kupovinu za cijelo kućanstvo</string>
     <string name="login_sign_in_with_google">Prijava putem Googlea</string>
     <string name="login_error">Prijava nije uspjela. Pokušaj ponovno.</string>
     <string name="shopping_list_default_title">Kućanstvo</string>

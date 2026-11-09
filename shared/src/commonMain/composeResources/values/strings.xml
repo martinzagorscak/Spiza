@@ -52,6 +52,8 @@
     <string name="settings_shopping_items_saving_add_suggestion_dialog_label">Suggestion name</string>
     <string name="settings_shopping_items_saving_add_suggestion_dialog_confirm">Add</string>
     <string name="settings_sign_out">Sign out</string>
+    <string name="login_app_title">Spiza</string>
+    <string name="login_tagline">Shared shopping lists for your whole household</string>
     <string name="login_sign_in_with_google">Sign in with Google</string>
     <string name="login_error">Sign-in failed. Please try again.</string>
     <string name="shopping_list_default_title">Household</string>

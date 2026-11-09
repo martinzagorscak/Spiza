@@ -54,7 +54,7 @@ data class ButtonAppearance(
             ButtonVariant.Primary, ButtonVariant.Tertiary -> {
                 ButtonDefaults.buttonColors().copy(
                     containerColor = when (variant) {
-                        ButtonVariant.Primary -> contentColor ?: MaterialTheme.colorScheme.primary
+                        ButtonVariant.Primary -> containerColor ?: MaterialTheme.colorScheme.primary
                         ButtonVariant.Tertiary -> Color.Transparent
                     },
                     contentColor = when (variant) {
