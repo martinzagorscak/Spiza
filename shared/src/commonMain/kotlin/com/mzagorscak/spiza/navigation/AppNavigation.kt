@@ -54,6 +54,9 @@ import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardViewModel
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsScreen
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsScreenCallbacks
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsViewModel
+import com.mzagorscak.spiza.ui.screens.onboarding.OnboardingScreen
+import com.mzagorscak.spiza.ui.screens.onboarding.OnboardingScreenCallbacks
+import com.mzagorscak.spiza.ui.screens.onboarding.OnboardingViewModel
 import com.mzagorscak.spiza.ui.screens.settings.SettingsScreen
 import com.mzagorscak.spiza.ui.screens.settings.SettingsScreenCallbacks
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
@@ -68,8 +71,11 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun AppNavigation(isSignedIn: Boolean) {
-    val startRoute: Route = if (isSignedIn) Route.ShoppingList else Route.Login
+fun AppNavigation(
+    isSignedIn: Boolean,
+    isOnboardingCompleted: Boolean,
+) {
+    val startRoute = startRoute(isSignedIn = isSignedIn, isOnboardingCompleted = isOnboardingCompleted)
     val hapticFeedback = LocalHapticFeedback.current
 
     val backStack =
@@ -78,23 +84,20 @@ fun AppNavigation(isSignedIn: Boolean) {
             startRoute,
         )
 
-    // Auth is the source of truth for the root destination: reset the stack only when the root no longer matches it,
-    // so a restored back stack (e.g. after a configuration change) is kept.
+    // Auth and the onboarding flag are the source of truth for the root destination: reset the stack only when the root no longer
+    // matches it, so a restored back stack (e.g. after a configuration change) is kept.
     LaunchedEffect(startRoute) {
-        if (backStack.firstOrNull() != startRoute) {
-            backStack.clear()
-            backStack.add(startRoute)
-        }
+        backStack.resetRootTo(startRoute)
     }
 
     val shortcutNavigationRequests = koinInject<ShortcutNavigationRequests>()
     val shortcutLoyaltyCardId by shortcutNavigationRequests.loyaltyCardId.collectAsStateWithLifecycle()
     // Declared after the root reset above so it runs after it. Signed out, a shortcut has nothing to open: drop it.
-    LaunchedEffect(shortcutLoyaltyCardId, isSignedIn) {
+    LaunchedEffect(shortcutLoyaltyCardId, startRoute) {
         val cardId = shortcutLoyaltyCardId ?: return@LaunchedEffect
         if (isSignedIn) {
             backStack.clear()
-            backStack.addAll(listOf(Route.ShoppingList, Route.LoyaltyCards, Route.LoyaltyCardDetails(cardId)))
+            backStack.addAll(loyaltyCardShortcutBackStack(startRoute = startRoute, cardId = cardId))
         }
         shortcutNavigationRequests.consume(cardId)
     }
@@ -162,6 +165,41 @@ private fun AppNavDisplay(
                                         viewModel.signInWithGoogle()
                                     },
                                     onLoginErrorShown = viewModel::onLoginErrorShown,
+                                )
+                            },
+                        )
+                    }
+                    entry<Route.Onboarding> { key ->
+                        val viewModel = koinViewModel<OnboardingViewModel>(parameters = { parametersOf(key.isReplay) })
+                        val state by viewModel.state().collectAsStateWithLifecycle()
+                        OnboardingScreen(
+                            state = state,
+                            callbacks = remember(key) {
+                                OnboardingScreenCallbacks(
+                                    onBackClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        backStack.popIfTop(key)
+                                    },
+                                    onSkipClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.onFinish()
+                                    },
+                                    onNextClick = { performHapticFeedback(hapticFeedback) },
+                                    onGetStartedClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.onFinish()
+                                    },
+                                    onFinished = {
+                                        if (key.isReplay) {
+                                            backStack.popIfTop(key)
+                                        } else {
+                                            // The flag is stored, so the start route also becomes the shopping list; moving on here
+                                            // does not depend on the app state stream. Whichever reset runs second finds a matching
+                                            // root and does nothing.
+                                            backStack.resetRootTo(Route.ShoppingList)
+                                        }
+                                    },
+                                    onErrorShown = viewModel::onErrorShown,
                                 )
                             },
                         )
@@ -542,6 +580,13 @@ private val tabTransition =
     NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() } +
         NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() } +
         NavDisplay.predictivePopTransitionSpec { fadeIn() togetherWith fadeOut() }
+
+private fun NavBackStack<NavKey>.resetRootTo(route: Route) {
+    if (firstOrNull() != route) {
+        clear()
+        add(route)
+    }
+}
 
 private fun NavBackStack<NavKey>.popIfTop(route: Route) {
     if (size > 1 && lastOrNull() == route) {

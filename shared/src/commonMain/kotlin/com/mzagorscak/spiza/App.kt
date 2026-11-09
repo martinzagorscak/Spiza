@@ -26,7 +26,10 @@ fun App() {
 
     ProvideAppLanguage(state.language) {
         TheAppTheme(darkTheme = darkTheme) {
-            AppNavigation(isSignedIn = state.isSignedIn)
+            AppNavigation(
+                isSignedIn = state.isSignedIn,
+                isOnboardingCompleted = state.isOnboardingCompleted,
+            )
         }
     }
 }

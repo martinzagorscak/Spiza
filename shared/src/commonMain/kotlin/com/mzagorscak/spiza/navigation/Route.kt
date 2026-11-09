@@ -18,6 +18,12 @@ sealed interface Route : NavKey {
         val householdDescription: String? = null,
     ) : Route
 
+    /** The intro carousel: after the first sign-in on a device, or replayed from settings when [isReplay] is set. */
+    @Serializable
+    data class Onboarding(
+        val isReplay: Boolean = false,
+    ) : Route
+
     @Serializable
     data object ShoppingList : Route
 
@@ -51,6 +57,7 @@ val routeSerializersModule =
         polymorphic(NavKey::class) {
             subclass(Route.Login::class)
             subclass(Route.CreateHousehold::class)
+            subclass(Route.Onboarding::class)
             subclass(Route.ShoppingList::class)
             subclass(Route.Settings::class)
             subclass(Route.HouseholdManagement::class)

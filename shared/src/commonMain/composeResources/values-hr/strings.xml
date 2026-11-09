@@ -1,5 +1,6 @@
 <resources>
     <!--  General terminology  -->
+    <string name="app_name">Spiza</string>
     <string name="member">Member</string>
     <string name="owner">Vlasnik</string>
     <string name="current_user">Me</string>
@@ -153,4 +154,23 @@
     <string name="app_update_recommended_description">Ažuriraj Spizu i iskoristi najnovija poboljšanja i ispravke.</string>
     <string name="app_update_recommended_later">Kasnije</string>
     <string name="app_update_update_button">Ažuriraj</string>
+    <string name="onboarding_skip">Preskoči</string>
+    <string name="onboarding_next">Dalje</string>
+    <string name="onboarding_get_started">Kreni</string>
+    <string name="onboarding_back">Natrag</string>
+    <string name="onboarding_page_indicator">Stranica %1$d od %2$d</string>
+    <string name="onboarding_households_title">Zajedno u kupnji</string>
+    <string name="onboarding_households_description">Stvori kućanstvo i dodaj ukućane pomoću njihova ključa za pridruživanje. Svi dijelite isti popis u stvarnom vremenu.</string>
+    <string name="onboarding_shopping_list_title">Popis koji se slaže sam</string>
+    <string name="onboarding_shopping_list_description">Dodaj artikle, označi ih kad ih kupiš i presloži ih povlačenjem. Kupljeni idu u zasebnu sekciju koju možeš sklopiti.</string>
+    <string name="onboarding_suggestions_title">Brže dodavanje</string>
+    <string name="onboarding_suggestions_description">Uključi spremanje artikala u postavkama i Spiza će zapamtiti što često kupuješ, pa sljedeći put dodaješ jednim dodirom.</string>
+    <string name="onboarding_loyalty_cards_title">Sve kartice na jednom mjestu</string>
+    <string name="onboarding_loyalty_cards_description">Skeniraj kartice vjernosti kamerom i pokaži barkod na blagajni. Najdraže dodaj u prečace pa ih otvaraš dugim pritiskom na ikonu aplikacije.</string>
+    <string name="onboarding_sample_item_milk">Mlijeko</string>
+    <string name="onboarding_sample_item_eggs">Jaja</string>
+    <string name="onboarding_sample_item_bread">Kruh</string>
+    <string name="onboarding_sample_suggestion_bananas">Banane</string>
+    <string name="onboarding_sample_suggestion_yogurt">Jogurt</string>
+    <string name="onboarding_sample_suggestion_coffee">Kava</string>
 </resources>

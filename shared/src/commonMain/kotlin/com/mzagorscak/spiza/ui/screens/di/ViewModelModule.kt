@@ -17,6 +17,8 @@ import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardViewModel
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.add.AddLoyaltyCardViewModelImpl
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsViewModel
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.details.LoyaltyCardDetailsViewModelImpl
+import com.mzagorscak.spiza.ui.screens.onboarding.OnboardingViewModel
+import com.mzagorscak.spiza.ui.screens.onboarding.OnboardingViewModelImpl
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModel
 import com.mzagorscak.spiza.ui.screens.settings.SettingsViewModelImpl
 import com.mzagorscak.spiza.ui.screens.shoppingList.ShoppingListViewModel
@@ -34,9 +36,11 @@ val viewModelModule = module {
             observeThemeMode = get(),
             observeAppLanguage = get(),
             observeUserProfile = get(),
+            observeOnboardingCompleted = get(),
             getCurrentThemeMode = get(),
             getCurrentAppLanguage = get(),
             getCurrentUserProfile = get(),
+            getOnboardingCompleted = get(),
             crashLogger = get(),
         )
     }
@@ -48,6 +52,13 @@ val viewModelModule = module {
         )
     }
     viewModel<LoginViewModel> { LoginViewModelImpl(signIn = get(), crashLogger = get()) }
+    viewModel<OnboardingViewModel> { (isReplay: Boolean) ->
+        OnboardingViewModelImpl(
+            isReplay = isReplay,
+            completeOnboarding = get(),
+            crashLogger = get(),
+        )
+    }
     viewModel<CreateHouseholdViewModel> { (scenario: HouseholdScenario) ->
         CreateHouseholdViewModelImpl(
             scenario = scenario,

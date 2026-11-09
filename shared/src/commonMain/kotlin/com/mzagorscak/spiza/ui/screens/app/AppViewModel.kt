@@ -9,9 +9,10 @@ data class AppState(
     val themeMode: ThemeMode,
     val language: AppLanguage,
     val isSignedIn: Boolean,
+    val isOnboardingCompleted: Boolean,
 )
 
-/** Exposes app-wide preferences (theme, language) applied at the root of the UI. */
+/** Exposes app-wide state applied at the root of the UI: preferences (theme, language) and what decides the start screen. */
 abstract class AppViewModel : ViewModel() {
     abstract fun state(): StateFlow<AppState>
 }
