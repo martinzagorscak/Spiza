@@ -23,10 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.keepScreenOn
-import com.mzagorscak.spiza.ui.components.Button
-import com.mzagorscak.spiza.ui.components.ButtonAppearance
-import com.mzagorscak.spiza.ui.components.ButtonSize
-import com.mzagorscak.spiza.ui.components.ButtonVariant
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
@@ -183,17 +179,6 @@ fun LoyaltyCardDetailsScreen(
                             onToggleShortcut = callbacks.onToggleShortcut,
                         )
                     }
-
-                    Button(
-                        label = stringResource(Res.string.loyalty_card_details_delete_button),
-                        onClick = { showDeleteDialog = true },
-                        isEnabled = state.isDeleting.not(),
-                        appearance = ButtonAppearance(
-                            variant = ButtonVariant.Secondary,
-                            size = ButtonSize.Large,
-                        ),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
                 }
             }
         }
