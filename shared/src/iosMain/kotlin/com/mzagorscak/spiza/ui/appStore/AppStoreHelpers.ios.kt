@@ -9,19 +9,20 @@ import platform.UIKit.UIApplication
 // TODO(ios-release): replace with the numeric Apple ID from App Store Connect (see docs/RELEASE.md).
 private const val APP_STORE_ID = ""
 
-private const val APP_STORE_APP_URL = "itms-apps://apps.apple.com/app/id"
-
-// Used while APP_STORE_ID is not set, so the button still leads somewhere useful.
-private const val APP_STORE_SEARCH_URL = "https://apps.apple.com/search?term=Spiza"
+// A universal link: on a device it opens the App Store app directly, on the simulator (no App Store) Safari.
+private const val APP_STORE_APP_URL = "https://apps.apple.com/app/id"
 
 @Composable
 actual fun rememberOpenAppStore(crashLogger: CrashLogger): () -> Unit = remember(crashLogger) { { openAppStore(crashLogger) } }
 
 private fun openAppStore(crashLogger: CrashLogger) {
     val isAppStoreIdSet = APP_STORE_ID.isNotEmpty() && APP_STORE_ID.all(Char::isDigit)
-    val urlString = if (isAppStoreIdSet) APP_STORE_APP_URL + APP_STORE_ID else APP_STORE_SEARCH_URL
+    if (isAppStoreIdSet.not()) {
+        crashLogger.logWarning(message = "Opening the store failed: APP_STORE_ID is not set")
+        return
+    }
     val url =
-        NSURL.URLWithString(urlString) ?: run {
+        NSURL.URLWithString(APP_STORE_APP_URL + APP_STORE_ID) ?: run {
             crashLogger.logWarning(message = "Opening the store failed: invalid App Store URL")
             return
         }

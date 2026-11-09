@@ -104,7 +104,7 @@ fun AppNavigation(isSignedIn: Boolean) {
     val openAppStore = rememberOpenAppStore(crashLogger = koinInject<CrashLogger>())
     val isUpdateRequired = appUpdateState.status == AppUpdateStatus.UpdateRequired
     // Also on returning from the background, so a version that became unsupported meanwhile is caught.
-    LifecycleStartEffect(Unit) {
+    LifecycleStartEffect(appUpdateViewModel) {
         appUpdateViewModel.onAppStarted()
         onStopOrDispose {}
     }
