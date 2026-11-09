@@ -3,6 +3,7 @@ package com.mzagorscak.spiza.ui.screens.shoppingList
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -338,6 +339,7 @@ private fun DoneHeader(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
+            .clickable(onClick = onCheckedItemsCollapse)
             .padding(padding200),
     ) {
         val checkedIconRes = if (areCheckedItemsCollapsed) Res.drawable.ic_filled_chevron_up else Res.drawable.ic_filled_chevron_down
