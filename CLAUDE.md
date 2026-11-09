@@ -64,6 +64,7 @@ Navigation is wired in `AppNavigation.kt` — that is where `koinViewModel()`, `
 (with haptic feedback) are created.
 
 Testing handbook for humans (levels, structure, commands, recipes): `docs/TESTING.md`.
+Release handbook and to-dos per platform (Android / iOS checklists, release runbook, forcing app updates via Remote Config): `docs/RELEASE.md`.
 
 Detailed rules live in `.claude/rules/` and are loaded automatically. Read them before writing code in an area you have not touched yet.
 
