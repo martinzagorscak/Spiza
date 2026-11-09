@@ -13,6 +13,7 @@
     <string name="error_quota_exceeded">Spiza je trenutno dosegnula ograničenje korištenja. Pokušaj ponovno kasnije.</string>
     <string name="error_quota_exceeded_title">Usluga je privremeno nedostupna</string>
     <string name="error_quota_exceeded_description">Spiza je trenutno dosegnula ograničenje korištenja. Tvoji su podaci sigurni — pokušaj ponovno kasnije.</string>
+    <string name="error_offline">Nema internetske veze. Poveži se i pokušaj ponovno.</string>
 
     <!--  Screen specifics  -->
     <string name="bottom_navigation_shopping_list">Popis</string>
@@ -54,6 +55,11 @@
     <string name="settings_shopping_items_saving_add_suggestion_dialog_label">Naziv prijedloga</string>
     <string name="settings_shopping_items_saving_add_suggestion_dialog_confirm">Dodaj</string>
     <string name="settings_sign_out">Odjava</string>
+    <string name="settings_delete_account">Izbriši račun</string>
+    <string name="settings_delete_account_dialog_title">Izbrisati račun?</string>
+    <string name="settings_delete_account_dialog_description">Ovime trajno brišeš svoj račun i to se ne može poništiti. Kućanstva kojih si vlasnik bit će izbrisana za sve članove, zajedno s njihovim popisima za kupnju. Kućanstva kojih nisi vlasnik automatski ćeš napustiti. Izbrisat će se i kartice vjernosti i spremljeni prijedlozi na ovom uređaju. Za potvrdu ćeš se morati ponovno prijaviti putem Googlea.</string>
+    <string name="settings_delete_account_dialog_confirm">Izbriši račun</string>
+    <string name="settings_delete_account_wrong_account">To je drugi Google račun. Prijavi se računom koji želiš izbrisati.</string>
     <string name="login_app_title">Spiza</string>
     <string name="login_tagline">Zajednički popis za kupovinu za cijelo kućanstvo</string>
     <string name="login_sign_in_with_google">Prijava putem Googlea</string>

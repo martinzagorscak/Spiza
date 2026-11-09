@@ -2,12 +2,16 @@ package com.mzagorscak.spiza.ui.screens.settings
 
 import androidx.lifecycle.viewModelScope
 import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.crash.catchAndRecord
+import com.mzagorscak.spiza.crash.dataErrorReason
 import com.mzagorscak.spiza.crash.isQuotaExceeded
 import com.mzagorscak.spiza.domain.model.AppLanguage
+import com.mzagorscak.spiza.domain.model.DeleteAccountResult
 import com.mzagorscak.spiza.domain.model.ThemeMode
 import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCase
+import com.mzagorscak.spiza.domain.usecase.DeleteAccountUseCase
 import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveThemeModeUseCase
@@ -38,6 +42,7 @@ internal class SettingsViewModelImpl(
     private val setThemeMode: SetThemeModeUseCase,
     private val setAppLanguage: SetAppLanguageUseCase,
     private val signOut: SignOutUseCase,
+    private val deleteAccount: DeleteAccountUseCase,
     private val crashLogger: CrashLogger,
 ) : SettingsViewModel() {
     private val state = MutableStateFlow(SettingsState())
@@ -82,13 +87,33 @@ internal class SettingsViewModelImpl(
 
     // Navigation reacts to the auth state change, so there is nothing to do on success.
     override fun onSignOut() {
-        if (state.value.isSigningOut) return
+        if (state.value.isSigningOut || state.value.isDeletingAccount) return
         state.update { it.copy(isSigningOut = true) }
         launchAction(context = "Settings sign-out failed") {
             try {
                 signOut()
             } finally {
                 state.update { it.copy(isSigningOut = false) }
+            }
+        }
+    }
+
+    // Like sign-out, navigation reacts to the auth state change on success; a cancelled confirmation shows nothing.
+    // The repository finishes a confirmed deletion even when this scope is cancelled by leaving the screen.
+    override fun onDeleteAccount() {
+        if (state.value.isDeletingAccount || state.value.isSigningOut) return
+        state.update { it.copy(isDeletingAccount = true) }
+        launchSafely(
+            crashLogger = crashLogger,
+            context = "Settings account deletion failed",
+            onError = { error -> state.update { it.copy(errorState = error.toDeleteAccountErrorState()) } },
+        ) {
+            try {
+                if (deleteAccount() == DeleteAccountResult.WrongAccount) {
+                    state.update { it.copy(errorState = SettingsState.ErrorState.DeleteAccountWrongAccount) }
+                }
+            } finally {
+                state.update { it.copy(isDeletingAccount = false) }
             }
         }
     }
@@ -114,4 +139,11 @@ private fun Throwable.toErrorState(): SettingsState.ErrorState =
         SettingsState.ErrorState.QuotaExceeded
     } else {
         SettingsState.ErrorState.Generic
+    }
+
+private fun Throwable.toDeleteAccountErrorState(): SettingsState.ErrorState =
+    when {
+        dataErrorReason() == DataException.Reason.Offline -> SettingsState.ErrorState.Offline
+        isQuotaExceeded() -> SettingsState.ErrorState.QuotaExceeded
+        else -> SettingsState.ErrorState.Generic
     }

@@ -335,6 +335,10 @@ private fun AppNavDisplay(
                                         performHapticFeedback(hapticFeedback)
                                         viewModel.onSignOut()
                                     },
+                                    onDeleteAccountClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.onDeleteAccount()
+                                    },
                                     onErrorShown = viewModel::onErrorShown,
                                 )
                             },

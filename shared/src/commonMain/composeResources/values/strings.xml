@@ -13,6 +13,7 @@
     <string name="error_quota_exceeded">Spiza has reached its usage limit for now. Please try again later.</string>
     <string name="error_quota_exceeded_title">Service temporarily unavailable</string>
     <string name="error_quota_exceeded_description">Spiza has reached its usage limit for now. Your data is safe — please try again later.</string>
+    <string name="error_offline">You're offline. Connect to the internet and try again.</string>
 
     <!--  Screen specifics  -->
     <string name="bottom_navigation_shopping_list">Shopping list</string>
@@ -54,6 +55,11 @@
     <string name="settings_shopping_items_saving_add_suggestion_dialog_label">Suggestion name</string>
     <string name="settings_shopping_items_saving_add_suggestion_dialog_confirm">Add</string>
     <string name="settings_sign_out">Sign out</string>
+    <string name="settings_delete_account">Delete account</string>
+    <string name="settings_delete_account_dialog_title">Delete account?</string>
+    <string name="settings_delete_account_dialog_description">This permanently deletes your account and cannot be undone. Households you own are deleted for all their members, together with their shopping lists. You will leave the households you do not own. Loyalty cards and saved suggestions on this device are deleted too. To confirm, you will be asked to sign in with Google again.</string>
+    <string name="settings_delete_account_dialog_confirm">Delete account</string>
+    <string name="settings_delete_account_wrong_account">That is a different Google account. Sign in with the account you want to delete.</string>
     <string name="login_app_title">Spiza</string>
     <string name="login_tagline">Shared shopping lists for your whole household</string>
     <string name="login_sign_in_with_google">Sign in with Google</string>

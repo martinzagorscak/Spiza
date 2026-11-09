@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.data.di
 
+import com.mzagorscak.spiza.data.account.AccountRepositoryImpl
 import com.mzagorscak.spiza.data.appUpdate.AppUpdateRepositoryImpl
 import com.mzagorscak.spiza.data.household.HouseholdRepositoryImpl
 import com.mzagorscak.spiza.data.local.LocalDataCleaner
@@ -16,6 +17,7 @@ import com.mzagorscak.spiza.data.shortcuts.AppShortcutsRepositoryImpl
 import com.mzagorscak.spiza.data.suggestion.SuggestionRepositoryImpl
 import com.mzagorscak.spiza.data.suggestion.local.SuggestionDao
 import com.mzagorscak.spiza.data.user.UserRepositoryImpl
+import com.mzagorscak.spiza.domain.repository.AccountRepository
 import com.mzagorscak.spiza.domain.repository.AppShortcutsRepository
 import com.mzagorscak.spiza.domain.repository.AppUpdateRepository
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
@@ -56,6 +58,16 @@ val dataModule =
         single<LoyaltyCardDao> { get<SpizaDatabase>().loyaltyCardDao() }
         single<LoyaltyCardRepository> { LoyaltyCardRepositoryImpl(loyaltyCardDao = get()) }
         single<LocalDataCleaner> { RoomLocalDataCleaner(database = get()) }
+        single<AccountRepository> {
+            AccountRepositoryImpl(
+                authService = get(),
+                householdDataSource = get(),
+                userDataSource = get(),
+                settingsDataSource = get(),
+                localDataCleaner = get(),
+                crashLogger = get(),
+            )
+        }
         single<AppShortcutsRepository> { AppShortcutsRepositoryImpl(publisher = get(), crashLogger = get()) }
         single<AppUpdateRepository> {
             AppUpdateRepositoryImpl(

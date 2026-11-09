@@ -16,13 +16,20 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.mzagorscak.spiza.domain.model.AppLanguage
 import com.mzagorscak.spiza.domain.model.ThemeMode
 import com.mzagorscak.spiza.ui.components.Avatar
@@ -31,12 +38,16 @@ import com.mzagorscak.spiza.ui.components.Button
 import com.mzagorscak.spiza.ui.components.ButtonAppearance
 import com.mzagorscak.spiza.ui.components.ButtonSize
 import com.mzagorscak.spiza.ui.components.ButtonVariant
+import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.ListingItem
+import com.mzagorscak.spiza.ui.components.LoadingIndicator
+import com.mzagorscak.spiza.ui.components.LoadingIndicatorSize
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.model.PresentableUserProfile
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import com.mzagorscak.spiza.ui.theme.padding200
@@ -44,12 +55,19 @@ import com.mzagorscak.spiza.ui.theme.padding400
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
+import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.error_generic
+import spiza.shared.generated.resources.error_offline
 import spiza.shared.generated.resources.error_quota_exceeded
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_refresh
 import spiza.shared.generated.resources.ic_right_chevron
 import spiza.shared.generated.resources.settings_copy_key
+import spiza.shared.generated.resources.settings_delete_account
+import spiza.shared.generated.resources.settings_delete_account_dialog_confirm
+import spiza.shared.generated.resources.settings_delete_account_dialog_description
+import spiza.shared.generated.resources.settings_delete_account_dialog_title
+import spiza.shared.generated.resources.settings_delete_account_wrong_account
 import spiza.shared.generated.resources.settings_generate_key
 import spiza.shared.generated.resources.settings_household_management
 import spiza.shared.generated.resources.settings_how_to_use
@@ -79,8 +97,19 @@ fun SettingsScreen(
     val errorMessage = when (state.errorState) {
         SettingsState.ErrorState.Generic -> stringResource(Res.string.error_generic)
         SettingsState.ErrorState.QuotaExceeded -> stringResource(Res.string.error_quota_exceeded)
+        SettingsState.ErrorState.Offline -> stringResource(Res.string.error_offline)
+        SettingsState.ErrorState.DeleteAccountWrongAccount -> stringResource(Res.string.settings_delete_account_wrong_account)
         SettingsState.ErrorState.None -> null
     }
+    var showDeleteAccountDialog by rememberSaveable { mutableStateOf(false) }
+    val areAccountActionsEnabled = state.isSigningOut.not() && state.isDeletingAccount.not()
+    val areActionsEnabled = state.isDeletingAccount.not()
+    // A confirmed deletion must not be left halfway: back is swallowed until it finishes (navigation then leaves on its own).
+    NavigationBackHandler(
+        state = rememberNavigationEventState(currentInfo = NavigationEventInfo.None),
+        isBackEnabled = state.isDeletingAccount,
+        onBackCompleted = {},
+    )
     LaunchedEffect(state.errorState) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -95,6 +124,7 @@ fun SettingsScreen(
                     IconButton(
                         resource = Res.drawable.ic_back,
                         onClick = callbacks.onBackClick,
+                        isEnabled = areActionsEnabled,
                         appearance = IconButtonAppearance(
                             variant = IconButtonVariant.IconBased,
                             size = IconButtonSize.Medium,
@@ -119,6 +149,7 @@ fun SettingsScreen(
                 ProfileCard(
                     profile = state.profile,
                     showHouseholdJoinKeySection = state.showHouseholdJoinKeySection,
+                    isEnabled = areActionsEnabled,
                     snackbarHostState = snackbarHostState,
                     onCreateJoinKeyClick = callbacks.onCreateJoinKeyClick,
                     onRefreshJoinKeyClick = callbacks.onRefreshJoinKeyClick,
@@ -129,6 +160,7 @@ fun SettingsScreen(
                     OptionItem(
                         label = stringResource(mode.labelRes()),
                         selected = state.themeMode == mode,
+                        isEnabled = areActionsEnabled,
                         onClick = { callbacks.onThemeModeSelected(mode) },
                     )
                 }
@@ -138,6 +170,7 @@ fun SettingsScreen(
                     OptionItem(
                         label = stringResource(language.labelRes()),
                         selected = state.language == language,
+                        isEnabled = areActionsEnabled,
                         onClick = { callbacks.onLanguageSelected(language) },
                     )
                 }
@@ -145,11 +178,12 @@ fun SettingsScreen(
             Section(stringResource(Res.string.settings_section_general)) {
                 ListingItem(
                     label = stringResource(Res.string.settings_household_management),
-                    onClick = callbacks.onHouseholdManagementClick,
+                    onClick = callbacks.onHouseholdManagementClick.takeIf { areActionsEnabled },
                     trailingContent = {
                         IconButton(
                             resource = Res.drawable.ic_right_chevron,
                             onClick = callbacks.onHouseholdManagementClick,
+                            isEnabled = areActionsEnabled,
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
                                 size = IconButtonSize.Medium,
@@ -161,11 +195,12 @@ fun SettingsScreen(
                 )
                 ListingItem(
                     label = stringResource(Res.string.settings_shopping_items_saving),
-                    onClick = callbacks.onShoppingItemsSavingClick,
+                    onClick = callbacks.onShoppingItemsSavingClick.takeIf { areActionsEnabled },
                     trailingContent = {
                         IconButton(
                             resource = Res.drawable.ic_right_chevron,
                             onClick = callbacks.onShoppingItemsSavingClick,
+                            isEnabled = areActionsEnabled,
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
                                 size = IconButtonSize.Medium,
@@ -177,11 +212,12 @@ fun SettingsScreen(
                 )
                 ListingItem(
                     label = stringResource(Res.string.settings_how_to_use),
-                    onClick = callbacks.onHowToUseClick,
+                    onClick = callbacks.onHowToUseClick.takeIf { areActionsEnabled },
                     trailingContent = {
                         IconButton(
                             resource = Res.drawable.ic_right_chevron,
                             onClick = callbacks.onHowToUseClick,
+                            isEnabled = areActionsEnabled,
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
                                 size = IconButtonSize.Medium,
@@ -194,11 +230,45 @@ fun SettingsScreen(
             Button(
                 label = stringResource(Res.string.settings_sign_out),
                 onClick = callbacks.onSignOutClick,
-                isEnabled = !state.isSigningOut,
+                isEnabled = areAccountActionsEnabled,
                 appearance = ButtonAppearance(variant = ButtonVariant.Secondary, size = ButtonSize.Large),
                 modifier = Modifier.fillMaxWidth(),
             )
+            Button(
+                label = stringResource(Res.string.settings_delete_account),
+                onClick = { showDeleteAccountDialog = true },
+                isEnabled = areAccountActionsEnabled,
+                appearance = ButtonAppearance(
+                    variant = ButtonVariant.Tertiary,
+                    size = ButtonSize.Large,
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+                leadingContent = if (state.isDeletingAccount) {
+                    { LoadingIndicator(size = LoadingIndicatorSize.Small) }
+                } else {
+                    null
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
+    }
+
+    if (showDeleteAccountDialog) {
+        Dialog(
+            title = stringResource(Res.string.settings_delete_account_dialog_title),
+            description = stringResource(Res.string.settings_delete_account_dialog_description),
+            dismissCTA = CTA(
+                label = stringResource(Res.string.cancel),
+                onClick = { showDeleteAccountDialog = false },
+            ),
+            confirmCTA = CTA(
+                label = stringResource(Res.string.settings_delete_account_dialog_confirm),
+                onClick = {
+                    showDeleteAccountDialog = false
+                    callbacks.onDeleteAccountClick()
+                },
+            ),
+        )
     }
 }
 
@@ -206,6 +276,7 @@ fun SettingsScreen(
 private fun ProfileCard(
     profile: PresentableUserProfile,
     showHouseholdJoinKeySection: Boolean,
+    isEnabled: Boolean,
     snackbarHostState: SnackbarHostState,
     onCreateJoinKeyClick: () -> Unit,
     onRefreshJoinKeyClick: () -> Unit,
@@ -230,6 +301,7 @@ private fun ProfileCard(
         if (showHouseholdJoinKeySection) {
             HouseholdJoinKeySection(
                 profile = profile,
+                isEnabled = isEnabled,
                 onCreateJoinKeyClick = onCreateJoinKeyClick,
                 onRefreshJoinKeyClick = onRefreshJoinKeyClick,
                 onCopyJoinKeyClick = { joinKey ->
@@ -247,6 +319,7 @@ private fun ProfileCard(
 @Composable
 private fun HouseholdJoinKeySection(
     profile: PresentableUserProfile,
+    isEnabled: Boolean,
     onCreateJoinKeyClick: () -> Unit,
     onRefreshJoinKeyClick: () -> Unit,
     onCopyJoinKeyClick: (String) -> Unit,
@@ -266,6 +339,7 @@ private fun HouseholdJoinKeySection(
         IconButton(
             resource = Res.drawable.ic_refresh,
             onClick = onRefreshJoinKeyClick,
+            isEnabled = isEnabled,
             appearance = IconButtonAppearance(
                 variant = IconButtonVariant.IconBased,
                 size = IconButtonSize.Medium,
@@ -293,6 +367,7 @@ private fun HouseholdJoinKeySection(
         Button(
             label = stringResource(Res.string.settings_generate_key),
             onClick = onCreateJoinKeyClick,
+            isEnabled = isEnabled,
             appearance = ButtonAppearance(variant = ButtonVariant.Secondary, size = ButtonSize.Medium),
         )
     }
@@ -302,12 +377,13 @@ private fun HouseholdJoinKeySection(
 private fun OptionItem(
     label: String,
     selected: Boolean,
+    isEnabled: Boolean,
     onClick: () -> Unit,
 ) {
     ListingItem(
         label = label,
-        onClick = onClick,
-        trailingContent = { RadioButton(selected = selected, onClick = onClick) },
+        onClick = onClick.takeIf { isEnabled },
+        trailingContent = { RadioButton(selected = selected, onClick = onClick, enabled = isEnabled) },
     )
 }
 
@@ -352,6 +428,7 @@ data class SettingsScreenCallbacks(
     val onShoppingItemsSavingClick: () -> Unit,
     val onHowToUseClick: () -> Unit,
     val onSignOutClick: () -> Unit,
+    val onDeleteAccountClick: () -> Unit,
     val onErrorShown: () -> Unit,
 )
 
@@ -373,6 +450,7 @@ private fun SettingsScreenPreview() {
                 onShoppingItemsSavingClick = {},
                 onHowToUseClick = {},
                 onSignOutClick = {},
+                onDeleteAccountClick = {},
                 onErrorShown = {},
             ),
         )

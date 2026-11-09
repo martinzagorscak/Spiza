@@ -12,12 +12,19 @@ data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.System,
     val language: AppLanguage = AppLanguage.Default,
     val isSigningOut: Boolean = false,
+    val isDeletingAccount: Boolean = false,
     val errorState: ErrorState = ErrorState.None,
 ) {
     enum class ErrorState {
         None,
         Generic,
         QuotaExceeded,
+
+        /** Account deletion needs a connection: it must not delete the account while its data deletion is only queued. */
+        Offline,
+
+        /** The account deletion was confirmed with a different Google account; nothing was deleted. */
+        DeleteAccountWrongAccount,
     }
 
     companion object {
@@ -42,6 +49,9 @@ abstract class SettingsViewModel : ViewModel() {
     abstract fun onLanguageSelected(language: AppLanguage)
 
     abstract fun onSignOut()
+
+    /** Starts account deletion after the user confirmed it; asks them to sign in again first. */
+    abstract fun onDeleteAccount()
 
     abstract fun onErrorShown()
 }

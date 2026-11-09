@@ -2,15 +2,18 @@ package com.mzagorscak.spiza.ui.screens.settings
 
 import assertk.assertThat
 import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.domain.constraints.ConstraintsManagerImpl
 import com.mzagorscak.spiza.domain.model.AppLanguage
+import com.mzagorscak.spiza.domain.model.DeleteAccountResult
 import com.mzagorscak.spiza.domain.model.ThemeMode
 import com.mzagorscak.spiza.domain.usecase.CanUserJoinHouseholdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.DeleteAccountUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetHouseholdJoinKeyUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveAppLanguageUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveThemeModeUseCaseImpl
@@ -19,6 +22,7 @@ import com.mzagorscak.spiza.domain.usecase.RefreshHouseholdJoinKeyUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetThemeModeUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SignOutUseCaseImpl
+import com.mzagorscak.spiza.fakes.FakeAccountRepository
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import com.mzagorscak.spiza.fakes.FakeHouseholdRepository
 import com.mzagorscak.spiza.fakes.FakeSettingsRepository
@@ -40,6 +44,7 @@ class SettingsViewModelImplTest {
     private val households = FakeHouseholdRepository()
     private val settings = FakeSettingsRepository()
     private val users = FakeUserRepository()
+    private val account = FakeAccountRepository()
     private val logger = FakeCrashLogger()
 
     @BeforeTest
@@ -60,6 +65,7 @@ class SettingsViewModelImplTest {
             setThemeMode = SetThemeModeUseCaseImpl(settings),
             setAppLanguage = SetAppLanguageUseCaseImpl(settings),
             signOut = SignOutUseCaseImpl(users),
+            deleteAccount = DeleteAccountUseCaseImpl(account),
             crashLogger = logger,
         )
 
@@ -145,6 +151,63 @@ class SettingsViewModelImplTest {
             assertThat(state.isSigningOut).isFalse()
         }
 
+    @Test
+    fun onDeleteAccount_showsDeleting_untilTheDeletionFinishes() =
+        runTest {
+            account.neverCompleteDelete = true
+            val viewModel = viewModel()
+
+            viewModel.onDeleteAccount()
+
+            assertThat(account.deleteAccountCalls).isEqualTo(1)
+            assertThat(viewModel.state().value.isDeletingAccount).isTrue()
+        }
+
+    @Test
+    fun onDeleteAccount_deletesTheAccount_withoutError() =
+        runTest {
+            val viewModel = viewModel()
+
+            viewModel.onDeleteAccount()
+
+            assertThat(account.deleteAccountCalls).isEqualTo(1)
+            val state = viewModel.state().value
+            assertThat(state.isDeletingAccount).isFalse()
+            assertThat(state.errorState).isEqualTo(SettingsState.ErrorState.None)
+        }
+
+    @Test
+    fun onDeleteAccount_showsNothing_whenTheUserCancelsTheConfirmation() =
+        runTest {
+            account.deleteAccountResult = DeleteAccountResult.Cancelled
+            val viewModel = viewModel()
+
+            viewModel.onDeleteAccount()
+
+            val state = viewModel.state().value
+            assertThat(state.isDeletingAccount).isFalse()
+            assertThat(state.errorState).isEqualTo(SettingsState.ErrorState.None)
+            assertThat(logger.exceptions).isEmpty()
+        }
+
+    @Test
+    fun onDeleteAccount_showsWrongAccountMessage_withoutRecordingAnError_whenConfirmedWithAnotherAccount() =
+        runTest {
+            account.deleteAccountResult = DeleteAccountResult.WrongAccount
+            val viewModel = viewModel()
+
+            viewModel.onDeleteAccount()
+
+            val state = viewModel.state().value
+            assertThat(state.isDeletingAccount).isFalse()
+            assertThat(state.errorState).isEqualTo(SettingsState.ErrorState.DeleteAccountWrongAccount)
+            assertThat(logger.exceptions).isEmpty()
+
+            viewModel.onErrorShown()
+
+            assertThat(viewModel.state().value.errorState).isEqualTo(SettingsState.ErrorState.None)
+        }
+
     // region Error handling
 
     @Test
@@ -198,6 +261,55 @@ class SettingsViewModelImplTest {
 
             val state = viewModel.state().value
             assertThat(state.isSigningOut).isFalse()
+            assertThat(state.errorState).isEqualTo(SettingsState.ErrorState.Generic)
+            assertThat(
+                logger.exceptions
+                    .single()
+                    .cause
+                    ?.message,
+            ).isEqualTo(error.message)
+        }
+
+    @Test
+    fun onDeleteAccount_ignoresRepeatedTaps_andSignOut_whileDeleting() =
+        runTest {
+            account.neverCompleteDelete = true
+            val viewModel = viewModel()
+
+            viewModel.onDeleteAccount()
+            viewModel.onDeleteAccount()
+            viewModel.onSignOut()
+
+            assertThat(account.deleteAccountCalls).isEqualTo(1)
+            assertThat(users.signOutCalls).isEqualTo(0)
+        }
+
+    @Test
+    fun onDeleteAccount_setsOfflineError_andLogsAWarning_whenOffline() =
+        runTest {
+            account.deleteFailure = DataException(DataException.Reason.Offline, "offline")
+            val viewModel = viewModel()
+
+            viewModel.onDeleteAccount()
+
+            val state = viewModel.state().value
+            assertThat(state.isDeletingAccount).isFalse()
+            assertThat(state.errorState).isEqualTo(SettingsState.ErrorState.Offline)
+            assertThat(logger.warnings).hasSize(1)
+            assertThat(logger.exceptions).isEmpty()
+        }
+
+    @Test
+    fun onDeleteAccount_setsGenericError_andRecordsIt_whenDeletionFails() =
+        runTest {
+            val error = DataException(DataException.Reason.PermissionDenied, "denied")
+            account.deleteFailure = error
+            val viewModel = viewModel()
+
+            viewModel.onDeleteAccount()
+
+            val state = viewModel.state().value
+            assertThat(state.isDeletingAccount).isFalse()
             assertThat(state.errorState).isEqualTo(SettingsState.ErrorState.Generic)
             assertThat(
                 logger.exceptions

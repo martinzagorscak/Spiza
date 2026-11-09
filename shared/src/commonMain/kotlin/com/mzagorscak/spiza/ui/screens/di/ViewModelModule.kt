@@ -99,6 +99,7 @@ val viewModelModule = module {
             setThemeMode = get(),
             setAppLanguage = get(),
             signOut = get(),
+            deleteAccount = get(),
             crashLogger = get(),
         )
     }

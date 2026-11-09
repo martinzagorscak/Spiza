@@ -30,6 +30,8 @@ import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.DeleteAccountUseCase
+import com.mzagorscak.spiza.domain.usecase.DeleteAccountUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.DeleteAllSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.DeleteAllSuggestionsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.DeleteArticleItemUseCase
@@ -220,4 +222,7 @@ val domainModule =
         single<ObserveOnboardingCompletedUseCase> { ObserveOnboardingCompletedUseCaseImpl(repository = get()) }
         single<GetOnboardingCompletedUseCase> { GetOnboardingCompletedUseCaseImpl(repository = get()) }
         single<SetOnboardingCompletedUseCase> { SetOnboardingCompletedUseCaseImpl(repository = get()) }
+
+        // Account Use Cases
+        single<DeleteAccountUseCase> { DeleteAccountUseCaseImpl(repository = get()) }
     }
