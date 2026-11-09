@@ -5,6 +5,7 @@ import com.mzagorscak.spiza.data.household.HouseholdRepositoryImpl
 import com.mzagorscak.spiza.data.local.SpizaDatabase
 import com.mzagorscak.spiza.data.loyaltyCard.LoyaltyCardRepositoryImpl
 import com.mzagorscak.spiza.data.loyaltyCard.local.LoyaltyCardDao
+import com.mzagorscak.spiza.data.onboarding.OnboardingRepositoryImpl
 import com.mzagorscak.spiza.data.repository.PermissionRepositoryImpl
 import com.mzagorscak.spiza.data.settings.SettingsDataSource
 import com.mzagorscak.spiza.data.settings.SettingsDataSourceImpl
@@ -17,6 +18,7 @@ import com.mzagorscak.spiza.domain.repository.AppShortcutsRepository
 import com.mzagorscak.spiza.domain.repository.AppUpdateRepository
 import com.mzagorscak.spiza.domain.repository.HouseholdRepository
 import com.mzagorscak.spiza.domain.repository.LoyaltyCardRepository
+import com.mzagorscak.spiza.domain.repository.OnboardingRepository
 import com.mzagorscak.spiza.domain.repository.PermissionRepository
 import com.mzagorscak.spiza.domain.repository.SettingsRepository
 import com.mzagorscak.spiza.domain.repository.SuggestionRepository
@@ -30,6 +32,7 @@ val dataModule =
         single<Settings> { Settings() }
         single<SettingsDataSource> { SettingsDataSourceImpl(settings = get()) }
         single<SettingsRepository> { SettingsRepositoryImpl(dataSource = get()) }
+        single<OnboardingRepository> { OnboardingRepositoryImpl(settingsDataSource = get()) }
         single<UserRepository> {
             UserRepositoryImpl(
                 authService = get(),

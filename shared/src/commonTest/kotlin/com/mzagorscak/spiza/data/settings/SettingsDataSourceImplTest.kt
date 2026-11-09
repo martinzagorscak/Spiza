@@ -22,6 +22,7 @@ class SettingsDataSourceImplTest {
         assertThat(dataSource.selectedHouseholdId.value).isNull()
         assertThat(dataSource.suggestionsSavingEnabled.value).isFalse()
         assertThat(dataSource.dismissedRecommendedVersion.value).isNull()
+        assertThat(dataSource.onboardingCompleted.value).isFalse()
     }
 
     @Test
@@ -33,6 +34,7 @@ class SettingsDataSourceImplTest {
         dataSource.setSelectedHouseholdId("household-2")
         dataSource.setSuggestionsSavingEnabled(true)
         dataSource.setDismissedRecommendedVersion(10_203)
+        dataSource.setOnboardingCompleted()
 
         assertThat(dataSource.themeMode.value).isEqualTo(ThemeMode.Dark)
         assertThat(dataSource.currentThemeMode).isEqualTo(ThemeMode.Dark)
@@ -41,6 +43,7 @@ class SettingsDataSourceImplTest {
         assertThat(dataSource.selectedHouseholdId.value).isEqualTo("household-2")
         assertThat(dataSource.suggestionsSavingEnabled.value).isTrue()
         assertThat(dataSource.dismissedRecommendedVersion.value).isEqualTo(10_203L)
+        assertThat(dataSource.onboardingCompleted.value).isTrue()
     }
 
     @Test
@@ -51,6 +54,7 @@ class SettingsDataSourceImplTest {
             setSelectedHouseholdId("household-2")
             setSuggestionsSavingEnabled(true)
             setDismissedRecommendedVersion(10_203)
+            setOnboardingCompleted()
         }
 
         val restarted = SettingsDataSourceImpl(settings = storage)
@@ -60,6 +64,7 @@ class SettingsDataSourceImplTest {
         assertThat(restarted.selectedHouseholdId.value).isEqualTo("household-2")
         assertThat(restarted.suggestionsSavingEnabled.value).isTrue()
         assertThat(restarted.dismissedRecommendedVersion.value).isEqualTo(10_203L)
+        assertThat(restarted.onboardingCompleted.value).isTrue()
     }
 
     // region Error handling
