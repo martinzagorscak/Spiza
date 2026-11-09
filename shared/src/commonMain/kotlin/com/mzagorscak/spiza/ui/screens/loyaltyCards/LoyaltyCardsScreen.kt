@@ -30,7 +30,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.error_generic
-import spiza.shared.generated.resources.ic_plus
+import spiza.shared.generated.resources.ic_add_loyalty_card
 import spiza.shared.generated.resources.loyalty_cards_empty_description
 import spiza.shared.generated.resources.loyalty_cards_empty_title
 import spiza.shared.generated.resources.loyalty_cards_shortcut_added
@@ -80,7 +80,7 @@ fun LoyaltyCardsScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.ic_plus),
+                    painter = painterResource(Res.drawable.ic_add_loyalty_card),
                     contentDescription = null,
                 )
             }
