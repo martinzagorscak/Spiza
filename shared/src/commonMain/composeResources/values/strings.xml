@@ -167,7 +167,7 @@
     <string name="onboarding_suggestions_title">Add things faster</string>
     <string name="onboarding_suggestions_description">Turn on shopping items saving in settings and Spiza remembers what you often buy, so next time it's one tap away.</string>
     <string name="onboarding_loyalty_cards_title">All your cards in one place</string>
-    <string name="onboarding_loyalty_cards_description">Scan loyalty cards with your camera and show the barcode at checkout. Add favourites to app shortcuts and open them with a long press on the app icon.</string>
+    <string name="onboarding_loyalty_cards_description">Scan loyalty cards with your camera and show the barcode at checkout. Add favorites to app shortcuts and open them with a long press on the app icon.</string>
     <string name="onboarding_sample_item_milk">Milk</string>
     <string name="onboarding_sample_item_eggs">Eggs</string>
     <string name="onboarding_sample_item_bread">Bread</string>

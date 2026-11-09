@@ -14,6 +14,7 @@ internal fun startRoute(
 /**
  * The back stack that opens the loyalty card [cardId] from an app shortcut. The card opens on top of [startRoute] so the root
  * still matches it: a shortcut used at checkout is not blocked by a pending onboarding, which is shown again on back.
+ * Only called when signed in; a signed-out shortcut is dropped by the caller.
  */
 internal fun loyaltyCardShortcutBackStack(
     startRoute: Route,

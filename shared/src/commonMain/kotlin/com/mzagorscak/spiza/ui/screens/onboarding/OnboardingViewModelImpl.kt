@@ -1,7 +1,7 @@
 package com.mzagorscak.spiza.ui.screens.onboarding
 
 import com.mzagorscak.spiza.crash.CrashLogger
-import com.mzagorscak.spiza.domain.usecase.CompleteOnboardingUseCase
+import com.mzagorscak.spiza.domain.usecase.SetOnboardingCompletedUseCase
 import com.mzagorscak.spiza.ui.screens.common.launchSafely
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.update
 
 internal class OnboardingViewModelImpl(
     isReplay: Boolean,
-    private val completeOnboarding: CompleteOnboardingUseCase,
+    private val setOnboardingCompleted: SetOnboardingCompletedUseCase,
     private val crashLogger: CrashLogger,
 ) : OnboardingViewModel() {
     private val state = MutableStateFlow(OnboardingState(isReplay = isReplay))
@@ -30,7 +30,7 @@ internal class OnboardingViewModelImpl(
             context = "Completing onboarding failed",
             onError = { state.update { it.copy(isCompleting = false, hasError = true) } },
         ) {
-            completeOnboarding()
+            setOnboardingCompleted()
             state.update { it.copy(isCompleting = false, isFinished = true) }
         }
     }

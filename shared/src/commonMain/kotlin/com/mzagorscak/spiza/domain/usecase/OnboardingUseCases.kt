@@ -23,12 +23,12 @@ class GetOnboardingCompletedUseCaseImpl(
     override operator fun invoke(): Boolean = repository.isOnboardingCompleted
 }
 
-interface CompleteOnboardingUseCase {
+interface SetOnboardingCompletedUseCase {
     suspend operator fun invoke()
 }
 
-class CompleteOnboardingUseCaseImpl(
+class SetOnboardingCompletedUseCaseImpl(
     private val repository: OnboardingRepository,
-) : CompleteOnboardingUseCase {
+) : SetOnboardingCompletedUseCase {
     override suspend operator fun invoke() = repository.setOnboardingCompleted()
 }

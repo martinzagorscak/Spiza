@@ -26,8 +26,6 @@ import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
 import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCaseImpl
-import com.mzagorscak.spiza.domain.usecase.CompleteOnboardingUseCase
-import com.mzagorscak.spiza.domain.usecase.CompleteOnboardingUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
@@ -102,6 +100,8 @@ import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCase
 import com.mzagorscak.spiza.domain.usecase.SetAppLanguageUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.SetOnboardingCompletedUseCase
+import com.mzagorscak.spiza.domain.usecase.SetOnboardingCompletedUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCase
 import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetSuggestionsSavingEnabledUseCase
@@ -219,5 +219,5 @@ val domainModule =
         // Onboarding Use Cases
         single<ObserveOnboardingCompletedUseCase> { ObserveOnboardingCompletedUseCaseImpl(repository = get()) }
         single<GetOnboardingCompletedUseCase> { GetOnboardingCompletedUseCaseImpl(repository = get()) }
-        single<CompleteOnboardingUseCase> { CompleteOnboardingUseCaseImpl(repository = get()) }
+        single<SetOnboardingCompletedUseCase> { SetOnboardingCompletedUseCaseImpl(repository = get()) }
     }

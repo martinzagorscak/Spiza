@@ -95,7 +95,7 @@ fun AppNavigation(
     // Declared after the root reset above so it runs after it. Signed out, a shortcut has nothing to open: drop it.
     LaunchedEffect(shortcutLoyaltyCardId, startRoute) {
         val cardId = shortcutLoyaltyCardId ?: return@LaunchedEffect
-        if (isSignedIn) {
+        if (startRoute != Route.Login) {
             backStack.clear()
             backStack.addAll(loyaltyCardShortcutBackStack(startRoute = startRoute, cardId = cardId))
         }

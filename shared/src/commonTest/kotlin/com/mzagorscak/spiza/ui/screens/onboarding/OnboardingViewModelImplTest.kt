@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import com.mzagorscak.spiza.domain.usecase.CompleteOnboardingUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.SetOnboardingCompletedUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import com.mzagorscak.spiza.fakes.FakeOnboardingRepository
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +31,7 @@ class OnboardingViewModelImplTest {
     private fun viewModel(isReplay: Boolean = false) =
         OnboardingViewModelImpl(
             isReplay = isReplay,
-            completeOnboarding = CompleteOnboardingUseCaseImpl(onboarding),
+            setOnboardingCompleted = SetOnboardingCompletedUseCaseImpl(onboarding),
             crashLogger = logger,
         )
 

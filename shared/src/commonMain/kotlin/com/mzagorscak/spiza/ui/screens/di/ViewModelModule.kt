@@ -55,7 +55,7 @@ val viewModelModule = module {
     viewModel<OnboardingViewModel> { (isReplay: Boolean) ->
         OnboardingViewModelImpl(
             isReplay = isReplay,
-            completeOnboarding = get(),
+            setOnboardingCompleted = get(),
             crashLogger = get(),
         )
     }
