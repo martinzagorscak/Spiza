@@ -28,6 +28,15 @@ class AppUpdateUseCasesTest {
         }
 
     @Test
+    fun getAppUpdateStatus_returnsUpdateRequired_evenIfTheRecommendedVersionWasDismissed() =
+        runTest {
+            repository.versionConfig = config(minSupported = INSTALLED + 1, recommended = INSTALLED + 1)
+            repository.dismissedVersion = INSTALLED + 1
+
+            assertThat(getAppUpdateStatus()).isEqualTo(AppUpdateStatus.UpdateRequired)
+        }
+
+    @Test
     fun getAppUpdateStatus_returnsUpToDate_whenEqualToBothThresholds() =
         runTest {
             repository.versionConfig = config(minSupported = INSTALLED, recommended = INSTALLED)

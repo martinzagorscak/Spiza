@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.fakes
 
 import com.mzagorscak.spiza.domain.model.AppVersionConfig
 import com.mzagorscak.spiza.domain.repository.AppUpdateRepository
+import kotlinx.coroutines.CompletableDeferred
 
 /** Every dismissal is recorded as an attempt before [writeFailure] applies; successful ones are reflected in [dismissedVersion]. */
 class FakeAppUpdateRepository : AppUpdateRepository {
@@ -20,11 +21,19 @@ class FakeAppUpdateRepository : AppUpdateRepository {
     /** When set, [setDismissedRecommendedVersion] throws it. */
     var writeFailure: Throwable? = null
 
+    /** When set, [getVersionConfig] suspends until it is completed, like a slow fetch. */
+    var versionConfigGate: CompletableDeferred<Unit>? = null
+
+    var versionConfigRequests = 0
+        private set
+
     val dismissedAttempts = mutableListOf<Long>()
 
     override fun currentVersion(): Long = installedVersion
 
     override suspend fun getVersionConfig(): AppVersionConfig {
+        versionConfigRequests++
+        versionConfigGate?.await()
         versionConfigFailure?.let { throw it }
         return versionConfig
     }

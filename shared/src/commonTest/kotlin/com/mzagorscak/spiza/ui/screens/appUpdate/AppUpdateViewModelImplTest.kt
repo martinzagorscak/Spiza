@@ -12,6 +12,7 @@ import com.mzagorscak.spiza.domain.usecase.DismissRecommendedUpdateUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetAppUpdateStatusUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeAppUpdateRepository
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -63,6 +64,22 @@ class AppUpdateViewModelImplTest {
         }
 
     @Test
+    fun onAppStarted_ignoresACallWhileACheckIsRunning() =
+        runTest {
+            requireUpdate()
+            val slowFetch = CompletableDeferred<Unit>()
+            repository.versionConfigGate = slowFetch
+            val viewModel = viewModel()
+            viewModel.onAppStarted()
+
+            viewModel.onAppStarted()
+            slowFetch.complete(Unit)
+
+            assertThat(repository.versionConfigRequests).isEqualTo(1)
+            assertThat(viewModel.state().value.status).isEqualTo(AppUpdateStatus.UpdateRequired)
+        }
+
+    @Test
     fun onAppStarted_keepsARecommendationHiddenThisSession_butAlwaysShowsARequiredUpdate() =
         runTest {
             recommendUpdate()
@@ -101,6 +118,18 @@ class AppUpdateViewModelImplTest {
             viewModel.onAppStarted()
 
             viewModel.onUpdateClick()
+
+            assertThat(viewModel.state().value.status).isEqualTo(AppUpdateStatus.UpdateRequired)
+        }
+
+    @Test
+    fun onHideRecommended_keepsTheRequiredUpdateShown() =
+        runTest {
+            requireUpdate()
+            val viewModel = viewModel()
+            viewModel.onAppStarted()
+
+            viewModel.onHideRecommended()
 
             assertThat(viewModel.state().value.status).isEqualTo(AppUpdateStatus.UpdateRequired)
         }
