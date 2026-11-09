@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 
 /**
  * Every write is recorded as an attempt **before** [writeFailure] / [neverCompleteWrites] apply, so tests can assert
@@ -24,7 +25,7 @@ class FakeHouseholdRepository : HouseholdRepository {
     val items = MutableStateFlow<List<ArticleItem>>(emptyList())
     val joinKey = MutableStateFlow<String?>("join-key")
 
-    /** When set, [observeHouseholds] fails with it (checked each time the stream is collected). */
+    /** When set, [observeHouseholds] fails with it (checked when the stream is collected and on every emission, like a listener error). */
     var householdsFailure: Throwable? = null
 
     /** When set, [observeItems] fails with it (checked each time the stream is collected). */
@@ -68,6 +69,12 @@ class FakeHouseholdRepository : HouseholdRepository {
     /** The household id of every item write, in call order. */
     val itemWriteHouseholdIds = mutableListOf<String>()
     val clearedHouseholds = mutableListOf<String>()
+
+    /** The household id of every [observeItems] collection (one per started items listener), in call order. */
+    val observedItemsHouseholdIds = mutableListOf<String>()
+
+    /** How many times [observeHouseholds] was collected (one per started households listener). */
+    var observeHouseholdsCollections = 0
 
     /** The member id of every [removeMemberFromHousehold] call. */
     val removedMembers = mutableListOf<String>()
@@ -161,14 +168,16 @@ class FakeHouseholdRepository : HouseholdRepository {
 
     override fun observeHouseholds(): Flow<List<Household>> =
         flow {
+            observeHouseholdsCollections++
             householdsFailure?.let { throw it }
-            emitAll(households)
+            emitAll(households.onEach { householdsFailure?.let { throw it } })
         }
 
     override fun getCachedHouseholdCount(): Flow<Int> = households.map { it.size }
 
     override fun observeItems(householdId: String): Flow<List<ArticleItem>> =
         flow {
+            observedItemsHouseholdIds += householdId
             itemsFailure?.let { throw it }
             emitAll(items)
         }

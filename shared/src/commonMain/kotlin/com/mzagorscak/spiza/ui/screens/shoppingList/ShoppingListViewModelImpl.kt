@@ -32,13 +32,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -217,20 +221,23 @@ internal class ShoppingListViewModelImpl(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeSnapshots(): Flow<Snapshot> =
         retryTrigger.flatMapLatest {
-            observeHouseholdSelection()
-                .flatMapLatest { (households, current) ->
-                    if (current == null) {
-                        flowOf(Snapshot.NoHousehold)
-                    } else {
-                        observeItems(current.id).map {
-                            Snapshot.Loaded(
-                                households = households,
-                                current = current,
-                                items = it,
-                            )
+            channelFlow {
+                val selection = observeHouseholdSelection().stateIn(this)
+                selection
+                    .map { it.current?.id }
+                    .distinctUntilChanged()
+                    .flatMapLatest { currentId ->
+                        if (currentId == null) {
+                            flowOf(Snapshot.NoHousehold)
+                        } else {
+                            combine(selection, observeItems(currentId)) { (households, current), items ->
+                                current
+                                    ?.takeIf { it.id == currentId }
+                                    ?.let { Snapshot.Loaded(households = households, current = it, items = items) }
+                            }.filterNotNull()
                         }
-                    }
-                }.onStart<Snapshot> { emit(Snapshot.Loading) }
+                    }.collect { send(it) }
+            }.onStart<Snapshot> { emit(Snapshot.Loading) }
                 .catchAndRecord(crashLogger = crashLogger, context = "Shopping list stream failed") { error ->
                     emit(Snapshot.Failed(isQuotaExceeded = error.isQuotaExceeded()))
                 }

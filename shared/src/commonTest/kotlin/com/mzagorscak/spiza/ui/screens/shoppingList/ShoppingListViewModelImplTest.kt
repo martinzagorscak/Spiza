@@ -192,6 +192,41 @@ class ShoppingListViewModelImplTest {
         }
 
     @Test
+    fun householdsUpdate_keepsItemsListener_andShowsNewHeader_whenSelectedHouseholdStaysTheSame() =
+        runTest {
+            households.households.value =
+                listOf(household(id = "household-1", name = "Home"), household(id = "household-2", name = "Cottage"))
+            val viewModel = viewModel()
+
+            households.households.value =
+                listOf(household(id = "household-1", name = "New home"), household(id = "household-2", name = "Cottage"))
+            households.households.value += household(id = "household-joined", name = "Friends", ownerId = "user-2")
+
+            assertThat(households.observedItemsHouseholdIds).containsExactly("household-1")
+            assertThat(households.observeHouseholdsCollections).isEqualTo(1)
+            assertThat(viewModel.headerState().value.currentHouseholdName).isEqualTo("New home")
+            assertThat(viewModel.headerState().value.otherHouseholds).containsExactly(
+                PresentableSimpleHousehold(id = "household-2", name = "Cottage"),
+                PresentableSimpleHousehold(id = "household-joined", name = "Friends"),
+            )
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
+        }
+
+    @Test
+    fun onHouseholdSelected_startsItemsListenerForTheNewHousehold() =
+        runTest {
+            households.households.value =
+                listOf(household(id = "household-1", name = "Home"), household(id = "household-2", name = "Cottage"))
+            val viewModel = viewModel()
+
+            viewModel.onHouseholdSelected("household-2")
+
+            assertThat(households.observedItemsHouseholdIds).containsExactly("household-1", "household-2")
+            assertThat(households.observeHouseholdsCollections).isEqualTo(1)
+            assertThat(viewModel.content().currentHouseholdId).isEqualTo("household-2")
+        }
+
+    @Test
     fun itemWrites_goToTheSelectedHousehold() =
         runTest {
             households.households.value = listOf(household(id = "household-1"), household(id = "household-2"))
@@ -403,6 +438,41 @@ class ShoppingListViewModelImplTest {
             viewModel.retry()
 
             assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
+        }
+
+    @Test
+    fun householdsStreamFailingAfterLoad_showsGenericError_andRetryRecovers() =
+        runTest {
+            val viewModel = viewModel()
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
+
+            households.householdsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
+            households.households.value = listOf(household(id = "household-1", name = "Renamed"))
+
+            assertThat(viewModel.bodyState().value)
+                .isEqualTo(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.Generic))
+
+            households.householdsFailure = null
+            viewModel.retry()
+
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
+            assertThat(viewModel.headerState().value.currentHouseholdName).isEqualTo("Renamed")
+        }
+
+    @Test
+    fun failedItemsStream_showsGenericError_andRetryRecovers() =
+        runTest {
+            households.itemsFailure = DataException(DataException.Reason.PermissionDenied, "denied")
+            val viewModel = viewModel()
+
+            assertThat(viewModel.bodyState().value)
+                .isEqualTo(ShoppingListState.Body.Error(errorType = ShoppingListState.ErrorType.Generic))
+
+            households.itemsFailure = null
+            viewModel.retry()
+
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
+            assertThat(households.observeHouseholdsCollections).isEqualTo(2)
         }
 
     @Test
