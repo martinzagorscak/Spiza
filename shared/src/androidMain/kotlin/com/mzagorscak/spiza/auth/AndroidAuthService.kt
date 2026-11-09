@@ -10,16 +10,19 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.mzagorscak.spiza.crash.CrashLogger
-import com.mzagorscak.spiza.crash.recordError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+
+private const val USER_MISMATCH_ERROR_CODE = "ERROR_USER_MISMATCH"
 
 class AndroidAuthService(
     context: Context,
@@ -41,7 +44,9 @@ class AndroidAuthService(
 
     override suspend fun signIn(provider: AuthProvider): AuthResult =
         when (provider) {
-            AuthProvider.Google -> signInWithGoogle()
+            AuthProvider.Google ->
+                authenticateWithGoogle { credential -> firebaseAuth.signInWithCredential(credential).await().user }
+
             AuthProvider.Apple ->
                 AuthResult.Failure(UnsupportedOperationException("Apple sign-in is not supported on Android"))
         }
@@ -49,14 +54,46 @@ class AndroidAuthService(
     override suspend fun signOut() {
         firebaseAuth.signOut()
         // The user is already signed out of Firebase; a stale Google credential only affects the next account picker.
-        try {
-            credentialManager.clearCredentialState(ClearCredentialStateRequest())
-        } catch (e: ClearCredentialException) {
-            crashLogger.recordError(context = "Clearing Google credential state failed", error = e)
+        clearGoogleCredentialState()
+    }
+
+    override suspend fun reauthenticate(): AuthResult {
+        val user =
+            firebaseAuth.currentUser
+                ?: return AuthResult.Failure(IllegalStateException("No signed-in user to reauthenticate"))
+        // TODO: #ImplementAppleAuthProvider - reauthenticate Apple users once Apple sign-in exists.
+        if (user.providerData.none { it.providerId == GoogleAuthProvider.PROVIDER_ID }) {
+            return AuthResult.Failure(UnsupportedOperationException("Reauthentication is only supported for Google users"))
+        }
+        // Firebase rejects a credential of another account with a user-mismatch error; callers tell it apart from other failures.
+        return authenticateWithGoogle { credential ->
+            try {
+                user.reauthenticate(credential).await()
+            } catch (e: FirebaseAuthException) {
+                if (e.errorCode == USER_MISMATCH_ERROR_CODE) throw UserMismatchException(message = e.message, cause = e)
+                throw e
+            }
+            user
         }
     }
 
-    private suspend fun signInWithGoogle(): AuthResult {
+    override suspend fun deleteCurrentUser() {
+        val user = firebaseAuth.currentUser ?: throw IllegalStateException("No signed-in user to delete")
+        user.delete().await()
+        // The Firebase user is already gone; a stale Google credential only affects the next account picker.
+        clearGoogleCredentialState()
+    }
+
+    private suspend fun clearGoogleCredentialState() {
+        try {
+            credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        } catch (e: ClearCredentialException) {
+            crashLogger.logWarning(message = "Clearing Google credential state failed: ${e.message}")
+        }
+    }
+
+    /** Shows the Google account picker and passes the Google credential to [authenticate] (sign-in or reauthentication). */
+    private suspend fun authenticateWithGoogle(authenticate: suspend (AuthCredential) -> FirebaseUser?): AuthResult {
         val activity =
             activityProvider.current
                 ?: return AuthResult.Failure(IllegalStateException("No foreground Activity available"))
@@ -71,10 +108,7 @@ class AndroidAuthService(
             }
             val idToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
             val user =
-                firebaseAuth
-                    .signInWithCredential(GoogleAuthProvider.getCredential(idToken, null))
-                    .await()
-                    .user
+                authenticate(GoogleAuthProvider.getCredential(idToken, null))
                     ?: return AuthResult.Failure(IllegalStateException("Firebase returned no user"))
             AuthResult.Success(user.toAuthUser())
         } catch (e: GetCredentialCancellationException) {

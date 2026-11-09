@@ -12,6 +12,12 @@ interface IosHouseholdBridge {
         onError: (error: BridgeError) -> Unit,
     ): IosListenerHandle
 
+    /** Reads from the server only (`.server` source), so it fails when offline instead of returning cached data. */
+    fun getHouseholds(
+        userId: String,
+        onComplete: (households: List<HouseholdDto>, error: BridgeError?) -> Unit,
+    )
+
     fun observeItems(
         householdId: String,
         onChange: (List<ArticleItemDto>) -> Unit,

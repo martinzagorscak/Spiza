@@ -31,4 +31,16 @@ class IosUserDataSource(
                 }
             }
         }
+
+    override suspend fun deleteUserProfile(userId: String) {
+        suspendCancellableCoroutine { continuation ->
+            bridge.deleteUserProfile(userId = userId) { error ->
+                if (error == null) {
+                    continuation.resume(Unit)
+                } else {
+                    continuation.resumeWithException(error.toDataException())
+                }
+            }
+        }
+    }
 }

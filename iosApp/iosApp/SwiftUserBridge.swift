@@ -67,6 +67,12 @@ final class SwiftUserBridge: NSObject, IosUserBridge {
             onComplete(profiles, nil)
         }
     }
+
+    func deleteUserProfile(userId: String, onComplete: @escaping (BridgeError?) -> Void) {
+        users.document(userId).delete { error in
+            onComplete(error?.toBridgeError())
+        }
+    }
 }
 
 extension DocumentSnapshot {

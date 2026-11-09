@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.crash
 
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.firestore.FirebaseFirestoreException
 import java.io.IOException
 
@@ -12,6 +13,8 @@ private fun Throwable.knownReason(): DataException.Reason? =
     when (this) {
         is DataException -> reason
         is IOException -> DataException.Reason.Offline
+        // Firebase Auth (e.g. reauthenticate, delete user) reports a missing connection or timeout with this exception.
+        is FirebaseNetworkException -> DataException.Reason.Offline
         is FirebaseFirestoreException ->
             when (code) {
                 FirebaseFirestoreException.Code.UNAVAILABLE,

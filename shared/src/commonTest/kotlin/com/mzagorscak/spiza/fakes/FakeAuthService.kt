@@ -7,7 +7,10 @@ import com.mzagorscak.spiza.auth.AuthUser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** Signed in as [TEST_USER] by default; a successful [signIn] and [signOut] are reflected in [user] like Firebase Auth. */
+/**
+ * Signed in as [TEST_USER] by default; a successful [signIn], [signOut] and [deleteCurrentUser] are reflected in [user]
+ * like Firebase Auth.
+ */
 class FakeAuthService(
     signedInUser: AuthUser? = TEST_USER,
 ) : AuthService {
@@ -16,6 +19,17 @@ class FakeAuthService(
 
     /** What [signIn] returns. */
     var signInResult: AuthResult = AuthResult.Success(TEST_USER)
+
+    /** What [reauthenticate] returns. */
+    var reauthenticateResult: AuthResult = AuthResult.Success(TEST_USER)
+
+    /** When set, [deleteCurrentUser] throws it and the user stays signed in. */
+    var deleteUserFailure: Throwable? = null
+
+    var reauthenticateCalls = 0
+
+    /** Every [deleteCurrentUser] attempt, recorded **before** [deleteUserFailure] applies. */
+    var deleteUserCalls = 0
 
     override val authState: Flow<AuthUser?> = user
 
@@ -27,6 +41,17 @@ class FakeAuthService(
         }
 
     override suspend fun signOut() {
+        user.value = null
+    }
+
+    override suspend fun reauthenticate(): AuthResult {
+        reauthenticateCalls++
+        return reauthenticateResult
+    }
+
+    override suspend fun deleteCurrentUser() {
+        deleteUserCalls++
+        deleteUserFailure?.let { throw it }
         user.value = null
     }
 }

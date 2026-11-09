@@ -13,4 +13,9 @@ interface IosUserBridge {
         userIds: List<String>,
         onComplete: (users: List<UserProfileDto>, error: BridgeError?) -> Unit,
     )
+
+    fun deleteUserProfile(
+        userId: String,
+        onComplete: (error: BridgeError?) -> Unit,
+    )
 }

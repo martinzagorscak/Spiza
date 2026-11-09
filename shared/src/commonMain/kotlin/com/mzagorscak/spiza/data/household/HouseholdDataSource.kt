@@ -30,6 +30,9 @@ interface HouseholdDataSource {
 
     fun observeHouseholds(userId: String): Flow<List<HouseholdDto>>
 
+    /** One-shot read of the households [userId] has joined, from the server only (never the cache): throws when offline. */
+    suspend fun getHouseholds(userId: String): List<HouseholdDto>
+
     fun observeItems(householdId: String): Flow<List<ArticleItemDto>>
 
     suspend fun createHousehold(

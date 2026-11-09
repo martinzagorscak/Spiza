@@ -139,6 +139,29 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         return FirestoreListenerHandle(registration)
     }
 
+    // Server only: account deletion must act on the current memberships, never on a stale cache.
+    // Unlike the listeners, a malformed document fails the read: skipping it would leave that household (and the user in it)
+    // behind after the account is deleted.
+    func getHouseholds(userId: String, onComplete: @escaping ([HouseholdDto], BridgeError?) -> Void) {
+        households
+            .whereField(HouseholdFields.shared.JOINED_MEMBERS, arrayContains: userId)
+            .getDocuments(source: .server) { snapshot, error in
+                if let error = error {
+                    onComplete([], error.toBridgeError())
+                    return
+                }
+                var result: [HouseholdDto] = []
+                for document in snapshot?.documents ?? [] {
+                    guard let household = document.toHouseholdDto() else {
+                        onComplete([], BridgeError(reason: "Unknown", message: "Malformed household document \(document.documentID)"))
+                        return
+                    }
+                    result.append(household)
+                }
+                onComplete(result, nil)
+            }
+    }
+
     func observeItems(
         householdId: String,
         onChange: @escaping ([ArticleItemDto]) -> Void,
@@ -274,12 +297,12 @@ extension QueryDocumentSnapshot {
 extension Error {
     /// Maps a Firebase error to a BridgeError whose reason is a Kotlin DataException.Reason name.
     /// Firestore uses gRPC status codes: 4 deadlineExceeded, 5 notFound, 7 permissionDenied, 8 resourceExhausted (quota), 14 unavailable,
-    /// 16 unauthenticated.
+    /// 16 unauthenticated. Firebase Auth reports a missing connection or timeout as 17020 networkError.
     func toBridgeError() -> BridgeError {
         let nsError = self as NSError
         let reason: String
         switch (nsError.domain, nsError.code) {
-        case ("FIRFirestoreErrorDomain", 4), ("FIRFirestoreErrorDomain", 14), (NSURLErrorDomain, _):
+        case ("FIRFirestoreErrorDomain", 4), ("FIRFirestoreErrorDomain", 14), ("FIRAuthErrorDomain", 17020), (NSURLErrorDomain, _):
             reason = "Offline"
         case ("FIRFirestoreErrorDomain", 7), ("FIRFirestoreErrorDomain", 16):
             reason = "PermissionDenied"
