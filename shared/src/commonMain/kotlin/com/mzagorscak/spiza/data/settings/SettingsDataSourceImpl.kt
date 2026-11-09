@@ -12,11 +12,11 @@ internal class SettingsDataSourceImpl(
     private val settings: Settings,
 ) : SettingsDataSource {
     private val themeModeState = MutableStateFlow(readThemeMode())
-    private val languageState = MutableStateFlow(AppLanguage.fromTag(settings.getStringOrNull(KEY_LANGUAGE)))
-    private val selectedHouseholdIdState = MutableStateFlow(settings.getStringOrNull(KEY_SELECTED_HOUSEHOLD_ID))
-    private val suggestionsSavingEnabledState = MutableStateFlow(settings.getBoolean(KEY_SUGGESTIONS_SAVING_ENABLED, false))
-    private val dismissedRecommendedVersionState = MutableStateFlow(settings.getLongOrNull(KEY_DISMISSED_RECOMMENDED_VERSION))
-    private val onboardingCompletedState = MutableStateFlow(settings.getBoolean(KEY_ONBOARDING_COMPLETED, false))
+    private val languageState = MutableStateFlow(readLanguage())
+    private val selectedHouseholdIdState = MutableStateFlow(readSelectedHouseholdId())
+    private val suggestionsSavingEnabledState = MutableStateFlow(readSuggestionsSavingEnabled())
+    private val dismissedRecommendedVersionState = MutableStateFlow(readDismissedRecommendedVersion())
+    private val onboardingCompletedState = MutableStateFlow(readOnboardingCompleted())
 
     override val themeMode: StateFlow<ThemeMode> = themeModeState.asStateFlow()
     override val language: StateFlow<AppLanguage> = languageState.asStateFlow()
@@ -57,10 +57,30 @@ internal class SettingsDataSourceImpl(
         onboardingCompletedState.value = true
     }
 
+    // Only our own keys: on iOS the no-arg Settings is the shared NSUserDefaults, which also holds SDK (Firebase, Google) entries.
+    override fun clear() {
+        CLEARABLE_KEYS.forEach { settings.remove(it) }
+        themeModeState.value = readThemeMode()
+        languageState.value = readLanguage()
+        selectedHouseholdIdState.value = readSelectedHouseholdId()
+        suggestionsSavingEnabledState.value = readSuggestionsSavingEnabled()
+        onboardingCompletedState.value = readOnboardingCompleted()
+    }
+
     private fun readThemeMode(): ThemeMode =
         settings.getStringOrNull(KEY_THEME_MODE)?.let { stored ->
             ThemeMode.entries.firstOrNull { it.name == stored }
         } ?: ThemeMode.System
+
+    private fun readLanguage(): AppLanguage = AppLanguage.fromTag(settings.getStringOrNull(KEY_LANGUAGE))
+
+    private fun readSelectedHouseholdId(): String? = settings.getStringOrNull(KEY_SELECTED_HOUSEHOLD_ID)
+
+    private fun readSuggestionsSavingEnabled(): Boolean = settings.getBoolean(KEY_SUGGESTIONS_SAVING_ENABLED, false)
+
+    private fun readDismissedRecommendedVersion(): Long? = settings.getLongOrNull(KEY_DISMISSED_RECOMMENDED_VERSION)
+
+    private fun readOnboardingCompleted(): Boolean = settings.getBoolean(KEY_ONBOARDING_COMPLETED, false)
 
     private companion object {
         const val KEY_THEME_MODE = "theme_mode"
@@ -69,5 +89,16 @@ internal class SettingsDataSourceImpl(
         const val KEY_SUGGESTIONS_SAVING_ENABLED = "suggestions_saving_enabled"
         const val KEY_DISMISSED_RECOMMENDED_VERSION = "dismissed_recommended_version"
         const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
+
+        // What clear() removes: a new preference must be added here too. The dismissed recommended update is not listed because
+        // it describes the installed app on this device, not the user's data.
+        val CLEARABLE_KEYS =
+            listOf(
+                KEY_THEME_MODE,
+                KEY_LANGUAGE,
+                KEY_SELECTED_HOUSEHOLD_ID,
+                KEY_SUGGESTIONS_SAVING_ENABLED,
+                KEY_ONBOARDING_COMPLETED,
+            )
     }
 }

@@ -173,6 +173,7 @@ kover {
                     "*ComposableSingletons*",
                     "*BuildConfig*",
                     "com.mzagorscak.spiza.data.local.SpizaDatabaseConstructor",
+                    "com.mzagorscak.spiza.data.local.RoomLocalDataCleaner*",
                     "com.mzagorscak.spiza.data.loyaltyCard.LoyaltyCardRepositoryImpl*",
                     "com.mzagorscak.spiza.data.suggestion.SuggestionRepositoryImpl*",
                 )

@@ -2,6 +2,8 @@ package com.mzagorscak.spiza.data.di
 
 import com.mzagorscak.spiza.data.appUpdate.AppUpdateRepositoryImpl
 import com.mzagorscak.spiza.data.household.HouseholdRepositoryImpl
+import com.mzagorscak.spiza.data.local.LocalDataCleaner
+import com.mzagorscak.spiza.data.local.RoomLocalDataCleaner
 import com.mzagorscak.spiza.data.local.SpizaDatabase
 import com.mzagorscak.spiza.data.loyaltyCard.LoyaltyCardRepositoryImpl
 import com.mzagorscak.spiza.data.loyaltyCard.local.LoyaltyCardDao
@@ -53,6 +55,7 @@ val dataModule =
         single<SuggestionRepository> { SuggestionRepositoryImpl(suggestionDao = get()) }
         single<LoyaltyCardDao> { get<SpizaDatabase>().loyaltyCardDao() }
         single<LoyaltyCardRepository> { LoyaltyCardRepositoryImpl(loyaltyCardDao = get()) }
+        single<LocalDataCleaner> { RoomLocalDataCleaner(database = get()) }
         single<AppShortcutsRepository> { AppShortcutsRepositoryImpl(publisher = get(), crashLogger = get()) }
         single<AppUpdateRepository> {
             AppUpdateRepositoryImpl(

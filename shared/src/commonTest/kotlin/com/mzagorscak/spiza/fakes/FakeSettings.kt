@@ -11,7 +11,11 @@ class FakeSettings : Settings {
 
     override fun clear() = values.clear()
 
+    /** When set, [remove] throws it (like a storage failure). */
+    var removeFailure: Throwable? = null
+
     override fun remove(key: String) {
+        removeFailure?.let { throw it }
         values.remove(key)
     }
 

@@ -67,6 +67,51 @@ class SettingsDataSourceImplTest {
         assertThat(restarted.onboardingCompleted.value).isTrue()
     }
 
+    @Test
+    fun clear_resetsTheUsersPreferencesToTheirDefaults_inMemoryAndInStorage() {
+        val dataSource =
+            SettingsDataSourceImpl(settings = storage).apply {
+                setThemeMode(ThemeMode.Dark)
+                setLanguage(AppLanguage.Croatian)
+                setSelectedHouseholdId("household-2")
+                setSuggestionsSavingEnabled(true)
+                setDismissedRecommendedVersion(10_203)
+                setOnboardingCompleted()
+            }
+
+        dataSource.clear()
+
+        val restarted = SettingsDataSourceImpl(settings = storage)
+        listOf(dataSource, restarted).forEach {
+            assertThat(it.themeMode.value).isEqualTo(ThemeMode.System)
+            assertThat(it.language.value).isEqualTo(AppLanguage.Default)
+            assertThat(it.selectedHouseholdId.value).isNull()
+            assertThat(it.suggestionsSavingEnabled.value).isFalse()
+            assertThat(it.onboardingCompleted.value).isFalse()
+        }
+    }
+
+    // The dismissed recommended update describes the installed app on this device, not the user's data.
+    @Test
+    fun clear_keepsTheDismissedRecommendedVersion() {
+        val dataSource = SettingsDataSourceImpl(settings = storage).apply { setDismissedRecommendedVersion(10_203) }
+
+        dataSource.clear()
+
+        assertThat(dataSource.dismissedRecommendedVersion.value).isEqualTo(10_203L)
+        assertThat(SettingsDataSourceImpl(settings = storage).dismissedRecommendedVersion.value).isEqualTo(10_203L)
+    }
+
+    // On iOS the store is the app's shared NSUserDefaults, which also holds SDK entries.
+    @Test
+    fun clear_keepsKeysThatAreNotPreferencesOfTheApp() {
+        storage.putString("sdk_key", "value")
+
+        SettingsDataSourceImpl(settings = storage).clear()
+
+        assertThat(storage.values).isEqualTo(mapOf<String, Any>("sdk_key" to "value"))
+    }
+
     // region Error handling
 
     @Test

@@ -25,4 +25,10 @@ interface SettingsDataSource {
     fun setDismissedRecommendedVersion(version: Long)
 
     fun setOnboardingCompleted()
+
+    /**
+     * Removes the user's preferences (only the app's own keys; the dismissed recommended update stays) and resets their flows
+     * to the defaults.
+     */
+    fun clear()
 }
