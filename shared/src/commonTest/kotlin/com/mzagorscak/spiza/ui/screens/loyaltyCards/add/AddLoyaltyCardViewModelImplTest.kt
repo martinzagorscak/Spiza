@@ -2,6 +2,7 @@ package com.mzagorscak.spiza.ui.screens.loyaltyCards.add
 
 import androidx.compose.ui.graphics.toArgb
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.hasSize
 import assertk.assertions.isEmpty
@@ -139,6 +140,22 @@ class AddLoyaltyCardViewModelImplTest {
         assertThat(state.isFormatSelectedManually).isFalse()
         assertThat(permissions.requestedPermissions).containsExactly(PermissionType.CAMERA)
         assertThat(state.permissionStatus).isEqualTo(PermissionStatus.Granted)
+    }
+
+    @Test
+    fun onInputTypeChange_restoresTheStoredCode_whenEditingAndReturningFromTheCameraWithoutAScan() {
+        val card = storedCard()
+        repository.cards.value = listOf(card)
+        val viewModel = viewModel(cardId = card.id)
+        viewModel.onInputTypeChange(AddLoyaltyCardState.InputType.Camera)
+
+        viewModel.onInputTypeChange(AddLoyaltyCardState.InputType.Manual)
+
+        val state = viewModel.state().value
+        assertThat(state.codeText).isEqualTo(card.codeText)
+        assertThat(state.format).isEqualTo(card.format)
+        assertThat(state.isCodeValid).isTrue()
+        assertThat(state.isSaveEnabled).isTrue()
     }
 
     @Test
@@ -381,6 +398,23 @@ class AddLoyaltyCardViewModelImplTest {
         }
 
     @Test
+    fun onRetryLoadClick_showsTheForm_whenTheCardLoadsOnRetry() {
+        val card = storedCard()
+        repository.cards.value = listOf(card)
+        repository.readFailure = IllegalStateException("db closed")
+        val viewModel = viewModel(cardId = card.id)
+        repository.readFailure = null
+
+        viewModel.onRetryLoadClick()
+
+        val state = viewModel.state().value
+        assertThat(state.hasLoadError).isFalse()
+        assertThat(state.isLoadingCard).isFalse()
+        assertThat(state.cardName).isEqualTo(card.name)
+        assertThat(state.isSaveEnabled).isTrue()
+    }
+
+    @Test
     fun checkPermission_requestsAndStoresReturnedStatus_whenCameraIsNotGranted() {
         permissions.checkStatus = PermissionStatus.NotGranted
         permissions.requestStatus = PermissionStatus.Denied
@@ -448,23 +482,65 @@ class AddLoyaltyCardViewModelImplTest {
     }
 
     @Test
-    fun init_showsTheError_whenLoadingTheCardToEditFails() {
-        val failure = IllegalStateException("db closed")
-        repository.readFailure = failure
+    fun init_showsTheBlockingErrorAndBlocksSaving_whenLoadingTheCardToEditFails() =
+        runTest {
+            val failure = IllegalStateException("db closed")
+            repository.readFailure = failure
+            val viewModel = viewModel(cardId = STORED_CARD_ID)
 
-        val viewModel = viewModel(cardId = STORED_CARD_ID)
+            // Even a filled-in form must not overwrite the card that could not be loaded.
+            viewModel.onCardNameChange("Shop")
+            viewModel.onCodeChange("4006381333931")
+            viewModel.onSaveClick()
 
-        val state = viewModel.state().value
-        assertThat(state.hasError).isTrue()
-        assertThat(state.isCardMissing).isFalse()
-        assertThat(state.isSaveEnabled).isFalse()
-        assertThat(
-            crashLogger.exceptions
-                .single()
-                .cause
-                ?.message,
-        ).isEqualTo(failure.message)
-    }
+            val state = viewModel.state().value
+            assertThat(state.hasLoadError).isTrue()
+            assertThat(state.isLoadingCard).isFalse()
+            assertThat(state.hasError).isFalse()
+            assertThat(state.isCardMissing).isFalse()
+            assertThat(state.isSaveEnabled).isFalse()
+            assertThat(repository.updatedCards).isEmpty()
+            assertThat(
+                crashLogger.exceptions
+                    .single()
+                    .cause
+                    ?.message,
+            ).isEqualTo(failure.message)
+        }
+
+    @Test
+    fun onSaveClick_doesNothing_whileTheCardToEditIsLoading() =
+        runTest {
+            repository.neverCompleteReads = true
+            val viewModel = viewModel(cardId = STORED_CARD_ID)
+            viewModel.onCardNameChange("Shop")
+            viewModel.onCodeChange("4006381333931")
+
+            viewModel.onSaveClick()
+
+            assertThat(viewModel.state().value.isLoadingCard).isTrue()
+            assertThat(viewModel.state().value.isSaveEnabled).isFalse()
+            assertThat(repository.updatedCards).isEmpty()
+        }
+
+    @Test
+    fun onSaveClick_closesTheScreenAndLogs_whenTheEditedCardWasDeletedMeanwhile() =
+        runTest {
+            val card = storedCard()
+            repository.cards.value = listOf(card)
+            val viewModel = viewModel(cardId = card.id)
+            repository.cards.value = emptyList()
+
+            viewModel.onSaveClick()
+
+            val state = viewModel.state().value
+            assertThat(state.isCardMissing).isTrue()
+            assertThat(state.isSaved).isFalse()
+            assertThat(state.isSaving).isFalse()
+            assertThat(repository.updatedCards).hasSize(1)
+            assertThat(crashLogger.warnings.single()).contains(card.id.toString())
+            assertThat(crashLogger.exceptions).isEmpty()
+        }
 
     @Test
     fun onCodeChange_rejectsInput_overTheMaximumLength() {

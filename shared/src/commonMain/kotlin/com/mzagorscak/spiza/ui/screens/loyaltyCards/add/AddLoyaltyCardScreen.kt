@@ -1,6 +1,7 @@
 package com.mzagorscak.spiza.ui.screens.loyaltyCards.add
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,15 +31,19 @@ import com.mzagorscak.spiza.ui.components.ButtonSize
 import com.mzagorscak.spiza.ui.components.ButtonVariant
 import com.mzagorscak.spiza.ui.components.ColorPicker
 import com.mzagorscak.spiza.ui.components.ColorPickerItem
+import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
+import com.mzagorscak.spiza.ui.components.LoadingIndicator
+import com.mzagorscak.spiza.ui.components.LoadingIndicatorSize
 import com.mzagorscak.spiza.ui.components.LoyaltyCard
 import com.mzagorscak.spiza.ui.components.TextField
 import com.mzagorscak.spiza.ui.components.TextFieldAppearance
 import com.mzagorscak.spiza.ui.components.TextFieldVariant
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.theme.LoyaltyCardColors
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
@@ -55,8 +60,13 @@ import spiza.shared.generated.resources.loyalty_cards_add_input_type_manual
 import spiza.shared.generated.resources.loyalty_cards_add_preview_label
 import spiza.shared.generated.resources.loyalty_cards_add_save_button
 import spiza.shared.generated.resources.loyalty_cards_add_title
+import spiza.shared.generated.resources.loyalty_cards_edit_loading_error_description
+import spiza.shared.generated.resources.loyalty_cards_edit_loading_error_title
 import spiza.shared.generated.resources.loyalty_cards_edit_save_button
 import spiza.shared.generated.resources.loyalty_cards_edit_title
+import spiza.shared.generated.resources.retry
+
+private const val ERROR_LOTTIE_PATH = "files/lottie_error.json"
 
 @Composable
 fun AddLoyaltyCardScreen(
@@ -101,6 +111,29 @@ fun AddLoyaltyCardScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier.fillMaxSize(),
     ) { paddingValues ->
+        if (state.hasLoadError || state.isLoadingCard) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+            ) {
+                if (state.hasLoadError) {
+                    FallbackState(
+                        title = stringResource(Res.string.loyalty_cards_edit_loading_error_title),
+                        description = stringResource(Res.string.loyalty_cards_edit_loading_error_description),
+                        lottiePath = ERROR_LOTTIE_PATH,
+                        cta = CTA(
+                            label = stringResource(Res.string.retry),
+                            onClick = callbacks.onRetryLoadClick,
+                        ),
+                    )
+                } else {
+                    LoadingIndicator(size = LoadingIndicatorSize.Large)
+                }
+            }
+            return@Scaffold
+        }
         Column(
             verticalArrangement = Arrangement.spacedBy(padding400),
             modifier = Modifier
@@ -216,6 +249,7 @@ data class AddLoyaltyCardScreenCallbacks(
     val onSaved: () -> Unit,
     val onCardMissing: () -> Unit,
     val onErrorShown: () -> Unit,
+    val onRetryLoadClick: () -> Unit,
     val onRequestPermission: () -> Unit,
     val onOpenSettings: () -> Unit,
 )

@@ -22,7 +22,8 @@ interface LoyaltyCardDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(card: LoyaltyCardEntity)
 
-    // Not an upsert: REPLACE would reset createdAt (the list order) and isShortcut.
+    // Not an upsert: REPLACE would reset createdAt (the list order) and isShortcut. Returns the number of updated rows
+    // (0 when the card was deleted in the meantime).
     @Query(
         "UPDATE loyalty_cards SET name = :name, colorArgb = :colorArgb, codeText = :codeText, format = :format WHERE id = :id",
     )
@@ -32,7 +33,7 @@ interface LoyaltyCardDao {
         colorArgb: Int,
         codeText: String,
         format: LoyaltyCardFormat,
-    )
+    ): Int
 
     @Query("DELETE FROM loyalty_cards WHERE id = :id")
     suspend fun deleteById(id: Long)

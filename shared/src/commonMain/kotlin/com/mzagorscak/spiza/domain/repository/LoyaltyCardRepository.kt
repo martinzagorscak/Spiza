@@ -12,8 +12,11 @@ interface LoyaltyCardRepository {
 
     suspend fun addCard(card: LoyaltyCard)
 
-    /** Updates the editable fields of the card with [LoyaltyCard.id]; its creation time and shortcut state are kept. */
-    suspend fun updateCard(card: LoyaltyCard)
+    /**
+     * Updates the editable fields of the card with [LoyaltyCard.id]; its creation time and shortcut state are kept.
+     * Returns `false` when no card has that id (e.g. it was deleted in the meantime).
+     */
+    suspend fun updateCard(card: LoyaltyCard): Boolean
 
     suspend fun deleteCard(id: Long)
 

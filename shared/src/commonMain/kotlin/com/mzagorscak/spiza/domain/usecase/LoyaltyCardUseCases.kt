@@ -51,14 +51,15 @@ class AddLoyaltyCardUseCaseImpl(
     override suspend operator fun invoke(card: LoyaltyCard) = repository.addCard(card)
 }
 
+/** Returns `false` when the card no longer exists. */
 interface UpdateLoyaltyCardUseCase {
-    suspend operator fun invoke(card: LoyaltyCard)
+    suspend operator fun invoke(card: LoyaltyCard): Boolean
 }
 
 class UpdateLoyaltyCardUseCaseImpl(
     private val repository: LoyaltyCardRepository,
 ) : UpdateLoyaltyCardUseCase {
-    override suspend operator fun invoke(card: LoyaltyCard) = repository.updateCard(card)
+    override suspend operator fun invoke(card: LoyaltyCard): Boolean = repository.updateCard(card)
 }
 
 interface DeleteLoyaltyCardUseCase {

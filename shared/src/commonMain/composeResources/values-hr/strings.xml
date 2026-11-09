@@ -127,6 +127,8 @@
     <string name="loyalty_cards_add_save_button">Spremi karticu</string>
     <string name="loyalty_cards_edit_title">Uredi karticu vjernosti</string>
     <string name="loyalty_cards_edit_save_button">Spremi promjene</string>
+    <string name="loyalty_cards_edit_loading_error_title">Nešto je pošlo po zlu</string>
+    <string name="loyalty_cards_edit_loading_error_description">Nismo mogli učitati ovu karticu vjernosti. Pokušaj ponovno.</string>
     <string name="loyalty_cards_add_camera_permission_title">Potrebna je dozvola za kameru</string>
     <string name="loyalty_cards_add_camera_permission_description">Dozvola za kameru je trajno odbijena. Omogućite je u postavkama uređaja.</string>
     <string name="loyalty_cards_add_camera_permission_cta">Otvori postavke</string>

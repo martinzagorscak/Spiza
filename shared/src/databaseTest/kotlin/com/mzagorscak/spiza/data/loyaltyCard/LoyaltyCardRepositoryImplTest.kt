@@ -145,7 +145,7 @@ class LoyaltyCardRepositoryImplTest {
                 entity(id = 2L, name = "Newer", createdAt = 200L),
             )
 
-            repository.updateCard(
+            val isUpdated = repository.updateCard(
                 LoyaltyCard(
                     id = 1L,
                     name = "Renamed",
@@ -155,6 +155,7 @@ class LoyaltyCardRepositoryImplTest {
                 ),
             )
 
+            assertThat(isUpdated).isTrue()
             assertThat(database.loyaltyCardDao().getAll().first()).containsExactly(
                 entity(id = 2L, name = "Newer", createdAt = 200L),
                 LoyaltyCardEntity(
@@ -167,6 +168,25 @@ class LoyaltyCardRepositoryImplTest {
                     isShortcut = true,
                 ),
             )
+        }
+
+    @Test
+    fun updateCard_returnsFalseAndChangesNothing_whenTheCardDoesNotExist() =
+        runTest {
+            store(entity(id = 1L))
+
+            val isUpdated = repository.updateCard(
+                LoyaltyCard(
+                    id = 2L,
+                    name = "Renamed",
+                    colorArgb = OTHER_COLOR_ARGB,
+                    codeText = "96385074",
+                    format = LoyaltyCardFormat.Ean8,
+                ),
+            )
+
+            assertThat(isUpdated).isFalse()
+            assertThat(database.loyaltyCardDao().getAll().first()).containsExactly(entity(id = 1L))
         }
 
     @Test

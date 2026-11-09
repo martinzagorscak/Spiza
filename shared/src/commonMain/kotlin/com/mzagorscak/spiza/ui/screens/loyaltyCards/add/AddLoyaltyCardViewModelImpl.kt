@@ -43,6 +43,7 @@ internal class AddLoyaltyCardViewModelImpl(
     private val state = MutableStateFlow(
         AddLoyaltyCardState(
             isEditing = cardId != null,
+            isLoadingCard = cardId != null,
             // An existing card already has a code, so editing starts without opening the camera.
             inputType = if (cardId != null) AddLoyaltyCardState.InputType.Manual else AddLoyaltyCardState.InputType.Camera,
         ),
@@ -50,6 +51,9 @@ internal class AddLoyaltyCardViewModelImpl(
 
     // A code is accepted only after two identical reads in a row: a single frame can be misread (e.g. a partly visible barcode).
     private var pendingScan: ScannedCode? = null
+
+    // The code of the card being edited, restored when the user goes to the camera and back without scanning a new one.
+    private var storedCode: LoyaltyCardCode? = null
 
     init {
         cardId?.let(::loadCard)
@@ -61,7 +65,8 @@ internal class AddLoyaltyCardViewModelImpl(
         launchSafely(
             crashLogger = crashLogger,
             context = "Loading loyalty card to edit failed",
-            onError = { state.update { it.copy(hasError = true) } },
+            // Blocking: an empty edit form could overwrite the card on save.
+            onError = { state.update { it.copy(isLoadingCard = false, hasLoadError = true) } },
         ) {
             val card = getLoyaltyCardByIdUseCase(id)?.toPresentable()
             if (card == null) {
@@ -70,21 +75,36 @@ internal class AddLoyaltyCardViewModelImpl(
                 state.update { it.copy(isCardMissing = true) }
                 return@launchSafely
             }
+            val code = LoyaltyCardCode(value = card.codeText, format = card.format)
+            storedCode = code
             state.update {
-                it.copy(
-                    cardName = card.name,
-                    selectedColor = card.color,
-                    codeText = card.codeText,
-                    format = card.format,
-                    isFormatSelectedManually = true,
-                    isCodeValid = isValid(value = card.codeText, format = card.format),
-                    // The stored code is exact content (a scanned code may end in control characters), so it is kept
-                    // untrimmed like a scanned one until the user edits it.
-                    scanStatus = AddLoyaltyCardState.ScanStatus.Scanned,
-                )
+                it
+                    .copy(
+                        isLoadingCard = false,
+                        cardName = card.name,
+                        selectedColor = card.color,
+                    ).withStoredCode(code)
             }
         }
     }
+
+    override fun onRetryLoadClick() {
+        val id = cardId ?: return
+        if (state.value.hasLoadError.not()) return
+        state.update { it.copy(isLoadingCard = true, hasLoadError = false) }
+        loadCard(id)
+    }
+
+    // The stored code is exact content (a scanned code may end in control characters), so it is kept
+    // untrimmed like a scanned one until the user edits it.
+    private fun AddLoyaltyCardState.withStoredCode(code: LoyaltyCardCode): AddLoyaltyCardState =
+        copy(
+            codeText = code.value,
+            format = code.format,
+            isFormatSelectedManually = true,
+            isCodeValid = validateLoyaltyCardCodeUseCase(code),
+            scanStatus = AddLoyaltyCardState.ScanStatus.Scanned,
+        )
 
     override fun onCardNameChange(name: String) {
         state.update { it.copy(cardName = name) }
@@ -175,9 +195,13 @@ internal class AddLoyaltyCardViewModelImpl(
     override fun onInputTypeChange(inputType: AddLoyaltyCardState.InputType) {
         if (inputType == state.value.inputType) return
         // A scanned code is kept when switching to manual entry so it can be corrected; the camera always starts fresh.
+        // When editing, coming back without a newly scanned code restores the card's code instead of leaving it empty.
         state.update { current ->
+            val restoredCode = storedCode?.takeIf { current.scanStatus != AddLoyaltyCardState.ScanStatus.Scanned }
             when (inputType) {
                 AddLoyaltyCardState.InputType.Camera -> current.resetCode().copy(inputType = inputType)
+                AddLoyaltyCardState.InputType.Manual if restoredCode != null ->
+                    current.withStoredCode(restoredCode).copy(inputType = inputType)
                 AddLoyaltyCardState.InputType.Manual -> current.copy(inputType = inputType)
             }
         }
@@ -206,7 +230,14 @@ internal class AddLoyaltyCardViewModelImpl(
                 codeText = if (isScanned) currentState.codeText else currentState.codeText.trim(),
                 format = currentState.format,
             )
-            if (cardId != null) updateLoyaltyCardUseCase(card) else addLoyaltyCardUseCase(card)
+            if (cardId == null) {
+                addLoyaltyCardUseCase(card)
+            } else if (updateLoyaltyCardUseCase(card).not()) {
+                // Deleted (e.g. from another screen) while being edited; the details screen behind shows that it is gone.
+                crashLogger.logWarning("Loyalty card to update not found (id: $cardId)")
+                state.update { it.copy(isSaving = false, isCardMissing = true) }
+                return@launchSafely
+            }
             state.update { it.copy(isSaving = false, isSaved = true) }
         }
     }

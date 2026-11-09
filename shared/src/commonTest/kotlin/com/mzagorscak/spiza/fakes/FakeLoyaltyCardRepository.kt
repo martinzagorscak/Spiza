@@ -23,6 +23,9 @@ class FakeLoyaltyCardRepository : LoyaltyCardRepository {
     /** Thrown by [getById] when set. */
     var readFailure: Exception? = null
 
+    /** [getById] never completes, like a read still in progress. */
+    var neverCompleteReads = false
+
     /** Thrown by [addCard] / [updateCard] / [deleteCard] when set. */
     var writeFailure: Exception? = null
 
@@ -63,6 +66,7 @@ class FakeLoyaltyCardRepository : LoyaltyCardRepository {
 
     override suspend fun getById(id: Long): LoyaltyCard? {
         readFailure?.let { throw it }
+        if (neverCompleteReads) awaitCancellation()
         return cards.value.firstOrNull { it.id == id }
     }
 
@@ -74,10 +78,12 @@ class FakeLoyaltyCardRepository : LoyaltyCardRepository {
     }
 
     // Like the UPDATE query: an unknown id changes nothing, and the position and shortcut state are kept.
-    override suspend fun updateCard(card: LoyaltyCard) {
+    override suspend fun updateCard(card: LoyaltyCard): Boolean {
         updatedCards += card
         write()
+        if (cards.value.none { it.id == card.id }) return false
         cards.value = cards.value.map { if (it.id == card.id) card.copy(isShortcut = it.isShortcut) else it }
+        return true
     }
 
     override suspend fun deleteCard(id: Long) {

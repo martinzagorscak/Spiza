@@ -11,10 +11,14 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * [codeText] is kept exactly as scanned (no trimming) while [scanStatus] is [ScanStatus.Scanned];
  * typed codes are trimmed before validation and saving.
- * [isEditing] means the screen edits an existing card instead of adding one.
+ * [isEditing] means the screen edits an existing card instead of adding one; the form is shown only once that card is loaded
+ * ([isLoadingCard] / [hasLoadError]), so a save can never overwrite it with an empty form.
  */
 data class AddLoyaltyCardState(
     val isEditing: Boolean = false,
+    val isLoadingCard: Boolean = false,
+    /** Blocking: the card to edit could not be loaded; the form is replaced by an error with retry. */
+    val hasLoadError: Boolean = false,
     val cardName: String = "",
     val selectedColor: Color = LoyaltyCardColors.defaultColor,
     val codeText: String = "",
@@ -27,13 +31,19 @@ data class AddLoyaltyCardState(
     val isSaving: Boolean = false,
     /** One-shot: the card was stored, the screen closes. */
     val isSaved: Boolean = false,
-    /** Transient: the save (or loading the card to edit) failed; shown once and cleared with `onErrorShown()`. */
+    /** Transient: the save failed; shown once and cleared with `onErrorShown()`. */
     val hasError: Boolean = false,
-    /** One-shot: the card to edit no longer exists, the screen closes. */
+    /** One-shot: the card to edit no longer exists (when opening or saving), the screen closes. */
     val isCardMissing: Boolean = false,
 ) {
     val isSaveEnabled: Boolean
-        get() = cardName.isNotBlank() && isCodeValid && isSaving.not() && isSaved.not()
+        get() =
+            cardName.isNotBlank() &&
+                isCodeValid &&
+                isLoadingCard.not() &&
+                hasLoadError.not() &&
+                isSaving.not() &&
+                isSaved.not()
 
     val showCodeError: Boolean
         get() = codeText.isNotBlank() && isCodeValid.not()
@@ -86,6 +96,9 @@ abstract class AddLoyaltyCardViewModel : ViewModel() {
     abstract fun onSaveClick()
 
     abstract fun onErrorShown()
+
+    /** Loads the card to edit again after [AddLoyaltyCardState.hasLoadError]. */
+    abstract fun onRetryLoadClick()
 
     abstract fun checkPermission()
 

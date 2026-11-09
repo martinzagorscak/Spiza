@@ -518,6 +518,10 @@ private fun AppNavDisplay(
                                     onSaved = { backStack.popIfTop(key) },
                                     onCardMissing = { backStack.popIfTop(key) },
                                     onErrorShown = viewModel::onErrorShown,
+                                    onRetryLoadClick = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.onRetryLoadClick()
+                                    },
                                     onRequestPermission = viewModel::requestPermission,
                                     onOpenSettings = viewModel::openSettings,
                                 )

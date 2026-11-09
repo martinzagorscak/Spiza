@@ -23,15 +23,14 @@ internal class LoyaltyCardRepositoryImpl(
         loyaltyCardDao.insert(card.toEntity())
     }
 
-    override suspend fun updateCard(card: LoyaltyCard) {
+    override suspend fun updateCard(card: LoyaltyCard): Boolean =
         loyaltyCardDao.update(
             id = card.id,
             name = card.name,
             colorArgb = card.colorArgb,
             codeText = card.codeText,
             format = card.format,
-        )
-    }
+        ) > 0
 
     override suspend fun deleteCard(id: Long) {
         loyaltyCardDao.deleteById(id)
