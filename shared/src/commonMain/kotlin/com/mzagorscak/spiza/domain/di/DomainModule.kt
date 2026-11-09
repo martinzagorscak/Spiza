@@ -26,6 +26,8 @@ import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCase
 import com.mzagorscak.spiza.domain.usecase.CheckPermissionUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ClearCheckedItemsUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.CompleteOnboardingUseCase
+import com.mzagorscak.spiza.domain.usecase.CompleteOnboardingUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCase
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdJoinKeyUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.CreateHouseholdUseCase
@@ -58,6 +60,8 @@ import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardByIdUseCase
 import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardByIdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardShortcutLimitUseCase
 import com.mzagorscak.spiza.domain.usecase.GetLoyaltyCardShortcutLimitUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.GetOnboardingCompletedUseCase
+import com.mzagorscak.spiza.domain.usecase.GetOnboardingCompletedUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.GetUsersUseCase
 import com.mzagorscak.spiza.domain.usecase.GetUsersUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
@@ -76,6 +80,8 @@ import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardByIdUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardByIdUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardsUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ObserveOnboardingCompletedUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveOnboardingCompletedUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
@@ -209,4 +215,9 @@ val domainModule =
         // App Update Use Cases
         single<GetAppUpdateStatusUseCase> { GetAppUpdateStatusUseCaseImpl(repository = get()) }
         single<DismissRecommendedUpdateUseCase> { DismissRecommendedUpdateUseCaseImpl(repository = get()) }
+
+        // Onboarding Use Cases
+        single<ObserveOnboardingCompletedUseCase> { ObserveOnboardingCompletedUseCaseImpl(repository = get()) }
+        single<GetOnboardingCompletedUseCase> { GetOnboardingCompletedUseCaseImpl(repository = get()) }
+        single<CompleteOnboardingUseCase> { CompleteOnboardingUseCaseImpl(repository = get()) }
     }
