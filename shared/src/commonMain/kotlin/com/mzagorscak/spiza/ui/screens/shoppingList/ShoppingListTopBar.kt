@@ -34,49 +34,51 @@ fun ShoppingListTopBar(
     TopBar(
         title = headerState.currentHouseholdName ?: stringResource(Res.string.shopping_list_default_title),
         leadingContent = {
-            var isDropdownExpanded by remember { mutableStateOf(false) }
+            if (headerState.otherHouseholds.isNotEmpty() || headerState.canUserCreateHousehold) {
+                var isDropdownExpanded by remember { mutableStateOf(false) }
 
-            Box {
-                IconButton(
-                    resource = Res.drawable.ic_filled_chevron_down,
-                    onClick = { isDropdownExpanded = true },
-                    appearance = IconButtonAppearance(
-                        variant = IconButtonVariant.IconBased,
-                        size = IconButtonSize.Medium,
-                        tintColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
-                )
-                DropdownMenu(
-                    expanded = isDropdownExpanded,
-                    onDismissRequest = { isDropdownExpanded = false },
-                ) {
-                    headerState.otherHouseholds.forEach { household ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = household.name,
-                                    style = MaterialTheme.typography.labelMedium,
-                                )
-                            },
-                            onClick = {
-                                isDropdownExpanded = false
-                                callbacks.onOtherHouseholdClick(household.id)
-                            },
-                        )
-                    }
-                    if (headerState.canUserCreateHousehold) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(Res.string.shopping_list_create_household),
-                                    style = MaterialTheme.typography.labelMedium,
-                                )
-                            },
-                            onClick = {
-                                isDropdownExpanded = false
-                                callbacks.onCreateHouseholdClick()
-                            },
-                        )
+                Box {
+                    IconButton(
+                        resource = Res.drawable.ic_filled_chevron_down,
+                        onClick = { isDropdownExpanded = true },
+                        appearance = IconButtonAppearance(
+                            variant = IconButtonVariant.IconBased,
+                            size = IconButtonSize.Medium,
+                            tintColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
+                    )
+                    DropdownMenu(
+                        expanded = isDropdownExpanded,
+                        onDismissRequest = { isDropdownExpanded = false },
+                    ) {
+                        headerState.otherHouseholds.forEach { household ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = household.name,
+                                        style = MaterialTheme.typography.labelMedium,
+                                    )
+                                },
+                                onClick = {
+                                    isDropdownExpanded = false
+                                    callbacks.onOtherHouseholdClick(household.id)
+                                },
+                            )
+                        }
+                        if (headerState.canUserCreateHousehold) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(Res.string.shopping_list_create_household),
+                                        style = MaterialTheme.typography.labelMedium,
+                                    )
+                                },
+                                onClick = {
+                                    isDropdownExpanded = false
+                                    callbacks.onCreateHouseholdClick()
+                                },
+                            )
+                        }
                     }
                 }
             }
