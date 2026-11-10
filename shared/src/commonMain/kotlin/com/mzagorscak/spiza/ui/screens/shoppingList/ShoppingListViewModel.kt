@@ -31,6 +31,8 @@ sealed class ShoppingListState {
             val areCheckedItemsCollapsed: Boolean = true,
             val dialogState: DialogState = DialogState.Hidden,
             val contentErrorState: ContentErrorState = ContentErrorState.None,
+            /** While locked, items can only be checked and reordered; adding, editing and deleting is disabled. */
+            val isLocked: Boolean = false,
         ) : Body()
     }
 
@@ -90,4 +92,6 @@ abstract class ShoppingListViewModel : ViewModel() {
     abstract fun clearCheckedItems()
 
     abstract fun onErrorShown()
+
+    abstract fun onLockToggle()
 }

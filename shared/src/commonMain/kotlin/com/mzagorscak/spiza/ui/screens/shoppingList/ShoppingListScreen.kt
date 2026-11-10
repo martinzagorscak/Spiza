@@ -70,7 +70,9 @@ fun ShoppingListScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val suggestionsDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val areSuggestionsVisible =
-        (bodyState as? ShoppingListState.Body.Content)?.canAddItemToHousehold == true && bodyState.suggestions.isNotEmpty()
+        (bodyState as? ShoppingListState.Body.Content)?.canAddItemToHousehold == true &&
+            bodyState.isLocked.not() &&
+            bodyState.suggestions.isNotEmpty()
     val snackbarHostState = remember { SnackbarHostState() }
     val writeErrorMessage = if (bodyState is ShoppingListState.Body.Content) {
         when (bodyState.contentErrorState) {
@@ -117,7 +119,10 @@ fun ShoppingListScreen(
                 )
             },
             floatingActionButton = {
-                if (bodyState as? ShoppingListState.Body.Content != null && bodyState.suggestions.isNotEmpty()) {
+                if (bodyState as? ShoppingListState.Body.Content != null &&
+                    bodyState.isLocked.not() &&
+                    bodyState.suggestions.isNotEmpty()
+                ) {
                     FloatingActionButton(
                         onClick = {
                             scope.launch {
@@ -246,6 +251,7 @@ data class ShoppingListScreenCallbacks(
     val onDismissDialog: () -> Unit,
     val clearCheckedItems: () -> Unit,
     val onWriteErrorShown: () -> Unit,
+    val onLockToggle: () -> Unit,
 )
 
 @Preview
@@ -268,6 +274,28 @@ private fun ShoppingListScreenPreview() {
                 ),
                 doneItems = listOf(PresentableArticleItem(id = "3", text = "Bread", isChecked = true)),
                 areCheckedItemsCollapsed = false,
+            ),
+            callbacks = PreviewCallbacks,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ShoppingListScreenLockedPreview() {
+    TheAppTheme {
+        ShoppingListScreen(
+            headerState = ShoppingListState.Header(currentHouseholdName = "My Household"),
+            bodyState = ShoppingListState.Body.Content(
+                currentHouseholdId = "1",
+                pendingItems = listOf(
+                    PresentableArticleItem(id = "1", text = "Milk", isChecked = false),
+                    PresentableArticleItem(id = "2", text = "Eggs", isChecked = false),
+                ),
+                doneItems = listOf(PresentableArticleItem(id = "3", text = "Bread", isChecked = true)),
+                canAddItemToHousehold = true,
+                areCheckedItemsCollapsed = false,
+                isLocked = true,
             ),
             callbacks = PreviewCallbacks,
         )
@@ -303,4 +331,5 @@ private val PreviewCallbacks =
         onDismissDialog = {},
         clearCheckedItems = {},
         onWriteErrorShown = {},
+        onLockToggle = {},
     )

@@ -8,6 +8,7 @@ import com.mzagorscak.spiza.domain.model.UserProfile
 import com.mzagorscak.spiza.domain.repository.SettingsRepository
 import com.mzagorscak.spiza.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 interface ObserveUserProfileUseCase {
     operator fun invoke(): Flow<UserProfile?>
@@ -117,6 +118,26 @@ class SetSuggestionsSavingEnabledUseCaseImpl(
     private val repository: SettingsRepository,
 ) : SetSuggestionsSavingEnabledUseCase {
     override suspend operator fun invoke(enabled: Boolean) = repository.setSuggestionsSavingEnabled(enabled)
+}
+
+interface ObserveShoppingListLockedUseCase {
+    operator fun invoke(): Flow<Boolean>
+}
+
+class ObserveShoppingListLockedUseCaseImpl(
+    private val repository: SettingsRepository,
+) : ObserveShoppingListLockedUseCase {
+    override operator fun invoke(): Flow<Boolean> = repository.shoppingListLocked
+}
+
+interface ToggleShoppingListLockedUseCase {
+    suspend operator fun invoke()
+}
+
+class ToggleShoppingListLockedUseCaseImpl(
+    private val repository: SettingsRepository,
+) : ToggleShoppingListLockedUseCase {
+    override suspend operator fun invoke() = repository.setShoppingListLocked(locked = repository.shoppingListLocked.first().not())
 }
 
 interface SignInUseCase {

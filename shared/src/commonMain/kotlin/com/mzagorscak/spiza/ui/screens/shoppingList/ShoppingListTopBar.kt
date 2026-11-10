@@ -121,6 +121,7 @@ private fun ShoppingListTopBarLayoutPreview() {
             onDismissDialog = {},
             clearCheckedItems = {},
             onWriteErrorShown = {},
+            onLockToggle = {},
         ),
     )
 }

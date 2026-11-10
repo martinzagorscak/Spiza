@@ -12,12 +12,18 @@ import kotlinx.coroutines.flow.flow
 class FakeSettingsRepository : SettingsRepository {
     val selectedId = MutableStateFlow<String?>(null)
     val savingEnabled = MutableStateFlow(false)
+    val listLocked = MutableStateFlow(false)
 
     val themeModes = MutableStateFlow(ThemeMode.System)
     val languages = MutableStateFlow(AppLanguage.Default)
 
     /** When set, [themeMode] fails with it (checked each time the stream is collected). */
     var themeModeFailure: Throwable? = null
+
+    /** When set, [setShoppingListLocked] throws it after recording the attempt. */
+    var setShoppingListLockedFailure: Throwable? = null
+
+    val shoppingListLockedWrites = mutableListOf<Boolean>()
 
     override val themeMode: Flow<ThemeMode> =
         flow {
@@ -29,6 +35,7 @@ class FakeSettingsRepository : SettingsRepository {
     override val currentLanguage: AppLanguage get() = languages.value
     override val selectedHouseholdId: Flow<String?> = selectedId
     override val suggestionsSavingEnabled: Flow<Boolean> = savingEnabled
+    override val shoppingListLocked: Flow<Boolean> = listLocked
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         themeModes.value = mode
@@ -44,5 +51,11 @@ class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setSuggestionsSavingEnabled(enabled: Boolean) {
         savingEnabled.value = enabled
+    }
+
+    override suspend fun setShoppingListLocked(locked: Boolean) {
+        shoppingListLockedWrites += locked
+        setShoppingListLockedFailure?.let { throw it }
+        listLocked.value = locked
     }
 }

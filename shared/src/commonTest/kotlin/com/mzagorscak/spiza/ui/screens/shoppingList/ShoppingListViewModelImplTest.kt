@@ -22,10 +22,12 @@ import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdSelectionUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ObserveShoppingListLockedUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ToggleShoppingListLockedUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCaseImpl
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
 import com.mzagorscak.spiza.fakes.FakeHouseholdRepository
@@ -38,6 +40,7 @@ import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
 import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -95,6 +98,8 @@ class ShoppingListViewModelImplTest {
             addOrUpdateSuggestion = AddOrUpdateSuggestionUseCaseImpl(suggestions),
             observeSuggestionsSavingEnabled = ObserveSuggestionsSavingEnabledUseCaseImpl(settings),
             observeSuggestions = ObserveSuggestionsUseCaseImpl(suggestions),
+            observeShoppingListLocked = ObserveShoppingListLockedUseCaseImpl(settings),
+            toggleShoppingListLocked = ToggleShoppingListLockedUseCaseImpl(settings),
             crashLogger = logger,
         )
 
@@ -389,7 +394,139 @@ class ShoppingListViewModelImplTest {
             assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
         }
 
+    @Test
+    fun body_showsTheListAsLocked_whenItIsLocked() =
+        runTest {
+            val viewModel = viewModel()
+            assertThat(viewModel.content().isLocked).isFalse()
+
+            settings.listLocked.value = true
+
+            assertThat(viewModel.content().isLocked).isTrue()
+        }
+
+    @Test
+    fun onLockToggle_appliesBothTaps_whenTappedTwiceBeforeTheListUpdates() =
+        runTest {
+            // A queued dispatcher keeps the screen from re-rendering between the two taps, like a quick double tap.
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val viewModel = viewModel()
+            advanceUntilIdle()
+
+            viewModel.onLockToggle()
+            viewModel.onLockToggle()
+            advanceUntilIdle()
+
+            assertThat(settings.shoppingListLockedWrites).containsExactly(true, false)
+            assertThat(viewModel.content().isLocked).isFalse()
+        }
+
+    @Test
+    fun onAddItem_isIgnored_whenLocked() =
+        runTest {
+            settings.listLocked.value = true
+
+            viewModel().onAddItem("Eggs")
+
+            assertThat(households.addedItems).isEmpty()
+            assertThat(households.checkedChanges).isEmpty()
+        }
+
+    // The row flushes an edit still in its debounce when the list gets locked; dropping it would leave the row out of sync.
+    @Test
+    fun onItemTextChange_savesAnEditTypedBeforeLocking() =
+        runTest {
+            settings.listLocked.value = true
+            val viewModel = viewModel()
+
+            viewModel.onItemTextChange(itemId = "milk", text = "Oat milk")
+
+            assertThat(households.updatedTexts).containsExactly("milk" to "Oat milk")
+            assertThat(viewModel.content().pendingItems.map { it.text }).containsExactly("Oat milk")
+        }
+
+    @Test
+    fun onItemDelete_isIgnored_whenLocked() =
+        runTest {
+            settings.listLocked.value = true
+            val viewModel = viewModel()
+
+            viewModel.onItemDelete("milk")
+
+            assertThat(households.deletedItems).isEmpty()
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("milk")
+        }
+
+    @Test
+    fun showClearCheckedItemsConfirmationDialog_isIgnored_whenLocked() =
+        runTest {
+            settings.listLocked.value = true
+            val viewModel = viewModel()
+
+            viewModel.showClearCheckedItemsConfirmationDialog()
+
+            assertThat(viewModel.content().dialogState).isEqualTo(ShoppingListState.DialogState.Hidden)
+        }
+
+    @Test
+    fun clearCheckedItems_doesNotClear_andHidesDialog_whenLockedWhileDialogIsShown() =
+        runTest {
+            val viewModel = viewModel()
+            viewModel.showClearCheckedItemsConfirmationDialog()
+            settings.listLocked.value = true
+
+            viewModel.clearCheckedItems()
+            advanceUntilIdle()
+
+            assertThat(households.clearedHouseholds).isEmpty()
+            assertThat(viewModel.content().doneItems.map { it.id }).containsExactly("bread")
+            assertThat(viewModel.content().dialogState).isEqualTo(ShoppingListState.DialogState.Hidden)
+        }
+
+    @Test
+    fun onItemCheckedChange_savesTheCheckedState_whenLocked() =
+        runTest {
+            settings.listLocked.value = true
+            val viewModel = viewModel()
+
+            viewModel.onItemCheckedChange(itemId = "milk", isChecked = true)
+
+            assertThat(households.checkedChanges).containsExactly("milk" to true)
+            assertThat(viewModel.content().doneItems.map { it.id }).containsExactly("milk", "bread")
+        }
+
+    @Test
+    fun onItemMoved_savesThePosition_whenLocked() =
+        runTest {
+            households.items.value += item(id = "eggs", text = "Eggs", position = 3072.0)
+            settings.listLocked.value = true
+            val viewModel = viewModel()
+
+            viewModel.onItemMoved(itemId = "eggs", toIndex = 0)
+
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("eggs", "milk")
+        }
+
     // region Error handling
+
+    @Test
+    fun onLockToggle_showsWriteError_andKeepsTheListUnlocked_whenSavingFails() =
+        runTest {
+            val failure = IllegalStateException("storage unavailable")
+            settings.setShoppingListLockedFailure = failure
+            val viewModel = viewModel()
+
+            viewModel.onLockToggle()
+
+            assertThat(viewModel.content().isLocked).isFalse()
+            assertThat(viewModel.content().contentErrorState).isEqualTo(ShoppingListState.ContentErrorState.WriteError)
+            assertThat(
+                logger.exceptions
+                    .single()
+                    .cause
+                    ?.message,
+            ).isEqualTo(failure.message)
+        }
 
     @Test
     fun failedWrite_showsWriteError_untilItIsShown() =

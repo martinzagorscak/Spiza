@@ -32,6 +32,7 @@ fun EditableCheckListItem(
     text: String,
     checked: Boolean,
     isCheckable: Boolean = true,
+    isEditable: Boolean = true,
     onTextChange: (String) -> Unit,
     onCheckedChange: (Boolean) -> Unit,
     onDelete: () -> Unit,
@@ -55,7 +56,7 @@ fun EditableCheckListItem(
                     null
                 },
             trailingIcon = {
-                if (text.isNotEmpty()) {
+                if (isEditable && text.isNotEmpty()) {
                     IconButton(
                         resource = Res.drawable.ic_close,
                         appearance = IconButtonAppearance(
@@ -66,7 +67,7 @@ fun EditableCheckListItem(
                     )
                 }
             },
-            readOnly = checked,
+            readOnly = checked || isEditable.not(),
         ),
         keyboardOptions = keyboardOptions,
         onKeyboardAction = onKeyboardAction,

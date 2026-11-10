@@ -13,6 +13,7 @@ interface SettingsDataSource {
     val suggestionsSavingEnabled: StateFlow<Boolean>
     val dismissedRecommendedVersion: StateFlow<Long?>
     val onboardingCompleted: StateFlow<Boolean>
+    val shoppingListLocked: StateFlow<Boolean>
 
     fun setThemeMode(mode: ThemeMode)
 
@@ -25,6 +26,8 @@ interface SettingsDataSource {
     fun setDismissedRecommendedVersion(version: Long)
 
     fun setOnboardingCompleted()
+
+    fun setShoppingListLocked(locked: Boolean)
 
     /**
      * Removes the user's preferences (only the app's own keys; the dismissed recommended update stays) and resets their flows

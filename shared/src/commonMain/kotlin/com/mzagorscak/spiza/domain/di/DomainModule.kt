@@ -82,6 +82,8 @@ import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveLoyaltyCardsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveOnboardingCompletedUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveOnboardingCompletedUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ObserveShoppingListLockedUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveShoppingListLockedUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
@@ -118,6 +120,8 @@ import com.mzagorscak.spiza.domain.usecase.SyncLoyaltyCardShortcutsUseCase
 import com.mzagorscak.spiza.domain.usecase.SyncLoyaltyCardShortcutsUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.ToggleLoyaltyCardShortcutUseCase
 import com.mzagorscak.spiza.domain.usecase.ToggleLoyaltyCardShortcutUseCaseImpl
+import com.mzagorscak.spiza.domain.usecase.ToggleShoppingListLockedUseCase
+import com.mzagorscak.spiza.domain.usecase.ToggleShoppingListLockedUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCaseImpl
 import com.mzagorscak.spiza.domain.usecase.UpdateHouseholdUseCase
@@ -144,6 +148,8 @@ val domainModule =
         single<SetAppLanguageUseCase> { SetAppLanguageUseCaseImpl(repository = get()) }
         single<ObserveSuggestionsSavingEnabledUseCase> { ObserveSuggestionsSavingEnabledUseCaseImpl(repository = get()) }
         single<SetSuggestionsSavingEnabledUseCase> { SetSuggestionsSavingEnabledUseCaseImpl(repository = get()) }
+        single<ObserveShoppingListLockedUseCase> { ObserveShoppingListLockedUseCaseImpl(repository = get()) }
+        single<ToggleShoppingListLockedUseCase> { ToggleShoppingListLockedUseCaseImpl(repository = get()) }
         single<SignInUseCase> { SignInUseCaseImpl(repository = get()) }
         single<SignOutUseCase> { SignOutUseCaseImpl(repository = get()) }
 

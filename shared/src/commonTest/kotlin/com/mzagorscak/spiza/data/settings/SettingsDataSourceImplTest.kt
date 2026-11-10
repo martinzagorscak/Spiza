@@ -23,6 +23,7 @@ class SettingsDataSourceImplTest {
         assertThat(dataSource.suggestionsSavingEnabled.value).isFalse()
         assertThat(dataSource.dismissedRecommendedVersion.value).isNull()
         assertThat(dataSource.onboardingCompleted.value).isFalse()
+        assertThat(dataSource.shoppingListLocked.value).isFalse()
     }
 
     @Test
@@ -35,6 +36,7 @@ class SettingsDataSourceImplTest {
         dataSource.setSuggestionsSavingEnabled(true)
         dataSource.setDismissedRecommendedVersion(10_203)
         dataSource.setOnboardingCompleted()
+        dataSource.setShoppingListLocked(true)
 
         assertThat(dataSource.themeMode.value).isEqualTo(ThemeMode.Dark)
         assertThat(dataSource.currentThemeMode).isEqualTo(ThemeMode.Dark)
@@ -44,6 +46,7 @@ class SettingsDataSourceImplTest {
         assertThat(dataSource.suggestionsSavingEnabled.value).isTrue()
         assertThat(dataSource.dismissedRecommendedVersion.value).isEqualTo(10_203L)
         assertThat(dataSource.onboardingCompleted.value).isTrue()
+        assertThat(dataSource.shoppingListLocked.value).isTrue()
     }
 
     @Test
@@ -55,6 +58,7 @@ class SettingsDataSourceImplTest {
             setSuggestionsSavingEnabled(true)
             setDismissedRecommendedVersion(10_203)
             setOnboardingCompleted()
+            setShoppingListLocked(true)
         }
 
         val restarted = SettingsDataSourceImpl(settings = storage)
@@ -65,6 +69,7 @@ class SettingsDataSourceImplTest {
         assertThat(restarted.suggestionsSavingEnabled.value).isTrue()
         assertThat(restarted.dismissedRecommendedVersion.value).isEqualTo(10_203L)
         assertThat(restarted.onboardingCompleted.value).isTrue()
+        assertThat(restarted.shoppingListLocked.value).isTrue()
     }
 
     @Test
@@ -77,6 +82,7 @@ class SettingsDataSourceImplTest {
                 setSuggestionsSavingEnabled(true)
                 setDismissedRecommendedVersion(10_203)
                 setOnboardingCompleted()
+                setShoppingListLocked(true)
             }
 
         dataSource.clear()
@@ -88,6 +94,7 @@ class SettingsDataSourceImplTest {
             assertThat(it.selectedHouseholdId.value).isNull()
             assertThat(it.suggestionsSavingEnabled.value).isFalse()
             assertThat(it.onboardingCompleted.value).isFalse()
+            assertThat(it.shoppingListLocked.value).isFalse()
         }
     }
 

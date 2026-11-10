@@ -14,6 +14,7 @@ internal class SettingsRepositoryImpl(
     override val currentLanguage: AppLanguage get() = dataSource.currentLanguage
     override val selectedHouseholdId: Flow<String?> = dataSource.selectedHouseholdId
     override val suggestionsSavingEnabled: Flow<Boolean> = dataSource.suggestionsSavingEnabled
+    override val shoppingListLocked: Flow<Boolean> = dataSource.shoppingListLocked
 
     override suspend fun setThemeMode(mode: ThemeMode) = dataSource.setThemeMode(mode)
 
@@ -22,4 +23,6 @@ internal class SettingsRepositoryImpl(
     override suspend fun setSelectedHouseholdId(householdId: String) = dataSource.setSelectedHouseholdId(householdId)
 
     override suspend fun setSuggestionsSavingEnabled(enabled: Boolean) = dataSource.setSuggestionsSavingEnabled(enabled)
+
+    override suspend fun setShoppingListLocked(locked: Boolean) = dataSource.setShoppingListLocked(locked)
 }

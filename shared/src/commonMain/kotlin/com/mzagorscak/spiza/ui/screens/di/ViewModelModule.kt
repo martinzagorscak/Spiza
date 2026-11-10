@@ -84,6 +84,8 @@ val viewModelModule = module {
             clearCheckedItems = get(),
             observeSuggestionsSavingEnabled = get(),
             observeSuggestions = get(),
+            observeShoppingListLocked = get(),
+            toggleShoppingListLocked = get(),
             crashLogger = get(),
         )
     }

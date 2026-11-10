@@ -288,6 +288,10 @@ private fun AppNavDisplay(
                                         viewModel.clearCheckedItems()
                                     },
                                     onWriteErrorShown = viewModel::onErrorShown,
+                                    onLockToggle = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.onLockToggle()
+                                    },
                                 )
                             },
                         )

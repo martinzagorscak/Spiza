@@ -17,6 +17,7 @@ internal class SettingsDataSourceImpl(
     private val suggestionsSavingEnabledState = MutableStateFlow(readSuggestionsSavingEnabled())
     private val dismissedRecommendedVersionState = MutableStateFlow(readDismissedRecommendedVersion())
     private val onboardingCompletedState = MutableStateFlow(readOnboardingCompleted())
+    private val shoppingListLockedState = MutableStateFlow(readShoppingListLocked())
 
     override val themeMode: StateFlow<ThemeMode> = themeModeState.asStateFlow()
     override val language: StateFlow<AppLanguage> = languageState.asStateFlow()
@@ -26,6 +27,7 @@ internal class SettingsDataSourceImpl(
     override val suggestionsSavingEnabled: StateFlow<Boolean> = suggestionsSavingEnabledState.asStateFlow()
     override val dismissedRecommendedVersion: StateFlow<Long?> = dismissedRecommendedVersionState.asStateFlow()
     override val onboardingCompleted: StateFlow<Boolean> = onboardingCompletedState.asStateFlow()
+    override val shoppingListLocked: StateFlow<Boolean> = shoppingListLockedState.asStateFlow()
 
     override fun setThemeMode(mode: ThemeMode) {
         settings.putString(KEY_THEME_MODE, mode.name)
@@ -57,6 +59,11 @@ internal class SettingsDataSourceImpl(
         onboardingCompletedState.value = true
     }
 
+    override fun setShoppingListLocked(locked: Boolean) {
+        settings.putBoolean(KEY_SHOPPING_LIST_LOCKED, locked)
+        shoppingListLockedState.value = locked
+    }
+
     // Only our own keys: on iOS the no-arg Settings is the shared NSUserDefaults, which also holds SDK (Firebase, Google) entries.
     override fun clear() {
         CLEARABLE_KEYS.forEach { settings.remove(it) }
@@ -65,6 +72,7 @@ internal class SettingsDataSourceImpl(
         selectedHouseholdIdState.value = readSelectedHouseholdId()
         suggestionsSavingEnabledState.value = readSuggestionsSavingEnabled()
         onboardingCompletedState.value = readOnboardingCompleted()
+        shoppingListLockedState.value = readShoppingListLocked()
     }
 
     private fun readThemeMode(): ThemeMode =
@@ -82,6 +90,8 @@ internal class SettingsDataSourceImpl(
 
     private fun readOnboardingCompleted(): Boolean = settings.getBoolean(KEY_ONBOARDING_COMPLETED, false)
 
+    private fun readShoppingListLocked(): Boolean = settings.getBoolean(KEY_SHOPPING_LIST_LOCKED, false)
+
     private companion object {
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_LANGUAGE = "language"
@@ -89,6 +99,7 @@ internal class SettingsDataSourceImpl(
         const val KEY_SUGGESTIONS_SAVING_ENABLED = "suggestions_saving_enabled"
         const val KEY_DISMISSED_RECOMMENDED_VERSION = "dismissed_recommended_version"
         const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
+        const val KEY_SHOPPING_LIST_LOCKED = "shopping_list_locked"
 
         // What clear() removes: a new preference must be added here too. The dismissed recommended update is not listed because
         // it describes the installed app on this device, not the user's data.
@@ -99,6 +110,7 @@ internal class SettingsDataSourceImpl(
                 KEY_SELECTED_HOUSEHOLD_ID,
                 KEY_SUGGESTIONS_SAVING_ENABLED,
                 KEY_ONBOARDING_COMPLETED,
+                KEY_SHOPPING_LIST_LOCKED,
             )
     }
 }

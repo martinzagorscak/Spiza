@@ -74,7 +74,9 @@
     <string name="shopping_list_no_household_description">Stvori ili pridruži se kućanstvu kako bi započeo zajednički popis za kupnju.</string>
     <string name="shopping_list_empty_title">Tvoj popis je prazan</string>
     <string name="shopping_list_empty_description">Dodaj prvi artikl u nastavku.</string>
+    <string name="shopping_list_empty_locked_description">Otključaj popis kako bi dodao artikle.</string>
     <string name="shopping_list_add_item_placeholder">Dodaj artikl</string>
+    <string name="shopping_list_pending_section">Za kupiti</string>
     <string name="shopping_list_done_section">Kupljeno</string>
     <string name="shopping_list_write_error">Promjena nije spremljena</string>
     <string name="shopping_list_suggestions_title">Prijedlozi</string>

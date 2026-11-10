@@ -18,10 +18,12 @@ import com.mzagorscak.spiza.domain.usecase.GetCurrentUserProfileUseCase
 import com.mzagorscak.spiza.domain.usecase.MoveArticleItemUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveArticleItemsUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveHouseholdSelectionUseCase
+import com.mzagorscak.spiza.domain.usecase.ObserveShoppingListLockedUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsSavingEnabledUseCase
 import com.mzagorscak.spiza.domain.usecase.ObserveSuggestionsUseCase
 import com.mzagorscak.spiza.domain.usecase.SetArticleItemCheckedUseCase
 import com.mzagorscak.spiza.domain.usecase.SetSelectedHouseholdIdUseCase
+import com.mzagorscak.spiza.domain.usecase.ToggleShoppingListLockedUseCase
 import com.mzagorscak.spiza.domain.usecase.UpdateArticleItemTextUseCase
 import com.mzagorscak.spiza.ui.model.PresentableSimpleHousehold
 import com.mzagorscak.spiza.ui.model.toPresentable
@@ -81,6 +83,8 @@ internal class ShoppingListViewModelImpl(
     private val addOrUpdateSuggestion: AddOrUpdateSuggestionUseCase,
     observeSuggestionsSavingEnabled: ObserveSuggestionsSavingEnabledUseCase,
     observeSuggestions: ObserveSuggestionsUseCase,
+    observeShoppingListLocked: ObserveShoppingListLockedUseCase,
+    private val toggleShoppingListLocked: ToggleShoppingListLockedUseCase,
     private val crashLogger: CrashLogger,
 ) : ShoppingListViewModel() {
     private val header = MutableStateFlow(ShoppingListState.Header())
@@ -99,12 +103,14 @@ internal class ShoppingListViewModelImpl(
             areCheckedItemsCollapsedState,
             dialogStatePublisher,
             observeSuggestions(),
-        ) { snapshot, areCheckedItemsCollapsed, dialogState, suggestions ->
+            observeShoppingListLocked(),
+        ) { snapshot, areCheckedItemsCollapsed, dialogState, suggestions, isLocked ->
             render(
                 snapshot,
                 areCheckedItemsCollapsed,
                 dialogState,
                 suggestions,
+                isLocked,
             )
         }.launchIn(viewModelScope)
     }
@@ -128,6 +134,7 @@ internal class ShoppingListViewModelImpl(
     }
 
     override fun onAddItem(text: String) {
+        if (isLocked()) return
         val loaded = latest ?: return
         write {
             val isNewItem = addItem(householdId = loaded.current.id, text = text, currentItems = loaded.items)
@@ -141,6 +148,7 @@ internal class ShoppingListViewModelImpl(
         itemId: String,
         text: String,
     ) {
+        // Not guarded by the lock: the text field is read-only while locked, so this is an edit typed before locking.
         val loaded = latest ?: return
         write { updateItemText(loaded.current.id, itemId, text) }
     }
@@ -162,18 +170,25 @@ internal class ShoppingListViewModelImpl(
     }
 
     override fun onItemDelete(itemId: String) {
+        if (isLocked()) return
         val loaded = latest ?: return
         write { deleteItem(loaded.current.id, itemId) }
     }
 
     override fun onCheckedItemsCollapse() = areCheckedItemsCollapsedState.update { it.not() }
 
-    override fun showClearCheckedItemsConfirmationDialog() =
+    override fun showClearCheckedItemsConfirmationDialog() {
+        if (isLocked()) return
         dialogStatePublisher.update { ShoppingListState.DialogState.ClearCheckedItemsConfirmation }
+    }
 
     override fun dismissDialog() = dialogStatePublisher.update { ShoppingListState.DialogState.Hidden }
 
     override fun clearCheckedItems() {
+        if (isLocked()) {
+            dismissDialog()
+            return
+        }
         write {
             val loaded = latest ?: return@write
             areCheckedItemsCollapsedState.update { true }
@@ -195,27 +210,42 @@ internal class ShoppingListViewModelImpl(
         }
     }
 
+    override fun onLockToggle() {
+        launchSafely(
+            crashLogger = crashLogger,
+            context = "Shopping list lock toggle failed",
+            onError = ::showWriteError,
+        ) {
+            toggleShoppingListLocked()
+        }
+    }
+
+    // Adding, deleting and clearing are blocked because the UI hides them while the list is locked.
+    private fun isLocked(): Boolean = (body.value as? ShoppingListState.Body.Content)?.isLocked == true
+
     // Firestore applies local writes to the listeners immediately, so a failure here means the server rejected it.
     private fun write(block: suspend () -> Unit) {
         launchSafely(
             crashLogger = crashLogger,
             context = "Shopping list write failed",
-            onError = { error ->
-                body.update {
-                    if (it is ShoppingListState.Body.Content) {
-                        it.copy(
-                            contentErrorState = if (error.isQuotaExceeded()) {
-                                ShoppingListState.ContentErrorState.QuotaExceeded
-                            } else {
-                                ShoppingListState.ContentErrorState.WriteError
-                            },
-                        )
-                    } else {
-                        it
-                    }
-                }
-            },
+            onError = ::showWriteError,
         ) { block() }
+    }
+
+    private fun showWriteError(error: Throwable) {
+        body.update {
+            if (it is ShoppingListState.Body.Content) {
+                it.copy(
+                    contentErrorState = if (error.isQuotaExceeded()) {
+                        ShoppingListState.ContentErrorState.QuotaExceeded
+                    } else {
+                        ShoppingListState.ContentErrorState.WriteError
+                    },
+                )
+            } else {
+                it
+            }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -248,6 +278,7 @@ internal class ShoppingListViewModelImpl(
         areCheckedItemsCollapsed: Boolean,
         dialogState: ShoppingListState.DialogState,
         suggestions: List<ShoppingItemSuggestion>,
+        isLocked: Boolean,
     ) {
         latest = snapshot as? Snapshot.Loaded
         when (snapshot) {
@@ -296,6 +327,7 @@ internal class ShoppingListViewModelImpl(
                         areCheckedItemsCollapsed = areCheckedItemsCollapsed,
                         dialogState = dialogState,
                         contentErrorState = previousError,
+                        isLocked = isLocked,
                     )
             }
         }

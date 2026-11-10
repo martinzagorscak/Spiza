@@ -9,11 +9,9 @@ interface SettingsRepository {
     val language: Flow<AppLanguage>
     val currentThemeMode: ThemeMode
     val currentLanguage: AppLanguage
-
-    /** The household last opened on this device, or null if none was chosen yet. */
     val selectedHouseholdId: Flow<String?>
-
     val suggestionsSavingEnabled: Flow<Boolean>
+    val shoppingListLocked: Flow<Boolean>
 
     suspend fun setThemeMode(mode: ThemeMode)
 
@@ -22,4 +20,6 @@ interface SettingsRepository {
     suspend fun setSelectedHouseholdId(householdId: String)
 
     suspend fun setSuggestionsSavingEnabled(enabled: Boolean)
+
+    suspend fun setShoppingListLocked(locked: Boolean)
 }

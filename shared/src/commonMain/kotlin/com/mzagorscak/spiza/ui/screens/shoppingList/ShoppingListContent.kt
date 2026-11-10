@@ -1,6 +1,7 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
@@ -47,20 +48,29 @@ import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_filled_chevron_down
 import spiza.shared.generated.resources.ic_filled_chevron_up
+import spiza.shared.generated.resources.ic_lock
+import spiza.shared.generated.resources.ic_lock_open
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.shopping_list_add_item_placeholder
 import spiza.shared.generated.resources.shopping_list_done_section
 import spiza.shared.generated.resources.shopping_list_empty_description
+import spiza.shared.generated.resources.shopping_list_empty_locked_description
 import spiza.shared.generated.resources.shopping_list_empty_title
+import spiza.shared.generated.resources.shopping_list_pending_section
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val TEXT_COMMIT_DEBOUNCE_MS = 600L
 private const val ARTICLE_TEXT_MAX_LENGTH = 100
 private const val OPTIMISTIC_ORDER_TIMEOUT_MS = 3_000L
+private const val PENDING_HEADER_KEY = "pending-header"
 private const val EMPTY_KEY = "empty"
 private const val ADD_ITEM_KEY = "add-item"
 private const val DONE_HEADER_KEY = "done-header"
 private const val DONE_ITEM_TEMPLATE_KEY = "done-item"
+
+// Index of the first pending item in the LazyColumn: the pending header comes before it. The empty state is shown only
+// when there are no pending items, so it never shifts a draggable item.
+private const val FIRST_PENDING_INDEX = 1
 
 private val AutoScrollEdgeSize = 64.dp
 private val AutoScrollStep = 8.dp
@@ -122,11 +132,22 @@ fun ShoppingListContent(
         contentPadding = PaddingValues(bottom = padding1600),
         modifier = modifier.fillMaxSize(),
     ) {
+        // Shown on an empty list too, so a locked list can always be unlocked.
+        item(key = PENDING_HEADER_KEY) {
+            PendingHeader(
+                isLocked = state.isLocked,
+                onLockToggle = callbacks.onLockToggle,
+            )
+        }
         if (state.pendingItems.isEmpty() && state.doneItems.isEmpty()) {
             item(key = EMPTY_KEY) {
                 FallbackState(
                     title = stringResource(Res.string.shopping_list_empty_title),
-                    description = stringResource(Res.string.shopping_list_empty_description),
+                    description = if (state.isLocked) {
+                        stringResource(Res.string.shopping_list_empty_locked_description)
+                    } else {
+                        stringResource(Res.string.shopping_list_empty_description)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -159,10 +180,10 @@ fun ShoppingListContent(
                     .fillMaxWidth()
                     .then(if (isDragging) Modifier else Modifier.animateItem()),
             ) {
-                ArticleRow(item = item, callbacks = callbacks)
+                ArticleRow(item = item, isEditable = state.isLocked.not(), callbacks = callbacks)
             }
         }
-        if (state.canAddItemToHousehold) {
+        if (state.canAddItemToHousehold && state.isLocked.not()) {
             item(key = ADD_ITEM_KEY) {
                 AddItemRow(
                     householdId = state.currentHouseholdId,
@@ -180,6 +201,7 @@ fun ShoppingListContent(
             ) {
                 DoneHeader(
                     areCheckedItemsCollapsed = state.areCheckedItemsCollapsed,
+                    canClearCheckedItems = state.isLocked.not(),
                     onCheckedItemsCollapse = callbacks.onCheckedItemsCollapse,
                     showClearCheckedItemsConfirmationDialog = callbacks.showClearCheckedItemsConfirmationDialog,
                 )
@@ -188,7 +210,12 @@ fun ShoppingListContent(
 
         if (state.areCheckedItemsCollapsed.not()) {
             items(items = state.doneItems, key = { "$DONE_ITEM_TEMPLATE_KEY-${it.id}" }) { item ->
-                ArticleRow(item = item, callbacks = callbacks, modifier = Modifier.animateItem())
+                ArticleRow(
+                    item = item,
+                    isEditable = state.isLocked.not(),
+                    callbacks = callbacks,
+                    modifier = Modifier.animateItem(),
+                )
             }
         }
     }
@@ -209,7 +236,7 @@ private fun moveDraggedItem(
     val center = current.offset + current.size / 2f + dragOffset
     val target = infos.firstOrNull {
         it.key != key &&
-            it.index < pending.size &&
+            it.index - FIRST_PENDING_INDEX in pending.indices &&
             center >= it.offset &&
             center <= it.offset + it.size
     } ?: return 0f
@@ -219,7 +246,7 @@ private fun moveDraggedItem(
         index = listState.firstVisibleItemIndex,
         scrollOffset = listState.firstVisibleItemScrollOffset,
     )
-    pending.add(target.index, pending.removeAt(current.index))
+    pending.add(target.index - FIRST_PENDING_INDEX, pending.removeAt(current.index - FIRST_PENDING_INDEX))
     return (current.offset - target.offset).toFloat()
 }
 
@@ -245,10 +272,11 @@ private fun DragAutoScrollEffect(
             val layoutInfo = listState.layoutInfo
             val current = layoutInfo.visibleItemsInfo.firstOrNull { it.key == key } ?: continue
             val top = current.offset + dragOffset()
+            val pendingIndex = current.index - FIRST_PENDING_INDEX
             // Stops at the first and last pending item, so the dragged item is never scrolled out of the viewport.
             val step = when {
-                current.index > 0 && top < layoutInfo.viewportStartOffset + edgePx -> -stepPx
-                current.index < pending.lastIndex && top + current.size > layoutInfo.viewportEndOffset - edgePx -> stepPx
+                pendingIndex > 0 && top < layoutInfo.viewportStartOffset + edgePx -> -stepPx
+                pendingIndex < pending.lastIndex && top + current.size > layoutInfo.viewportEndOffset - edgePx -> stepPx
                 else -> continue
             }
             onScrolled(key, listState.scrollBy(step))
@@ -259,6 +287,7 @@ private fun DragAutoScrollEffect(
 @Composable
 private fun ArticleRow(
     item: PresentableArticleItem,
+    isEditable: Boolean,
     callbacks: ShoppingListScreenCallbacks,
     modifier: Modifier = Modifier,
 ) {
@@ -270,9 +299,10 @@ private fun ArticleRow(
         if (text == lastSyncedText) text = item.text
         lastSyncedText = item.text
     }
-    LaunchedEffect(text) {
+    // Locking the list flushes an edit still waiting for the debounce instead of dropping it.
+    LaunchedEffect(text, isEditable) {
         if (text != lastSyncedText) {
-            if (text.isNotBlank()) delay(TEXT_COMMIT_DEBOUNCE_MS.milliseconds)
+            if (text.isNotBlank() && isEditable) delay(TEXT_COMMIT_DEBOUNCE_MS.milliseconds)
             callbacks.onItemTextChange(item.id, text)
         }
     }
@@ -280,6 +310,7 @@ private fun ArticleRow(
     EditableCheckListItem(
         text = text,
         checked = item.isChecked,
+        isEditable = isEditable,
         onTextChange = {
             if (it.length <= ARTICLE_TEXT_MAX_LENGTH) {
                 text = it
@@ -329,8 +360,42 @@ private fun AddItemRow(
 }
 
 @Composable
+private fun PendingHeader(
+    isLocked: Boolean,
+    onLockToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(padding200),
+    ) {
+        Text(
+            text = stringResource(Res.string.shopping_list_pending_section),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f).padding(horizontal = padding400, vertical = padding200),
+        )
+
+        Crossfade(targetState = isLocked, label = "lockIcon") { locked ->
+            IconButton(
+                resource = if (locked) Res.drawable.ic_lock else Res.drawable.ic_lock_open,
+                onClick = onLockToggle,
+                appearance = IconButtonAppearance(
+                    variant = IconButtonVariant.IconBased,
+                    size = IconButtonSize.Medium,
+                    tintColor = MaterialTheme.colorScheme.onBackground,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
 private fun DoneHeader(
     areCheckedItemsCollapsed: Boolean,
+    canClearCheckedItems: Boolean,
     onCheckedItemsCollapse: () -> Unit,
     showClearCheckedItemsConfirmationDialog: () -> Unit,
     modifier: Modifier = Modifier,
@@ -360,14 +425,16 @@ private fun DoneHeader(
             modifier = Modifier.weight(1f).padding(horizontal = padding400, vertical = padding200),
         )
 
-        IconButton(
-            resource = Res.drawable.ic_trash,
-            onClick = showClearCheckedItemsConfirmationDialog,
-            appearance = IconButtonAppearance(
-                variant = IconButtonVariant.IconBased,
-                size = IconButtonSize.Medium,
-                tintColor = MaterialTheme.colorScheme.onBackground,
-            ),
-        )
+        if (canClearCheckedItems) {
+            IconButton(
+                resource = Res.drawable.ic_trash,
+                onClick = showClearCheckedItemsConfirmationDialog,
+                appearance = IconButtonAppearance(
+                    variant = IconButtonVariant.IconBased,
+                    size = IconButtonSize.Medium,
+                    tintColor = MaterialTheme.colorScheme.onBackground,
+                ),
+            )
+        }
     }
 }
