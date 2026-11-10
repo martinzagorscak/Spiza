@@ -61,8 +61,7 @@ val dataModule =
         single<AccountRepository> {
             AccountRepositoryImpl(
                 authService = get(),
-                householdDataSource = get(),
-                userDataSource = get(),
+                accountDataSource = get(),
                 settingsDataSource = get(),
                 localDataCleaner = get(),
                 crashLogger = get(),

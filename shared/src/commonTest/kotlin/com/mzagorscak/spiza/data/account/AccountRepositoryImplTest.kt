@@ -16,17 +16,14 @@ import com.mzagorscak.spiza.auth.AuthResult
 import com.mzagorscak.spiza.auth.UserMismatchException
 import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.data.settings.SettingsDataSourceImpl
-import com.mzagorscak.spiza.data.user.model.UserProfileDto
 import com.mzagorscak.spiza.domain.model.DeleteAccountResult
 import com.mzagorscak.spiza.domain.model.ThemeMode
+import com.mzagorscak.spiza.fakes.FakeAccountDataSource
 import com.mzagorscak.spiza.fakes.FakeAuthService
 import com.mzagorscak.spiza.fakes.FakeCrashLogger
-import com.mzagorscak.spiza.fakes.FakeHouseholdDataSource
 import com.mzagorscak.spiza.fakes.FakeLocalDataCleaner
 import com.mzagorscak.spiza.fakes.FakeSettings
-import com.mzagorscak.spiza.fakes.FakeUserDataSource
 import com.mzagorscak.spiza.fakes.TEST_USER
-import com.mzagorscak.spiza.fakes.householdDto
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -35,12 +32,9 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
-private const val OTHER_USER_ID = "user-2"
-
 class AccountRepositoryImplTest {
     private val authService = FakeAuthService()
-    private val households = FakeHouseholdDataSource()
-    private val users = FakeUserDataSource()
+    private val accountData = FakeAccountDataSource()
     private val storage = FakeSettings()
     private val settings = SettingsDataSourceImpl(settings = storage)
     private val localData = FakeLocalDataCleaner()
@@ -48,50 +42,30 @@ class AccountRepositoryImplTest {
     private val repository =
         AccountRepositoryImpl(
             authService = authService,
-            householdDataSource = households,
-            userDataSource = users,
+            accountDataSource = accountData,
             settingsDataSource = settings,
             localDataCleaner = localData,
             crashLogger = logger,
         )
 
-    private val ownedShared = householdDto(id = "owned-shared", members = listOf(TEST_USER.uid, OTHER_USER_ID))
-    private val joined = householdDto(id = "joined", ownerId = OTHER_USER_ID, members = listOf(OTHER_USER_ID, TEST_USER.uid))
-    private val unrelated = householdDto(id = "unrelated", ownerId = OTHER_USER_ID, members = listOf(OTHER_USER_ID))
-
     @BeforeTest
     fun setUp() {
-        households.households.value = listOf(ownedShared, joined, unrelated)
-        households.joinKeys["join-key"] = TEST_USER.uid
-        users.users =
-            listOf(
-                UserProfileDto(id = TEST_USER.uid, name = TEST_USER.displayName, email = TEST_USER.email, photoUrl = null),
-                UserProfileDto(id = OTHER_USER_ID, name = "Ivo", email = null, photoUrl = null),
-            )
         settings.setThemeMode(ThemeMode.Dark)
         settings.setOnboardingCompleted()
     }
 
-    private fun assertNothingDeleted() {
-        assertThat(households.households.value).containsExactly(ownedShared, joined, unrelated)
-        assertThat(households.deletedJoinKeysOfUsers).isEmpty()
-        assertThat(users.deletedProfileIds).isEmpty()
+    private fun assertAuthUserAndLocalDataKept() {
         assertThat(authService.deleteUserCalls).isEqualTo(0)
+        assertThat(authService.currentUser).isNotNull()
         assertThat(localData.clearAllCalls).isEqualTo(0)
         assertThat(settings.onboardingCompleted.value).isTrue()
+        assertThat(settings.themeMode.value).isEqualTo(ThemeMode.Dark)
     }
 
-    @Test
-    fun deleteAccount_deletesOwnedHouseholds_andLeavesJoinedOnes() =
-        runTest {
-            repository.deleteAccount()
-
-            // The owned household is gone for its other member too; the joined one stays for its owner without the user.
-            assertThat(households.households.value).containsExactly(
-                joined.copy(joinedMembers = listOf(OTHER_USER_ID)),
-                unrelated,
-            )
-        }
+    private fun assertNothingDeleted() {
+        assertThat(accountData.deleteAttempts).isEmpty()
+        assertAuthUserAndLocalDataKept()
+    }
 
     @Test
     fun deleteAccount_deletesRemoteDataAuthUserAndLocalData_whenConfirmed() =
@@ -100,16 +74,38 @@ class AccountRepositoryImplTest {
 
             assertThat(result).isEqualTo(DeleteAccountResult.Deleted)
             assertThat(authService.reauthenticateCalls).isEqualTo(1)
-            assertThat(households.deletedJoinKeysOfUsers).containsExactly(TEST_USER.uid)
-            assertThat(households.joinKeys).isEmpty()
-            assertThat(users.deletedProfileIds).containsExactly(TEST_USER.uid)
-            assertThat(users.users.map { it.id }).containsExactly(OTHER_USER_ID)
+            assertThat(accountData.deletedUserIds).containsExactly(TEST_USER.uid, TEST_USER.uid)
             assertThat(authService.deleteUserCalls).isEqualTo(1)
             assertThat(authService.currentUser).isNull()
             assertThat(localData.clearAllCalls).isEqualTo(1)
             assertThat(settings.onboardingCompleted.value).isFalse()
             assertThat(settings.themeMode.value).isEqualTo(ThemeMode.System)
             assertThat(logger.exceptions).isEmpty()
+        }
+
+    // The rules only let a signed-in user delete their data, and local data is the user's fallback while the account exists.
+    @Test
+    fun deleteAccount_deletesRemoteDataBeforeTheAuthUser_andTheAuthUserBeforeLocalData() =
+        runTest {
+            var reauthenticatedBeforeRemote = false
+            var authUserDeletionsBeforeRemote = -1
+            var localWipesBeforeRemote = -1
+            accountData.onDelete = {
+                reauthenticatedBeforeRemote = authService.reauthenticateCalls == 1
+                authUserDeletionsBeforeRemote = authService.deleteUserCalls
+                localWipesBeforeRemote = localData.clearAllCalls
+            }
+            authService.deleteUserFailure = DataException(reason = DataException.Reason.Offline, message = "network")
+
+            assertFailure { repository.deleteAccount() }.isInstanceOf<DataException>()
+
+            assertThat(accountData.deleteAttempts).containsExactly(TEST_USER.uid, TEST_USER.uid)
+            assertThat(reauthenticatedBeforeRemote).isTrue()
+            assertThat(authUserDeletionsBeforeRemote).isEqualTo(0)
+            assertThat(localWipesBeforeRemote).isEqualTo(0)
+            // The auth user deletion was attempted after the remote batch, and its failure kept the local data.
+            assertThat(authService.deleteUserCalls).isEqualTo(1)
+            assertThat(localData.clearAllCalls).isEqualTo(0)
         }
 
     @Test
@@ -127,7 +123,7 @@ class AccountRepositoryImplTest {
     fun deleteAccount_finishesTheDeletion_whenTheCallerIsCancelledAfterConfirming() =
         runTest {
             val acknowledgement = CompletableDeferred<Unit>()
-            users.deleteGate = acknowledgement
+            accountData.gate = acknowledgement
             val deletion = launch { repository.deleteAccount() }
             runCurrent()
 
@@ -135,7 +131,7 @@ class AccountRepositoryImplTest {
             acknowledgement.complete(Unit)
             advanceUntilIdle()
 
-            assertThat(users.deletedProfileIds).containsExactly(TEST_USER.uid)
+            assertThat(accountData.deletedUserIds).containsExactly(TEST_USER.uid, TEST_USER.uid)
             assertThat(authService.currentUser).isNull()
             assertThat(localData.clearAllCalls).isEqualTo(1)
             assertThat(settings.onboardingCompleted.value).isFalse()
@@ -165,8 +161,8 @@ class AccountRepositoryImplTest {
 
             assertThat(result).isEqualTo(DeleteAccountResult.NotSignedIn)
             assertThat(authService.reauthenticateCalls).isEqualTo(0)
+            assertThat(accountData.deleteAttempts).isEmpty()
             assertThat(logger.exceptions).hasSize(1)
-            assertThat(households.households.value).hasSize(3)
         }
 
     @Test
@@ -182,48 +178,51 @@ class AccountRepositoryImplTest {
             assertNothingDeleted()
         }
 
-    // The join key goes before the memberships are read, so nobody can add the user to a household in between.
     @Test
-    fun deleteAccount_hasDeletedTheJoinKey_andKeepsAuthUserAndLocalData_whenReadingHouseholdsFails() =
+    fun deleteAccount_throwsWithTheReason_andKeepsAuthUserAndLocalData_whenTheBatchIsRejected() =
         runTest {
-            households.getHouseholdsFailure = DataException(reason = DataException.Reason.Offline, message = "offline")
+            accountData.deleteFailure = DataException(reason = DataException.Reason.PermissionDenied, message = "denied")
 
-            assertFailure { repository.deleteAccount() }.isInstanceOf<DataException>()
+            assertFailure { repository.deleteAccount() }
+                .isInstanceOf<DataException>()
+                .prop(DataException::reason)
+                .isEqualTo(DataException.Reason.PermissionDenied)
 
-            assertThat(households.deletedJoinKeysOfUsers).containsExactly(TEST_USER.uid)
-            assertThat(households.households.value).containsExactly(ownedShared, joined, unrelated)
-            assertThat(users.deletedProfileIds).isEmpty()
-            assertThat(authService.deleteUserCalls).isEqualTo(0)
-            assertThat(localData.clearAllCalls).isEqualTo(0)
-            assertThat(settings.onboardingCompleted.value).isTrue()
+            assertThat(accountData.deleteAttempts).containsExactly(TEST_USER.uid)
+            assertThat(accountData.deletedUserIds).isEmpty()
+            assertAuthUserAndLocalDataKept()
+        }
+
+    // The second pass catches a household the user was added to while the first pass was prepared; until it succeeds the
+    // account must stay complete enough to retry.
+    @Test
+    fun deleteAccount_throws_andKeepsAuthUserAndLocalData_whenTheSecondPassFails() =
+        runTest {
+            accountData.succeedingAttempts = 1
+            accountData.deleteFailure = DataException(reason = DataException.Reason.PermissionDenied, message = "denied")
+
+            assertFailure { repository.deleteAccount() }
+                .isInstanceOf<DataException>()
+                .prop(DataException::reason)
+                .isEqualTo(DataException.Reason.PermissionDenied)
+
+            assertThat(accountData.deleteAttempts).containsExactly(TEST_USER.uid, TEST_USER.uid)
+            assertThat(accountData.deletedUserIds).containsExactly(TEST_USER.uid)
+            assertAuthUserAndLocalDataKept()
         }
 
     @Test
-    fun deleteAccount_keepsAuthUserAndLocalData_whenDeletingTheProfileFails() =
+    fun deleteAccount_failsAsOffline_andKeepsAuthUserAndLocalData_whenTheBatchIsNotAcknowledged() =
         runTest {
-            users.deleteFailure = DataException(reason = DataException.Reason.PermissionDenied, message = "denied")
-
-            assertFailure { repository.deleteAccount() }.isInstanceOf<DataException>()
-
-            assertThat(authService.deleteUserCalls).isEqualTo(0)
-            assertThat(authService.currentUser).isNotNull()
-            assertThat(localData.clearAllCalls).isEqualTo(0)
-            assertThat(settings.onboardingCompleted.value).isTrue()
-        }
-
-    @Test
-    fun deleteAccount_failsAsOffline_andKeepsAuthUser_whenDeletionsAreNotAcknowledged() =
-        runTest {
-            households.neverAcknowledgeWrites = true
+            accountData.neverAcknowledge = true
 
             assertFailure { repository.deleteAccount() }
                 .isInstanceOf<DataException>()
                 .prop(DataException::reason)
                 .isEqualTo(DataException.Reason.Offline)
 
-            assertThat(authService.deleteUserCalls).isEqualTo(0)
-            assertThat(localData.clearAllCalls).isEqualTo(0)
-            assertThat(settings.onboardingCompleted.value).isTrue()
+            assertThat(accountData.deletedUserIds).isEmpty()
+            assertAuthUserAndLocalDataKept()
         }
 
     @Test

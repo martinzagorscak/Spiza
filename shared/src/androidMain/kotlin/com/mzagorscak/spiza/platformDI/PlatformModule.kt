@@ -5,6 +5,8 @@ import com.mzagorscak.spiza.auth.AndroidAuthService
 import com.mzagorscak.spiza.auth.AuthService
 import com.mzagorscak.spiza.crash.AndroidCrashLogger
 import com.mzagorscak.spiza.crash.CrashLogger
+import com.mzagorscak.spiza.data.account.AccountDataSource
+import com.mzagorscak.spiza.data.account.FirestoreAccountDataSource
 import com.mzagorscak.spiza.data.appUpdate.AndroidAppVersionProvider
 import com.mzagorscak.spiza.data.appUpdate.AppVersionProvider
 import com.mzagorscak.spiza.data.household.FirestoreHouseholdDataSource
@@ -30,6 +32,7 @@ actual fun platformModule(): Module =
         single<CrashLogger> { AndroidCrashLogger() }
         single<UserDataSource> { FirestoreUserDataSource() }
         single<HouseholdDataSource> { FirestoreHouseholdDataSource(crashLogger = get()) }
+        single<AccountDataSource> { FirestoreAccountDataSource() }
         single<RemoteConfigDataSource> {
             FirebaseRemoteConfigDataSource(
                 isDebuggable = (androidContext().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,

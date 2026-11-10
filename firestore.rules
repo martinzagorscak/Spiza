@@ -87,7 +87,7 @@ service cloud.firestore {
       // to household co-members and join-key holders; listing is denied so nobody can enumerate profiles and emails.
       allow get: if isSignedIn();
 
-      // Account deletion: users remove their own profile (and with it their name and email) as the last step.
+      // Account deletion: users remove their own profile (and with it their name and email) in the account-deletion batch.
       allow delete: if isSignedIn() && userId == request.auth.uid;
     }
 

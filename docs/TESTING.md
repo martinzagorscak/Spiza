@@ -198,6 +198,7 @@ A fake is a small working in-memory implementation of an interface, shared by al
 |---|---|---|
 | `FakeHouseholdRepository` | `HouseholdRepository` (ViewModel / use-case tests) | `households`, `items`, `joinKey`, `writeFailure`, `householdsFailure`, `itemsFailure`, `neverCompleteWrites`, `addMemberResult` |
 | `FakeHouseholdDataSource` | Firestore household data source (repository tests) | `households`, `items`, `joinKeys`, `writeFailure`, `neverAcknowledgeWrites` |
+| `FakeAccountDataSource` | account data deletion batch (`AccountRepositoryImpl` tests) | `deleteFailure`, `gate`, `neverAcknowledge`, `onDelete`; records `deleteAttempts`, `deletedUserIds` |
 | `FakeUserRepository` / `FakeUserDataSource` / `FakeAuthService` | user profile and sign-in | `signInFailure`, `signOutFailure`, `saveFailure`, `getUsersFailure` |
 | `FakeLoyaltyCardRepository` | `LoyaltyCardRepository` (ViewModel / use-case tests) | `cards`, `observeFailure`, `writeFailure`, `beforeAddShortcut` |
 | `FakeSuggestionRepository` | `SuggestionRepository` | `suggestions`, `observeFailure`, `writeFailure` |

@@ -139,29 +139,6 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
         return FirestoreListenerHandle(registration)
     }
 
-    // Server only: account deletion must act on the current memberships, never on a stale cache.
-    // Unlike the listeners, a malformed document fails the read: skipping it would leave that household (and the user in it)
-    // behind after the account is deleted.
-    func getHouseholds(userId: String, onComplete: @escaping ([HouseholdDto], BridgeError?) -> Void) {
-        households
-            .whereField(HouseholdFields.shared.JOINED_MEMBERS, arrayContains: userId)
-            .getDocuments(source: .server) { snapshot, error in
-                if let error = error {
-                    onComplete([], error.toBridgeError())
-                    return
-                }
-                var result: [HouseholdDto] = []
-                for document in snapshot?.documents ?? [] {
-                    guard let household = document.toHouseholdDto() else {
-                        onComplete([], BridgeError(reason: "Unknown", message: "Malformed household document \(document.documentID)"))
-                        return
-                    }
-                    result.append(household)
-                }
-                onComplete(result, nil)
-            }
-    }
-
     func observeItems(
         householdId: String,
         onChange: @escaping ([ArticleItemDto]) -> Void,

@@ -36,6 +36,7 @@ struct iOSApp: App {
             authBridge: SwiftAuthBridge(),
             userBridge: SwiftUserBridge(),
             householdBridge: SwiftHouseholdBridge(),
+            accountBridge: SwiftAccountBridge(),
             remoteConfigBridge: SwiftRemoteConfigBridge())
     }
 

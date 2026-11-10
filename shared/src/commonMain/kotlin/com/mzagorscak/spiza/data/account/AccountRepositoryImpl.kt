@@ -7,10 +7,8 @@ import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.crash.dataErrorReason
 import com.mzagorscak.spiza.crash.recordError
-import com.mzagorscak.spiza.data.household.HouseholdDataSource
 import com.mzagorscak.spiza.data.local.LocalDataCleaner
 import com.mzagorscak.spiza.data.settings.SettingsDataSource
-import com.mzagorscak.spiza.data.user.UserDataSource
 import com.mzagorscak.spiza.domain.model.DeleteAccountResult
 import com.mzagorscak.spiza.domain.repository.AccountRepository
 import kotlinx.coroutines.CancellationException
@@ -21,12 +19,12 @@ import kotlin.time.Duration.Companion.milliseconds
 
 // Unlike create/update, a timeout is a failure here: offline the deletes are only queued locally, and the auth user must not be
 // deleted before its data is really gone (afterwards the rules would reject the queued writes of a user that no longer exists).
+// A timed-out batch may still be applied later from that queue; retrying is safe because deleting the data is idempotent.
 private const val DELETE_ACCOUNT_DATA_TIMEOUT_MS = 20_000L
 
 internal class AccountRepositoryImpl(
     private val authService: AuthService,
-    private val householdDataSource: HouseholdDataSource,
-    private val userDataSource: UserDataSource,
+    private val accountDataSource: AccountDataSource,
     private val settingsDataSource: SettingsDataSource,
     private val localDataCleaner: LocalDataCleaner,
     private val crashLogger: CrashLogger,
@@ -59,7 +57,16 @@ internal class AccountRepositoryImpl(
         // phase is bounded by its timeout, so this can not hang.
         withContext(NonCancellable) {
             // The remote data goes while the user still exists: the rules only let a signed-in member or owner delete it.
-            withTimeoutOrNull(DELETE_ACCOUNT_DATA_TIMEOUT_MS.milliseconds) { deleteRemoteData(userId) }
+            // One batch: a rejected write deletes nothing, so the user keeps a complete account to retry with.
+            withTimeoutOrNull(DELETE_ACCOUNT_DATA_TIMEOUT_MS.milliseconds) {
+                accountDataSource.deleteAccountData(userId)
+                // A second pass instead of deleting the join key up front (which would be a partial deletion): an owner may
+                // have consumed the key between the first pass's reads and its commit, adding the user to a household that
+                // pass did not see. The first pass deleted the key, so only an owner who already read it can still add the user
+                // (a tiny window the rules can not close), and this pass removes that membership. It is idempotent (an already deleted profile may be deleted again); if it fails, the
+                // auth user is kept and retrying is safe.
+                accountDataSource.deleteAccountData(userId)
+            }
                 ?: throw DataException(
                     reason = DataException.Reason.Offline,
                     message = "Deleting the data of user $userId timed out",
@@ -70,20 +77,6 @@ internal class AccountRepositoryImpl(
             wipeLocalData()
         }
         return DeleteAccountResult.Deleted
-    }
-
-    private suspend fun deleteRemoteData(userId: String) {
-        // The join key first, so nobody can add the user to a household after the memberships below were read.
-        householdDataSource.deleteHouseholdJoinKey(userId)
-        householdDataSource.getHouseholds(userId).forEach { household ->
-            if (household.ownerId == userId) {
-                // Also for the other members: the household can not exist without its owner.
-                householdDataSource.deleteHousehold(household.id)
-            } else {
-                householdDataSource.removeMemberFromHousehold(householdId = household.id, memberId = userId)
-            }
-        }
-        userDataSource.deleteUserProfile(userId)
     }
 
     // The account is already deleted, so a failed wipe is only recorded: nothing may surface as an error anymore. Each part is

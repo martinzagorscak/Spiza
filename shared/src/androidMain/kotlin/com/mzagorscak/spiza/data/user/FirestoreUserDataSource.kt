@@ -38,10 +38,6 @@ class FirestoreUserDataSource(
                 .map { it.toUserProfileDto() }
         }
     }
-
-    override suspend fun deleteUserProfile(userId: String) {
-        users.document(userId).delete().await()
-    }
 }
 
 private fun DocumentSnapshot.toUserProfileDto(): UserProfileDto =

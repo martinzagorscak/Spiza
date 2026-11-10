@@ -88,17 +88,6 @@ class IosHouseholdDataSource(
             awaitClose { handle.remove() }
         }
 
-    override suspend fun getHouseholds(userId: String): List<HouseholdDto> =
-        suspendCancellableCoroutine { continuation ->
-            bridge.getHouseholds(userId = userId) { households, error ->
-                if (error == null) {
-                    continuation.resume(households)
-                } else {
-                    continuation.resumeWithException(error.toDataException())
-                }
-            }
-        }
-
     override fun observeItems(householdId: String): Flow<List<ArticleItemDto>> =
         callbackFlow {
             val handle =

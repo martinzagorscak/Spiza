@@ -5,6 +5,8 @@ import com.mzagorscak.spiza.auth.IosAuthService
 import com.mzagorscak.spiza.crash.CrashLogger
 import com.mzagorscak.spiza.crash.IosCrashLogger
 import com.mzagorscak.spiza.crash.IosCrashLoggerBridge
+import com.mzagorscak.spiza.data.account.AccountDataSource
+import com.mzagorscak.spiza.data.account.IosAccountDataSource
 import com.mzagorscak.spiza.data.appUpdate.AppVersionProvider
 import com.mzagorscak.spiza.data.appUpdate.IosAppVersionProvider
 import com.mzagorscak.spiza.data.household.HouseholdDataSource
@@ -32,6 +34,7 @@ actual fun platformModule(): Module =
         }
         single<UserDataSource> { IosUserDataSource(bridge = get()) }
         single<HouseholdDataSource> { IosHouseholdDataSource(bridge = get()) }
+        single<AccountDataSource> { IosAccountDataSource(bridge = get()) }
         single<RemoteConfigDataSource> { IosRemoteConfigDataSource(bridge = get()) }
         single<AppVersionProvider> { IosAppVersionProvider() }
         single<SpizaDatabase> {

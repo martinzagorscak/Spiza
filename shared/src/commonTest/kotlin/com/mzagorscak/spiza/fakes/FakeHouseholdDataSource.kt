@@ -27,9 +27,6 @@ class FakeHouseholdDataSource : HouseholdDataSource {
     /** When set, [observeHouseholds] fails with it on every subscription (like a rejected Firestore listener). */
     var householdsFailure: Throwable? = null
 
-    /** When set, [getHouseholds] throws it (like a server read while offline). */
-    var getHouseholdsFailure: Throwable? = null
-
     /** When set, [observeItems] fails with it on every subscription. */
     var itemsFailure: Throwable? = null
 
@@ -169,11 +166,6 @@ class FakeHouseholdDataSource : HouseholdDataSource {
             householdsFailure?.let { throw it }
             emitAll(households.map { all -> all.filter { userId in it.joinedMembers } })
         }
-
-    override suspend fun getHouseholds(userId: String): List<HouseholdDto> {
-        getHouseholdsFailure?.let { throw it }
-        return households.value.filter { userId in it.joinedMembers }
-    }
 
     override fun observeItems(householdId: String): Flow<List<ArticleItemDto>> =
         flow {

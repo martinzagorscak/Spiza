@@ -5,9 +5,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FieldValue.arrayUnion
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Source
 import com.mzagorscak.spiza.crash.CrashLogger
-import com.mzagorscak.spiza.crash.DataException
 import com.mzagorscak.spiza.data.household.model.ArticleItemDto
 import com.mzagorscak.spiza.data.household.model.HouseholdDto
 import kotlinx.coroutines.channels.awaitClose
@@ -132,20 +130,6 @@ class FirestoreHouseholdDataSource(
                     }
             awaitClose { registration.remove() }
         }
-
-    // Server only: account deletion must act on the current memberships, never on a stale cache.
-    // Unlike the listeners, a malformed document fails the read: skipping it would leave that household (and the user in it)
-    // behind after the account is deleted.
-    override suspend fun getHouseholds(userId: String): List<HouseholdDto> =
-        households
-            .whereArrayContains(HouseholdFields.JOINED_MEMBERS, userId)
-            .get(Source.SERVER)
-            .await()
-            .documents
-            .map { document ->
-                document.toHouseholdDto()
-                    ?: throw DataException(reason = DataException.Reason.Unknown, message = "Malformed household document ${document.id}")
-            }
 
     override fun observeItems(householdId: String): Flow<List<ArticleItemDto>> =
         callbackFlow {

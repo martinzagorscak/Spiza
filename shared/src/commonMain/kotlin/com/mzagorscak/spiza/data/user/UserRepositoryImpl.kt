@@ -50,7 +50,7 @@ internal class UserRepositoryImpl(
 
     // The profile document only makes the user visible to household members, so failing to save it
     // (e.g. offline on first launch) must never break the auth state that navigation depends on.
-    // Known gap with account deletion: an auth emission between deleteUserProfile and deleteCurrentUser re-saves the profile,
+    // Known gap with account deletion: an auth emission between deleteAccountData and deleteCurrentUser re-saves the profile,
     // and if deleteCurrentUser fails the next start re-creates it. Both are small windows; retrying the deletion removes it.
     private suspend fun saveProfile(userProfile: UserProfile) {
         try {

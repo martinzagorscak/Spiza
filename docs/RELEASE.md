@@ -16,9 +16,13 @@ How to use this file:
       loyalty card numbers, crash reports; processors: Firebase/Google; how to request deletion). Both stores require the URL,
       and GDPR applies because users are in the EU.
 - [x] **In-app account deletion** (Settings → Delete account). Both stores require it for apps that let users create an account.
-      After a confirmation dialog and a fresh Google sign-in (Firebase needs a recent login), the app deletes, in this order:
-      the user's `joinKeys`, households they own (with their `items`, also for the other members), their membership in the
-      other households, the `users/{uid}` profile, the Firebase Auth user, and finally all local data (Room, settings).
+      After a confirmation dialog and a fresh Google sign-in (Firebase needs a recent login), the app deletes in ONE atomic
+      Firestore batch the user's `joinKeys`, households they own (with their `items`, also for the other members), their
+      membership in the other households and the `users/{uid}` profile; then runs the same batch a second time (catches a
+      household the user was added to with their join key in the meantime); then deletes the Firebase Auth user, and finally
+      all local data (Room, settings). A rejected batch deletes nothing; a timed-out one may still be applied later, and
+      retrying is safe. Known gap: an item another member adds to an owned household between the items read and the commit
+      is left orphaned under the deleted household (delete it in the Firebase console if it is ever noticed).
       Code: `AccountRepositoryImpl`; rules: `allow delete` on `users/{uid}` (covered by `firestore-tests/test/accountDeletion.test.ts`).
 - [ ] **Account deletion web page / instructions** at a public URL. Google Play requires the URL in the Data safety form
       (users must be able to request deletion without reinstalling the app); useful for App Store review too. The page must:
@@ -89,7 +93,7 @@ How to use this file:
       (search `#ImplementAppleAuthProvider`). On account deletion, Apple also requires **revoking the Apple token**
       (`Auth.auth().revokeToken(withAuthorizationCode:)`).
 - [ ] **Build the account deletion bridges in Xcode** (written without a Swift compiler): `SwiftAuthBridge` (`reauthenticate`,
-      `deleteCurrentUser`, user-mismatch mapping), `SwiftHouseholdBridge.getHouseholds`, `SwiftUserBridge.deleteUserProfile`;
+      `deleteCurrentUser`, user-mismatch mapping), `SwiftAccountBridge.deleteAccountData` (and its wiring in `iOSApp.swift`);
       then check Google sign-in still works and run the delete account smoke test on a device.
 - [ ] **Bundle identifier**: `Config.xcconfig` builds it as `com.mzagorscak.spiza.Spiza$(TEAM_ID)`. Decide the final id, create it in
       App Store Connect and make sure the iOS app in Firebase (and `GoogleService-Info.plist`) uses the same id.
