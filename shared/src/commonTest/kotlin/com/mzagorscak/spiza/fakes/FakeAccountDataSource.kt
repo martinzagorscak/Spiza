@@ -12,9 +12,6 @@ class FakeAccountDataSource : AccountDataSource {
     /** When set, [deleteAccountData] throws it (like a batch rejected by the rules): nothing is deleted. */
     var deleteFailure: Throwable? = null
 
-    /** How many attempts succeed before [deleteFailure] applies (e.g. 1 to fail only the second pass). */
-    var succeedingAttempts = 0
-
     /** When set, [deleteAccountData] waits for it to complete, like a slow server acknowledgement. */
     var gate: CompletableDeferred<Unit>? = null
 
@@ -34,7 +31,7 @@ class FakeAccountDataSource : AccountDataSource {
         onDelete()
         gate?.await()
         if (neverAcknowledge) awaitCancellation()
-        if (deleteAttempts.size > succeedingAttempts) deleteFailure?.let { throw it }
+        deleteFailure?.let { throw it }
         deletedUserIds += userId
     }
 }

@@ -74,7 +74,7 @@ class AccountRepositoryImplTest {
 
             assertThat(result).isEqualTo(DeleteAccountResult.Deleted)
             assertThat(authService.reauthenticateCalls).isEqualTo(1)
-            assertThat(accountData.deletedUserIds).containsExactly(TEST_USER.uid, TEST_USER.uid)
+            assertThat(accountData.deletedUserIds).containsExactly(TEST_USER.uid)
             assertThat(authService.deleteUserCalls).isEqualTo(1)
             assertThat(authService.currentUser).isNull()
             assertThat(localData.clearAllCalls).isEqualTo(1)
@@ -99,7 +99,7 @@ class AccountRepositoryImplTest {
 
             assertFailure { repository.deleteAccount() }.isInstanceOf<DataException>()
 
-            assertThat(accountData.deleteAttempts).containsExactly(TEST_USER.uid, TEST_USER.uid)
+            assertThat(accountData.deleteAttempts).containsExactly(TEST_USER.uid)
             assertThat(reauthenticatedBeforeRemote).isTrue()
             assertThat(authUserDeletionsBeforeRemote).isEqualTo(0)
             assertThat(localWipesBeforeRemote).isEqualTo(0)
@@ -131,7 +131,7 @@ class AccountRepositoryImplTest {
             acknowledgement.complete(Unit)
             advanceUntilIdle()
 
-            assertThat(accountData.deletedUserIds).containsExactly(TEST_USER.uid, TEST_USER.uid)
+            assertThat(accountData.deletedUserIds).containsExactly(TEST_USER.uid)
             assertThat(authService.currentUser).isNull()
             assertThat(localData.clearAllCalls).isEqualTo(1)
             assertThat(settings.onboardingCompleted.value).isFalse()
@@ -190,24 +190,6 @@ class AccountRepositoryImplTest {
 
             assertThat(accountData.deleteAttempts).containsExactly(TEST_USER.uid)
             assertThat(accountData.deletedUserIds).isEmpty()
-            assertAuthUserAndLocalDataKept()
-        }
-
-    // The second pass catches a household the user was added to while the first pass was prepared; until it succeeds the
-    // account must stay complete enough to retry.
-    @Test
-    fun deleteAccount_throws_andKeepsAuthUserAndLocalData_whenTheSecondPassFails() =
-        runTest {
-            accountData.succeedingAttempts = 1
-            accountData.deleteFailure = DataException(reason = DataException.Reason.PermissionDenied, message = "denied")
-
-            assertFailure { repository.deleteAccount() }
-                .isInstanceOf<DataException>()
-                .prop(DataException::reason)
-                .isEqualTo(DataException.Reason.PermissionDenied)
-
-            assertThat(accountData.deleteAttempts).containsExactly(TEST_USER.uid, TEST_USER.uid)
-            assertThat(accountData.deletedUserIds).containsExactly(TEST_USER.uid)
             assertAuthUserAndLocalDataKept()
         }
 

@@ -10,6 +10,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 import { asSignedOut, asUser, createTestEnvironment, JOIN_KEY, MEMBER, OWNER, seed } from "./setup";
@@ -110,6 +111,8 @@ describe("users", () => {
   // endregion
 });
 
+const NEW_JOIN_KEY = "4f7c1f0e-0000-4000-8000-000000000003";
+
 describe("joinKeys", () => {
   const keyRef = (db: ReturnType<typeof asUser>) => doc(db, "joinKeys", JOIN_KEY);
 
@@ -136,6 +139,23 @@ describe("joinKeys", () => {
     await assertSucceeds(deleteDoc(keyRef(asUser(env, OWNER))));
   });
 
+  // Same batch as the client replacing the user's key: delete the previous key and create the new one.
+  it("allows a user to replace their key", async () => {
+    await seed(env, (db) => setDoc(doc(db, "joinKeys", JOIN_KEY), { userId: MEMBER }));
+    const db = asUser(env, MEMBER);
+    const batch = writeBatch(db);
+    batch.delete(keyRef(db));
+    batch.set(doc(db, "joinKeys", NEW_JOIN_KEY), { userId: MEMBER });
+
+    await assertSucceeds(batch.commit());
+  });
+
+  it("allows a user to delete their own key", async () => {
+    await seed(env, (db) => setDoc(doc(db, "joinKeys", JOIN_KEY), { userId: MEMBER }));
+
+    await assertSucceeds(deleteDoc(keyRef(asUser(env, MEMBER))));
+  });
+
   // region Error handling
 
   it("rejects creating a key for someone else", async () => {
@@ -144,6 +164,12 @@ describe("joinKeys", () => {
 
   it("rejects unknown fields", async () => {
     await assertFails(setDoc(keyRef(asUser(env, MEMBER)), { userId: MEMBER, householdId: "household-1" }));
+  });
+
+  // Deleting is what consumes a key, so a key that no longer exists can not be consumed (again).
+  it("rejects deleting a key that does not exist", async () => {
+    await assertFails(deleteDoc(keyRef(asUser(env, OWNER))));
+    await assertFails(deleteDoc(keyRef(asUser(env, MEMBER))));
   });
 
   it("rejects updating a key, a new key is a new document", async () => {

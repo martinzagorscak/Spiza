@@ -18,12 +18,12 @@ How to use this file:
 - [x] **In-app account deletion** (Settings → Delete account). Both stores require it for apps that let users create an account.
       After a confirmation dialog and a fresh Google sign-in (Firebase needs a recent login), the app deletes in ONE atomic
       Firestore batch the user's `joinKeys`, households they own (with their `items`, also for the other members), their
-      membership in the other households and the `users/{uid}` profile; then runs the same batch a second time (catches a
-      household the user was added to with their join key in the meantime); then deletes the Firebase Auth user, and finally
-      all local data (Room, settings). A rejected batch deletes nothing; a timed-out one may still be applied later, and
+      membership in the other households and the `users/{uid}` profile (if an owner consumes the user's join key in the
+      meantime, the rules reject the batch because only an existing key may be deleted, and a retry sees the new membership);
+      then deletes the Firebase Auth user, and finally all local data (Room, settings). A rejected batch deletes nothing; a timed-out one may still be applied later, and
       retrying is safe. Known gap: an item another member adds to an owned household between the items read and the commit
       is left orphaned under the deleted household (delete it in the Firebase console if it is ever noticed).
-      Code: `AccountRepositoryImpl`; rules: `allow delete` on `users/{uid}` (covered by `firestore-tests/test/accountDeletion.test.ts`).
+      Code: `AccountRepositoryImpl`; rules: `allow delete` on `users/{uid}` and only existing `joinKeys` (covered by `firestore-tests/test/accountDeletion.test.ts`).
 - [ ] **Account deletion web page / instructions** at a public URL. Google Play requires the URL in the Data safety form
       (users must be able to request deletion without reinstalling the app); useful for App Store review too. The page must:
       - name the app and developer as on the store listing;

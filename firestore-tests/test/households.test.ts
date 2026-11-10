@@ -13,7 +13,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   asSignedOut,
   asUser,
@@ -150,6 +150,29 @@ describe("households: update by the owner", () => {
   });
 
   // region Error handling
+
+  // Consuming deletes the key and only an existing key may be deleted, so a key can add its user only once.
+  it("rejects a second owner consuming a join key that was already consumed", async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, "joinKeys", JOIN_KEY), { userId: STRANGER });
+      await setDoc(doc(db, "households", "household-2"), household({ ownerId: MEMBER, joinedMembers: [MEMBER] }));
+    });
+    const first = asUser(env, OWNER);
+    const firstBatch = writeBatch(first);
+    firstBatch.update(householdRef(first), { joinedMembers: arrayUnion(STRANGER) });
+    firstBatch.delete(doc(first, "joinKeys", JOIN_KEY));
+    await assertSucceeds(firstBatch.commit());
+    const second = asUser(env, MEMBER);
+    const secondBatch = writeBatch(second);
+    secondBatch.update(doc(second, "households", "household-2"), { joinedMembers: arrayUnion(STRANGER) });
+    secondBatch.delete(doc(second, "joinKeys", JOIN_KEY));
+
+    await assertFails(secondBatch.commit());
+
+    await seed(env, async (db) => {
+      expect((await getDoc(doc(db, "households", "household-2"))).data()?.joinedMembers).toEqual([MEMBER]);
+    });
+  });
 
   it("rejects transferring ownership", async () => {
     await assertFails(updateDoc(householdRef(asUser(env, OWNER)), { ownerId: MEMBER }));

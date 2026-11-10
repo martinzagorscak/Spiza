@@ -1,6 +1,7 @@
 import { assertFails, assertSucceeds, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import {
   arrayRemove,
+  arrayUnion,
   collection,
   doc,
   type Firestore,
@@ -32,6 +33,8 @@ beforeEach(async () => {
 // MEMBER deletes their account: they own OWNED_ID (shared with OWNER) and are only a member of JOINED_ID (owned by OWNER).
 const OWNED_ID = "household-owned";
 const JOINED_ID = "household-joined";
+// OWNER's household the user is added to with their join key while their account is being deleted.
+const ADDED_ID = "household-added";
 const SECOND_JOIN_KEY = "4f7c1f0e-0000-4000-8000-000000000002";
 
 // ConstraintsManager limits (client-side): HOUSEHOLDS_PER_USER and ITEMS_PER_HOUSEHOLD.
@@ -41,9 +44,9 @@ const MAX_ITEMS = 100;
 /**
  * The same reads and the same single batch as the client's account deletion: own join keys, every household the user is
  * a member of and the items of the ones they own, then ONE batch that deletes the keys, the owned households with their
- * items, leaves the other households and deletes the profile. [extra] adds writes to the batch before it is committed.
+ * items, leaves the other households and deletes the profile. Returns the batch after the reads, not yet committed.
  */
-async function deleteAccount(db: Firestore, uid: string, extra: (batch: WriteBatch) => void = () => {}): Promise<void> {
+async function prepareAccountDeletion(db: Firestore, uid: string): Promise<WriteBatch> {
   const keys = await assertSucceeds(getDocs(query(collection(db, "joinKeys"), where("userId", "==", uid))));
   const households = await assertSucceeds(
     getDocs(query(collection(db, "households"), where("joinedMembers", "array-contains", uid))),
@@ -60,8 +63,22 @@ async function deleteAccount(db: Firestore, uid: string, extra: (batch: WriteBat
   owned.forEach((it) => batch.delete(it.ref));
   joined.forEach((it) => batch.update(it.ref, { joinedMembers: arrayRemove(uid) }));
   batch.delete(doc(db, "users", uid));
+  return batch;
+}
+
+/** [prepareAccountDeletion] and commit; [extra] adds writes to the batch before it is committed. */
+async function deleteAccount(db: Firestore, uid: string, extra: (batch: WriteBatch) => void = () => {}): Promise<void> {
+  const batch = await prepareAccountDeletion(db, uid);
   extra(batch);
   await batch.commit();
+}
+
+/** Same batch as the client's addMemberToHousehold: add the key's user and consume (delete) the key. */
+function addMember(db: Firestore, householdId: string, joinKey: string, uid: string): Promise<void> {
+  const batch = writeBatch(db);
+  batch.update(doc(db, "households", householdId), { joinedMembers: arrayUnion(uid) });
+  batch.delete(doc(db, "joinKeys", joinKey));
+  return batch.commit();
 }
 
 /** Every document path in the emulator, read with the rules disabled. */
@@ -106,34 +123,6 @@ describe("account deletion: one batch", () => {
     ]);
     await seed(env, async (admin) => {
       expect((await getDoc(doc(admin, "households", JOINED_ID))).data()?.joinedMembers).toEqual([OWNER]);
-    });
-  });
-
-  // The client runs a second pass right after the first batch; with nothing left it only deletes the missing profile.
-  it("allows a second pass when everything is already deleted", async () => {
-    const db = asUser(env, MEMBER);
-    await assertSucceeds(deleteAccount(db, MEMBER));
-    const afterFirstPass = await allPaths();
-
-    await assertSucceeds(deleteAccount(db, MEMBER));
-
-    expect(await allPaths()).toEqual(afterFirstPass);
-  });
-
-  // An owner may add the user with their join key while the first pass runs; the second pass removes them again.
-  it("removes the user from a household they were added to between the two passes", async () => {
-    const db = asUser(env, MEMBER);
-    await assertSucceeds(deleteAccount(db, MEMBER));
-    await seed(env, async (admin) => {
-      await setDoc(doc(admin, "households", "added-later"), household({ ownerId: OWNER, joinedMembers: [OWNER, MEMBER] }));
-      await setDoc(doc(admin, "households", "added-later", "items", "item-1"), item());
-    });
-
-    await assertSucceeds(deleteAccount(db, MEMBER));
-
-    await seed(env, async (admin) => {
-      expect((await getDoc(doc(admin, "households", "added-later"))).data()?.joinedMembers).toEqual([OWNER]);
-      expect((await getDoc(doc(admin, "households", "added-later", "items", "item-1"))).exists()).toBe(true);
     });
   });
 
@@ -209,6 +198,37 @@ describe("account deletion: one batch", () => {
 
     expect(await allPaths()).toContain(`users/${MEMBER}`);
     expect(await allPaths()).toContain(`households/${OWNED_ID}`);
+  });
+
+  // The owner adds the user with their key after the deletion read the memberships: the deletion batch also deletes that key,
+  // which no longer exists, so it fails as a whole instead of leaving the user in a household they never see again.
+  it("fails the deletion when the owner consumes the user's key between its reads and its commit, and a retry succeeds", async () => {
+    await seed(env, (db) => setDoc(doc(db, "households", ADDED_ID), household({ ownerId: OWNER, joinedMembers: [OWNER] })));
+    const db = asUser(env, MEMBER);
+    const deletion = await prepareAccountDeletion(db, MEMBER);
+    await assertSucceeds(addMember(asUser(env, OWNER), ADDED_ID, JOIN_KEY, MEMBER));
+    const beforeCommit = await allPaths();
+
+    await assertFails(deletion.commit());
+
+    expect(await allPaths()).toEqual(beforeCommit);
+    await assertSucceeds(deleteAccount(db, MEMBER));
+    await seed(env, async (admin) => {
+      expect((await getDoc(doc(admin, "households", ADDED_ID))).data()?.joinedMembers).toEqual([OWNER]);
+      expect((await getDoc(doc(admin, "users", MEMBER))).exists()).toBe(false);
+      expect((await getDocs(collection(admin, "joinKeys"))).size).toBe(0);
+    });
+  });
+
+  it("rejects the owner adding the user with a key the account deletion already deleted", async () => {
+    await seed(env, (db) => setDoc(doc(db, "households", ADDED_ID), household({ ownerId: OWNER, joinedMembers: [OWNER] })));
+    await assertSucceeds(deleteAccount(asUser(env, MEMBER), MEMBER));
+
+    await assertFails(addMember(asUser(env, OWNER), ADDED_ID, JOIN_KEY, MEMBER));
+
+    await seed(env, async (admin) => {
+      expect((await getDoc(doc(admin, "households", ADDED_ID))).data()?.joinedMembers).toEqual([OWNER]);
+    });
   });
 
   // endregion

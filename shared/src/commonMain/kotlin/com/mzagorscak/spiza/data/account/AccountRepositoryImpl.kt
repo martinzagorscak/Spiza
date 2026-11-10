@@ -58,15 +58,7 @@ internal class AccountRepositoryImpl(
         withContext(NonCancellable) {
             // The remote data goes while the user still exists: the rules only let a signed-in member or owner delete it.
             // One batch: a rejected write deletes nothing, so the user keeps a complete account to retry with.
-            withTimeoutOrNull(DELETE_ACCOUNT_DATA_TIMEOUT_MS.milliseconds) {
-                accountDataSource.deleteAccountData(userId)
-                // A second pass instead of deleting the join key up front (which would be a partial deletion): an owner may
-                // have consumed the key between the first pass's reads and its commit, adding the user to a household that
-                // pass did not see. The first pass deleted the key, so only an owner who already read it can still add the user
-                // (a tiny window the rules can not close), and this pass removes that membership. It is idempotent (an already deleted profile may be deleted again); if it fails, the
-                // auth user is kept and retrying is safe.
-                accountDataSource.deleteAccountData(userId)
-            }
+            withTimeoutOrNull(DELETE_ACCOUNT_DATA_TIMEOUT_MS.milliseconds) { accountDataSource.deleteAccountData(userId) }
                 ?: throw DataException(
                     reason = DataException.Reason.Offline,
                     message = "Deleting the data of user $userId timed out",

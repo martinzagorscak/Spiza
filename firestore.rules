@@ -29,7 +29,8 @@ service cloud.firestore {
     }
 
     // The owner may change anything except ownership, and must stay a member.
-    // Known limitation: the rules can not verify that an added member used a join key; the app consumes the key in the same batch.
+    // Known limitation: the rules can not verify that an added member used a join key; the app consumes (deletes) the key in the
+    // same batch, and a key can only be deleted while it exists, so a key consumed or deleted by someone else fails that batch.
     function ownerUpdate() {
       return isOwner(resource.data)
           && request.resource.data.ownerId == resource.data.ownerId
@@ -105,8 +106,11 @@ service cloud.firestore {
       // Users may only query their own keys (to show or replace them).
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
 
-      // Deleted by the owner when adding the member, or by the user when replacing it; both know the key.
-      allow delete: if isSignedIn();
+      // Deleted by the owner when adding the member, or by the user when replacing it or deleting their account; all know the key.
+      // Only an existing key may be deleted: deleting it is what makes consuming it single-use, so a batch that relies on a key
+      // someone else already consumed or deleted fails as a whole. This closes the race between adding a member with the key
+      // and the user deleting their account (and two owners consuming the same key).
+      allow delete: if isSignedIn() && resource != null;
     }
   }
 }
