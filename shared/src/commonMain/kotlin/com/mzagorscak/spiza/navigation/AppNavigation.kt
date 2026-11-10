@@ -511,10 +511,15 @@ private fun AppNavDisplay(
                                         performHapticFeedback(hapticFeedback)
                                         backStack.add(Route.AddLoyaltyCard(cardId = key.cardId))
                                     },
-                                    onDeleteClick = {
+                                    showDeleteConfirmationDialog = {
+                                        performHapticFeedback(hapticFeedback)
+                                        viewModel.showDeleteConfirmationDialog()
+                                    },
+                                    onDeleteConfirm = {
                                         performHapticFeedback(hapticFeedback)
                                         viewModel.deleteCard()
                                     },
+                                    onDismissDialog = viewModel::dismissDialog,
                                     onDeleted = { backStack.popIfTop(key) },
                                     onErrorShown = viewModel::onErrorShown,
                                     onToggleShortcut = {

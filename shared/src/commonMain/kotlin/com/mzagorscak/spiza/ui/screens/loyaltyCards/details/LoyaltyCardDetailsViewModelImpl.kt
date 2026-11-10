@@ -33,9 +33,15 @@ internal class LoyaltyCardDetailsViewModelImpl(
     )
     private val deletion = MutableStateFlow(Deletion())
     private val shortcutMessage = MutableStateFlow<LoyaltyCardDetailsState.ShortcutMessage>(LoyaltyCardDetailsState.ShortcutMessage.None)
+    private val dialogStatePublisher = MutableStateFlow(LoyaltyCardDetailsState.DialogState.Hidden)
 
     private val state: StateFlow<LoyaltyCardDetailsState> =
-        combine(observeLoyaltyCardByIdUseCase(cardId), deletion, shortcutMessage) { card, progress, message ->
+        combine(
+            observeLoyaltyCardByIdUseCase(cardId),
+            deletion,
+            shortcutMessage,
+            dialogStatePublisher,
+        ) { card, progress, message, dialogState ->
             // The card may disappear before the delete call returns, so it only counts as missing when this screen
             // is not deleting it; after a failed delete a later disappearance is reported again.
             val isDeletedHere = progress.isDeleting || progress.isDeleted
@@ -47,6 +53,7 @@ internal class LoyaltyCardDetailsViewModelImpl(
                 isDeleted = progress.isDeleted,
                 hasError = progress.hasError,
                 shortcutMessage = message,
+                dialogState = dialogState,
             )
         }.catchAndRecord(crashLogger = crashLogger, context = "Loyalty card details stream failed") {
             emit(emptyState.copy(isLoading = false))
@@ -58,7 +65,12 @@ internal class LoyaltyCardDetailsViewModelImpl(
 
     override fun state(): StateFlow<LoyaltyCardDetailsState> = state
 
+    override fun showDeleteConfirmationDialog() = dialogStatePublisher.update { LoyaltyCardDetailsState.DialogState.DeleteConfirmation }
+
+    override fun dismissDialog() = dialogStatePublisher.update { LoyaltyCardDetailsState.DialogState.Hidden }
+
     override fun deleteCard() {
+        dismissDialog()
         val current = deletion.value
         if (current.isDeleting || current.isDeleted) return
         deletion.update { it.copy(isDeleting = true, hasError = false) }

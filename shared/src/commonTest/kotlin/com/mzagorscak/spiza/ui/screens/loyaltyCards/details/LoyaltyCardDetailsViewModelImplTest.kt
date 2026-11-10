@@ -92,6 +92,57 @@ class LoyaltyCardDetailsViewModelImplTest {
         }
 
     @Test
+    fun showDeleteConfirmationDialog_showsTheDialog_withoutDeleting() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+
+                viewModel.showDeleteConfirmationDialog()
+
+                assertThat(expectMostRecentItem().dialogState).isEqualTo(LoyaltyCardDetailsState.DialogState.DeleteConfirmation)
+            }
+            assertThat(repository.deletedIds).isEmpty()
+        }
+
+    @Test
+    fun dismissDialog_hidesTheDialog_withoutDeleting() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+                viewModel.showDeleteConfirmationDialog()
+
+                viewModel.dismissDialog()
+
+                assertThat(expectMostRecentItem().dialogState).isEqualTo(LoyaltyCardDetailsState.DialogState.Hidden)
+            }
+            assertThat(repository.deletedIds).isEmpty()
+        }
+
+    @Test
+    fun deleteCard_hidesTheDialog_whenConfirmed() =
+        runTest {
+            repository.cards.value = listOf(card(id = 1L))
+            repository.neverCompleteWrites = true
+            val viewModel = viewModel(cardId = 1L)
+
+            viewModel.state().test {
+                expectMostRecentItem()
+                viewModel.showDeleteConfirmationDialog()
+
+                viewModel.deleteCard()
+
+                assertThat(expectMostRecentItem().dialogState).isEqualTo(LoyaltyCardDetailsState.DialogState.Hidden)
+            }
+            assertThat(repository.deletedIds).containsExactly(1L)
+        }
+
+    @Test
     fun deleteCard_deletesThisCardAndReportsItDeleted_withoutReportingItMissing() =
         runTest {
             repository.cards.value = listOf(card(id = 1L), card(id = 2L))

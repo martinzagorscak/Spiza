@@ -19,7 +19,13 @@ data class LoyaltyCardDetailsState(
     val shortcutLimit: Int = 0,
     /** Transient: feedback for a shortcut toggle; cleared with [LoyaltyCardDetailsViewModel.onShortcutMessageShown]. */
     val shortcutMessage: ShortcutMessage = ShortcutMessage.None,
+    val dialogState: DialogState = DialogState.Hidden,
 ) {
+    enum class DialogState {
+        Hidden,
+        DeleteConfirmation,
+    }
+
     sealed interface ShortcutMessage {
         data object None : ShortcutMessage
 
@@ -37,6 +43,10 @@ data class LoyaltyCardDetailsState(
 
 abstract class LoyaltyCardDetailsViewModel : ViewModel() {
     abstract fun state(): StateFlow<LoyaltyCardDetailsState>
+
+    abstract fun showDeleteConfirmationDialog()
+
+    abstract fun dismissDialog()
 
     abstract fun deleteCard()
 

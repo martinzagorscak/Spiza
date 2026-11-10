@@ -16,10 +16,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.keepScreenOn
@@ -67,8 +64,6 @@ fun LoyaltyCardDetailsScreen(
     sharedTransition: LoyaltyCardSharedTransition,
     modifier: Modifier = Modifier,
 ) {
-    var showDeleteDialog by remember { mutableStateOf(false) }
-
     LaunchedEffect(state.isDeleted) {
         if (state.isDeleted) callbacks.onDeleted()
     }
@@ -127,7 +122,7 @@ fun LoyaltyCardDetailsScreen(
                         )
                         IconButton(
                             resource = Res.drawable.ic_trash,
-                            onClick = { showDeleteDialog = true },
+                            onClick = callbacks.showDeleteConfirmationDialog,
                             isEnabled = state.isDeleting.not(),
                             appearance = IconButtonAppearance(
                                 variant = IconButtonVariant.IconBased,
@@ -184,22 +179,23 @@ fun LoyaltyCardDetailsScreen(
         }
     }
 
-    if (showDeleteDialog) {
-        Dialog(
-            title = stringResource(Res.string.loyalty_card_details_delete_dialog_title),
-            description = stringResource(Res.string.loyalty_card_details_delete_dialog_description),
-            dismissCTA = CTA(
-                label = stringResource(Res.string.cancel),
-                onClick = { showDeleteDialog = false },
-            ),
-            confirmCTA = CTA(
-                label = stringResource(Res.string.loyalty_card_details_delete_button),
-                onClick = {
-                    showDeleteDialog = false
-                    callbacks.onDeleteClick()
-                },
-            ),
-        )
+    when (state.dialogState) {
+        LoyaltyCardDetailsState.DialogState.DeleteConfirmation -> {
+            Dialog(
+                title = stringResource(Res.string.loyalty_card_details_delete_dialog_title),
+                description = stringResource(Res.string.loyalty_card_details_delete_dialog_description),
+                dismissCTA = CTA(
+                    label = stringResource(Res.string.cancel),
+                    onClick = callbacks.onDismissDialog,
+                ),
+                confirmCTA = CTA(
+                    label = stringResource(Res.string.loyalty_card_details_delete_button),
+                    onClick = callbacks.onDeleteConfirm,
+                ),
+            )
+        }
+
+        LoyaltyCardDetailsState.DialogState.Hidden -> Unit
     }
 }
 
@@ -251,7 +247,9 @@ private fun ShortcutSection(
 data class LoyaltyCardDetailsScreenCallbacks(
     val onBackClick: () -> Unit,
     val onEditClick: () -> Unit,
-    val onDeleteClick: () -> Unit,
+    val showDeleteConfirmationDialog: () -> Unit,
+    val onDeleteConfirm: () -> Unit,
+    val onDismissDialog: () -> Unit,
     val onDeleted: () -> Unit,
     val onErrorShown: () -> Unit,
     val onToggleShortcut: () -> Unit,
