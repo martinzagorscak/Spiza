@@ -6,6 +6,16 @@ Spiza is a shopping-list app for Android and iOS. Members of a household share o
 what you often buy, and your loyalty cards are always one tap away at checkout. It is built with
 **Kotlin Multiplatform** and **Compose Multiplatform** — almost all code, including the UI, is shared between platforms.
 
+<p align="center">
+  <img src="docs/screenshots/login.jpg" width="200" alt="Sign in" />
+  &nbsp;
+  <img src="docs/screenshots/onboarding.png" width="200" alt="Shopping list (light theme)" />
+  &nbsp;
+  <img src="docs/screenshots/shopping-list.png" width="200" alt="Shopping list (dark theme)" />
+  &nbsp;
+  <img src="docs/screenshots/loyalty-cards.png" width="200" alt="Loyalty cards" />
+</p>
+
 ## Features
 
 ### Households
@@ -37,6 +47,41 @@ what you often buy, and your loyalty cards are always one tap away at checkout. 
 - Forced and recommended app updates driven by Firebase Remote Config.
 - Account deletion that removes all remote data in a single atomic batch.
 - Friendly error, offline and empty states everywhere; errors are reported to Crashlytics.
+
+## Screenshots
+
+<table>
+  <tr>
+    <th>Shopping list</th>
+    <th>Suggestions</th>
+    <th>Household management</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/shopping-list.png" width="240" alt="Shopping list" /></td>
+    <td><img src="docs/screenshots/suggestions.png" width="240" alt="Suggestions" /></td>
+    <td><img src="docs/screenshots/household-management.png" width="240" alt="Household management" /></td>
+  </tr>
+  <tr>
+    <th>Loyalty cards</th>
+    <th>Add a loyalty card</th>
+    <th>Card details &amp; app shortcut</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/loyalty-cards.png" width="240" alt="Loyalty cards" /></td>
+    <td><img src="docs/screenshots/add-loyalty-card.png" width="240" alt="Add a loyalty card" /></td>
+    <td><img src="docs/screenshots/loyalty-card-details.png" width="240" alt="Loyalty card details" /></td>
+  </tr>
+  <tr>
+    <th>Onboarding</th>
+    <th>Settings</th>
+    <th>Light theme</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/onboarding.png" width="240" alt="Onboarding" /></td>
+    <td><img src="docs/screenshots/settings.png" width="240" alt="Settings" /></td>
+    <td><img src="docs/screenshots/shopping-list-light.png" width="240" alt="Loyalty cards (light theme)" /></td>
+  </tr>
+</table>
 
 ## Tech stack
 
@@ -115,3 +160,7 @@ Requirements: JDK 17+, Android Studio, Xcode (for iOS). Firebase config files
 
 - [docs/TESTING.md](docs/TESTING.md) — testing levels, structure and recipes
 - [docs/RELEASE.md](docs/RELEASE.md) — release checklists for Android and iOS, forcing app updates
+
+## Credits
+
+Login screen photo: [Smiley woman using organic bag for veggies](https://www.magnific.com/free-photo/smiley-woman-using-organic-bag-veggies_9877793.htm) — Designed by [Magnific](https://www.magnific.com), used under the Magnific free license.
