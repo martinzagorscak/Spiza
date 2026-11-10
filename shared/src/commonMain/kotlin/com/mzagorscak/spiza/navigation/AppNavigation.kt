@@ -540,7 +540,11 @@ private fun AppNavDisplay(
                         }
                         // The camera keeps running until a code is confirmed, so the user needs a signal that it is done.
                         LaunchedEffect(state.scanStatus) {
-                            if (state.scanStatus == AddLoyaltyCardState.ScanStatus.Scanned) performHapticFeedback(hapticFeedback)
+                            if (state.scanStatus == AddLoyaltyCardState.ScanStatus.Scanned &&
+                                state.inputType == AddLoyaltyCardState.InputType.Camera
+                            ) {
+                                performHapticFeedback(hapticFeedback)
+                            }
                         }
                         AddLoyaltyCardScreen(
                             state = state,
