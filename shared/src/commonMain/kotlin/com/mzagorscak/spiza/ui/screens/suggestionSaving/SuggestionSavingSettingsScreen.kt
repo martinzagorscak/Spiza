@@ -3,14 +3,15 @@ package com.mzagorscak.spiza.ui.screens.suggestionSaving
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -23,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -81,7 +83,6 @@ import spiza.shared.generated.resources.settings_shopping_items_saving_sorting_l
 import spiza.shared.generated.resources.settings_shopping_items_saving_sorting_most_used_asc
 import spiza.shared.generated.resources.settings_shopping_items_saving_sorting_most_used_desc
 
-private const val GRID_COLUMNS = 3
 private const val ERROR_LOTTIE_PATH = "files/lottie_error.json"
 
 @Composable
@@ -204,27 +205,30 @@ fun SuggestionSavingSettingsScreen(
                     )
                 }
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(count = GRID_COLUMNS),
+                FlowRow(
                     verticalArrangement = Arrangement.spacedBy(padding100),
                     horizontalArrangement = Arrangement.spacedBy(padding100),
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
                 ) {
-                    items(items = state.suggestions, key = PresentableShoppingItemSuggestion::id) { suggestion ->
-                        TextChip(
-                            text = suggestion.name,
-                            trailingContent = {
-                                IconButton(
-                                    resource = Res.drawable.ic_close,
-                                    onClick = { callbacks.onRemoveSuggestion(suggestion.id) },
-                                    appearance = IconButtonAppearance(
-                                        variant = IconButtonVariant.IconBased,
-                                        size = IconButtonSize.Small,
-                                        tintColor = MaterialTheme.colorScheme.onPrimary,
-                                    ),
-                                )
-                            },
-                            modifier = Modifier.animateItem(),
-                        )
+                    state.suggestions.forEach { suggestion ->
+                        key(suggestion.id) {
+                            TextChip(
+                                text = suggestion.name,
+                                trailingContent = {
+                                    IconButton(
+                                        resource = Res.drawable.ic_close,
+                                        onClick = { callbacks.onRemoveSuggestion(suggestion.id) },
+                                        appearance = IconButtonAppearance(
+                                            variant = IconButtonVariant.IconBased,
+                                            size = IconButtonSize.Small,
+                                            tintColor = MaterialTheme.colorScheme.onPrimary,
+                                        ),
+                                    )
+                                },
+                                // TextChip fills the available width; wrap it to its content so short names stay short chips.
+                                modifier = Modifier.width(IntrinsicSize.Max),
+                            )
+                        }
                     }
                 }
             }
@@ -367,6 +371,8 @@ private fun SuggestionSavingSettingsScreenLayoutPreview() {
                 PresentableShoppingItemSuggestion(id = 1, name = "Suggestion 1"),
                 PresentableShoppingItemSuggestion(id = 2, name = "Suggestion 2"),
                 PresentableShoppingItemSuggestion(id = 3, name = "Suggestion 3"),
+                PresentableShoppingItemSuggestion(id = 4, name = "Milk"),
+                PresentableShoppingItemSuggestion(id = 5, name = "Whole grain toast bread"),
             ),
         ),
         callbacks = SuggestionSavingSettingsScreenCallbacks(
