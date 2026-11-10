@@ -216,6 +216,7 @@ fun ShoppingListScreen(
                                         label = stringResource(Res.string.shopping_list_clear_checked_items_dialog_confirm),
                                         onClick = callbacks.clearCheckedItems,
                                     ),
+                                    isConfirmDestructive = true,
                                 )
                             }
 

@@ -28,6 +28,7 @@ fun Dialog(
     description: String,
     dismissCTA: CTA,
     confirmCTA: CTA,
+    isConfirmDestructive: Boolean = false,
     onDismissRequest: () -> Unit = dismissCTA.onClick,
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
@@ -36,6 +37,7 @@ fun Dialog(
             description = description,
             dismissCTA = dismissCTA,
             confirmCTA = confirmCTA,
+            isConfirmDestructive = isConfirmDestructive,
         )
     }
 }
@@ -149,6 +151,7 @@ private fun BasicDialogContent(
     description: String,
     dismissCTA: CTA,
     confirmCTA: CTA,
+    isConfirmDestructive: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -193,7 +196,7 @@ private fun BasicDialogContent(
                 onClick = confirmCTA.onClick,
                 isEnabled = confirmCTA.isEnabled,
                 appearance = ButtonAppearance(
-                    variant = ButtonVariant.Tertiary,
+                    variant = if (isConfirmDestructive) ButtonVariant.Destructive else ButtonVariant.Tertiary,
                     size = ButtonSize.Medium,
                 ),
             )
@@ -213,6 +216,14 @@ private fun DialogLayoutPreview() {
             description = "This is a sample dialog description.",
             dismissCTA = CTA(label = "Cancel", onClick = {}),
             confirmCTA = CTA(label = "Confirm", onClick = {}),
+        )
+
+        BasicDialogContent(
+            title = "Dialog Title",
+            description = "This is a sample destructive dialog description.",
+            dismissCTA = CTA(label = "Cancel", onClick = {}),
+            confirmCTA = CTA(label = "Delete", onClick = {}),
+            isConfirmDestructive = true,
         )
 
         UserInputDialogContent(

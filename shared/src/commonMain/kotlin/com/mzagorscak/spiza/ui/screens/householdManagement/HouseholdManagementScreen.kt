@@ -267,6 +267,7 @@ fun HouseholdManagementScreen(
                             )
                         },
                     ),
+                    isConfirmDestructive = true,
                 )
             }
 
@@ -292,6 +293,7 @@ fun HouseholdManagementScreen(
                             )
                         },
                     ),
+                    isConfirmDestructive = true,
                 )
             }
 

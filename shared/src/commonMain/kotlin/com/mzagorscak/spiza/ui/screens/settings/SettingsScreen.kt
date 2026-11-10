@@ -238,11 +238,7 @@ fun SettingsScreen(
                 label = stringResource(Res.string.settings_delete_account),
                 onClick = { showDeleteAccountDialog = true },
                 isEnabled = areAccountActionsEnabled,
-                appearance = ButtonAppearance(
-                    variant = ButtonVariant.Tertiary,
-                    size = ButtonSize.Large,
-                    contentColor = MaterialTheme.colorScheme.error,
-                ),
+                appearance = ButtonAppearance(variant = ButtonVariant.Destructive, size = ButtonSize.Large),
                 leadingContent = if (state.isDeletingAccount) {
                     { LoadingIndicator(size = LoadingIndicatorSize.Small) }
                 } else {
@@ -268,6 +264,7 @@ fun SettingsScreen(
                     callbacks.onDeleteAccountClick()
                 },
             ),
+            isConfirmDestructive = true,
         )
     }
 }

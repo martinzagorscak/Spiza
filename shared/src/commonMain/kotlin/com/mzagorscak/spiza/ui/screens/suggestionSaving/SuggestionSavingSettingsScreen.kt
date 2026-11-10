@@ -279,6 +279,7 @@ fun SuggestionSavingSettingsScreen(
                         label = stringResource(Res.string.settings_shopping_items_saving_remove_all_suggestions_dialog_confirm),
                         onClick = callbacks.removeAllSuggestions,
                     ),
+                    isConfirmDestructive = true,
                 )
             }
 

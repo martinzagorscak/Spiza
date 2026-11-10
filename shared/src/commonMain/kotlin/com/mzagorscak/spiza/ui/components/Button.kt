@@ -33,7 +33,7 @@ import com.mzagorscak.spiza.ui.theme.padding800
 
 enum class ButtonSize { Small, Medium, Large }
 
-enum class ButtonVariant { Primary, Secondary, Tertiary }
+enum class ButtonVariant { Primary, Secondary, Tertiary, Destructive }
 
 data class ButtonAppearance(
     val variant: ButtonVariant,
@@ -51,24 +51,25 @@ data class ButtonAppearance(
     @Composable
     fun buttonColors(): ButtonColors =
         when (variant) {
-            ButtonVariant.Primary, ButtonVariant.Tertiary -> {
+            ButtonVariant.Primary -> {
                 ButtonDefaults.buttonColors().copy(
-                    containerColor = when (variant) {
-                        ButtonVariant.Primary -> containerColor ?: MaterialTheme.colorScheme.primary
-                        ButtonVariant.Tertiary -> Color.Transparent
-                    },
-                    contentColor = when (variant) {
-                        ButtonVariant.Primary -> contentColor ?: MaterialTheme.colorScheme.onPrimary
-                        ButtonVariant.Tertiary -> contentColor ?: MaterialTheme.colorScheme.primary
-                    },
-                    disabledContainerColor = when (variant) {
-                        ButtonVariant.Primary -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                        ButtonVariant.Tertiary -> Color.Transparent
-                    },
-                    disabledContentColor = when (variant) {
-                        ButtonVariant.Primary -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
-                        ButtonVariant.Tertiary -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                    },
+                    containerColor = containerColor ?: MaterialTheme.colorScheme.primary,
+                    contentColor = contentColor ?: MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
+                )
+            }
+
+            ButtonVariant.Tertiary, ButtonVariant.Destructive -> {
+                val baseContentColor = when (variant) {
+                    ButtonVariant.Destructive -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.primary
+                }
+                ButtonDefaults.buttonColors().copy(
+                    containerColor = Color.Transparent,
+                    contentColor = contentColor ?: baseContentColor,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = baseContentColor.copy(alpha = 0.5f),
                 )
             }
 
@@ -160,7 +161,7 @@ fun Button(
             }
         }
 
-        ButtonVariant.Tertiary -> {
+        ButtonVariant.Tertiary, ButtonVariant.Destructive -> {
             TextButton(
                 onClick = onClick,
                 enabled = isEnabled,
@@ -307,6 +308,39 @@ private fun ButtonsLayoutPreview() {
             isEnabled = false,
             appearance = ButtonAppearance(
                 variant = ButtonVariant.Tertiary,
+                size = ButtonSize.Large,
+            ),
+        )
+        Button(
+            label = "Destructive Button",
+            onClick = {},
+            appearance = ButtonAppearance(
+                variant = ButtonVariant.Destructive,
+                size = ButtonSize.Small,
+            ),
+        )
+        Button(
+            label = "Destructive Button",
+            onClick = {},
+            appearance = ButtonAppearance(
+                variant = ButtonVariant.Destructive,
+                size = ButtonSize.Medium,
+            ),
+        )
+        Button(
+            label = "Destructive Button",
+            onClick = {},
+            appearance = ButtonAppearance(
+                variant = ButtonVariant.Destructive,
+                size = ButtonSize.Large,
+            ),
+        )
+        Button(
+            label = "Destructive Button",
+            onClick = {},
+            isEnabled = false,
+            appearance = ButtonAppearance(
+                variant = ButtonVariant.Destructive,
                 size = ButtonSize.Large,
             ),
         )

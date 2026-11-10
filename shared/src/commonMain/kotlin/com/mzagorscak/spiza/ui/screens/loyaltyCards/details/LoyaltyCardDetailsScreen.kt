@@ -192,6 +192,7 @@ fun LoyaltyCardDetailsScreen(
                     label = stringResource(Res.string.loyalty_card_details_delete_button),
                     onClick = callbacks.onDeleteConfirm,
                 ),
+                isConfirmDestructive = true,
             )
         }
 
