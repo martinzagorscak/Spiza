@@ -268,14 +268,26 @@ class ShoppingListViewModelImplTest {
         }
 
     @Test
-    fun addItem_showsNewItemAmongPendingItems_afterTheExistingOnes() =
+    fun addItem_showsNewItemAtTheTopOfThePendingItems() =
         runTest {
             households.items.value += item(id = "eggs", text = "Eggs", position = 3072.0)
             val viewModel = viewModel()
 
             viewModel.onAddItem("Butter")
 
-            assertThat(viewModel.content().pendingItems.map { it.text }).containsExactly("Milk", "Eggs", "Butter")
+            assertThat(viewModel.content().pendingItems.map { it.text }).containsExactly("Butter", "Milk", "Eggs")
+        }
+
+    @Test
+    fun addItem_movesTheExistingPendingItemToTheTop() =
+        runTest {
+            households.items.value += item(id = "eggs", text = "Eggs", position = 3072.0)
+            val viewModel = viewModel()
+
+            viewModel.onAddItem("eggs")
+
+            assertThat(households.addedItems).isEmpty()
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("eggs", "milk")
         }
 
     @Test
@@ -285,7 +297,7 @@ class ShoppingListViewModelImplTest {
 
             viewModel().onAddItem(" bread ")
 
-            assertThat(households.checkedChanges).containsExactly("bread" to false)
+            assertThat(households.checkedChanges.map { it.itemId to it.isChecked }).containsExactly("bread" to false)
             assertThat(households.addedItems).isEmpty()
             assertThat(suggestions.saved).isEmpty()
         }
@@ -308,9 +320,33 @@ class ShoppingListViewModelImplTest {
 
             viewModel.onItemCheckedChange(itemId = "milk", isChecked = true)
 
-            assertThat(households.checkedChanges).containsExactly("milk" to true)
+            assertThat(households.checkedChanges.map { it.itemId to it.isChecked }).containsExactly("milk" to true)
             assertThat(viewModel.content().pendingItems).isEmpty()
             assertThat(viewModel.content().doneItems.map { it.id }).containsExactly("milk", "bread")
+        }
+
+    // Eggs is below bread before checking, so it only ends up first if it is moved to the top.
+    @Test
+    fun onItemCheckedChange_showsTheCheckedItemAtTheTopOfTheDoneItems() =
+        runTest {
+            households.items.value += item(id = "eggs", text = "Eggs", position = 3072.0)
+            val viewModel = viewModel()
+
+            viewModel.onItemCheckedChange(itemId = "eggs", isChecked = true)
+
+            assertThat(viewModel.content().doneItems.map { it.id }).containsExactly("eggs", "bread")
+        }
+
+    // Bread is below milk by position, so it only ends up first if it is moved to the top.
+    @Test
+    fun onItemCheckedChange_showsTheUncheckedItemAtTheTopOfThePendingItems() =
+        runTest {
+            val viewModel = viewModel()
+
+            viewModel.onItemCheckedChange(itemId = "bread", isChecked = false)
+
+            assertThat(viewModel.content().pendingItems.map { it.id }).containsExactly("bread", "milk")
+            assertThat(viewModel.content().doneItems).isEmpty()
         }
 
     @Test
@@ -491,7 +527,7 @@ class ShoppingListViewModelImplTest {
 
             viewModel.onItemCheckedChange(itemId = "milk", isChecked = true)
 
-            assertThat(households.checkedChanges).containsExactly("milk" to true)
+            assertThat(households.checkedChanges.map { it.itemId to it.isChecked }).containsExactly("milk" to true)
             assertThat(viewModel.content().doneItems.map { it.id }).containsExactly("milk", "bread")
         }
 

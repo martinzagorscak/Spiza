@@ -205,8 +205,16 @@ class FirestoreHouseholdDataSource(
         householdId: String,
         itemId: String,
         isChecked: Boolean,
+        position: Double,
     ) {
-        items(householdId).document(itemId).update(HouseholdFields.IS_CHECKED, isChecked).await()
+        items(householdId)
+            .document(itemId)
+            .update(
+                mapOf(
+                    HouseholdFields.IS_CHECKED to isChecked,
+                    HouseholdFields.POSITION to position,
+                ),
+            ).await()
     }
 
     override suspend fun moveItem(

@@ -18,8 +18,9 @@ class ObserveArticleItemsUseCaseImpl(
 
 interface AddArticleItemUseCase {
     /**
-     * Adds [text] at the end of the pending items. When it is already on the list (ignoring case and surrounding spaces),
-     * a pending item is moved to the end instead and a checked one is unchecked. Returns true only when a new item was added.
+     * Adds [text] at the top of the pending items. When it is already on the list (ignoring case and surrounding spaces),
+     * that item goes to the top of the pending items instead (a checked one is unchecked). Returns true only when a new item
+     * was added.
      */
     suspend operator fun invoke(
         householdId: String,
@@ -40,26 +41,32 @@ class AddArticleItemUseCaseImpl(
         if (trimmed.isEmpty()) return false
         val existingItem = currentItems.findByText(trimmed)
         val pending = currentItems.filterNot { it.isChecked || it.id == existingItem?.id }
+        val topPosition = ArticleItemOrdering.prependPosition(pending)
         when {
             existingItem == null -> {
                 repository.addItem(
                     householdId = householdId,
                     text = trimmed,
-                    position = ArticleItemOrdering.appendPosition(pending),
+                    position = topPosition,
                     currentItemsCount = currentItems.count(),
                 )
                 return true
             }
 
             existingItem.isChecked -> {
-                repository.setItemChecked(householdId = householdId, itemId = existingItem.id, isChecked = false)
+                repository.setItemChecked(
+                    householdId = householdId,
+                    itemId = existingItem.id,
+                    isChecked = false,
+                    position = topPosition,
+                )
             }
 
             else -> {
                 repository.moveItem(
                     householdId = householdId,
                     itemId = existingItem.id,
-                    position = ArticleItemOrdering.appendPosition(pending),
+                    position = topPosition,
                 )
             }
         }
@@ -94,10 +101,12 @@ class UpdateArticleItemTextUseCaseImpl(
 }
 
 interface SetArticleItemCheckedUseCase {
+    /** Moves the item to the top of the section it lands in: checked items or pending items. */
     suspend operator fun invoke(
         householdId: String,
         itemId: String,
         isChecked: Boolean,
+        currentItems: List<ArticleItem>,
     )
 }
 
@@ -108,7 +117,16 @@ class SetArticleItemCheckedUseCaseImpl(
         householdId: String,
         itemId: String,
         isChecked: Boolean,
-    ) = repository.setItemChecked(householdId, itemId, isChecked)
+        currentItems: List<ArticleItem>,
+    ) {
+        val siblings = currentItems.filter { it.isChecked == isChecked && it.id != itemId }
+        repository.setItemChecked(
+            householdId = householdId,
+            itemId = itemId,
+            isChecked = isChecked,
+            position = ArticleItemOrdering.prependPosition(siblings),
+        )
+    }
 }
 
 interface MoveArticleItemUseCase {

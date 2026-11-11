@@ -4,7 +4,8 @@ private const val POSITION_STEP = 1024.0
 
 /** Fractional ordering: moving an item rewrites only its own position, never its neighbours'. */
 object ArticleItemOrdering {
-    fun appendPosition(items: List<ArticleItem>): Double = (items.maxOfOrNull { it.position } ?: 0.0) + POSITION_STEP
+    /** A position before every item in [items]; positions may become negative, which Firestore and the ordering allow. */
+    fun prependPosition(items: List<ArticleItem>): Double = items.minOfOrNull { it.position }?.minus(POSITION_STEP) ?: POSITION_STEP
 
     /** [siblings] is the ordered list the item is dropped into, without the moved item itself. */
     fun positionAt(

@@ -136,7 +136,8 @@ class IosHouseholdDataSource(
         householdId: String,
         itemId: String,
         isChecked: Boolean,
-    ) = write { bridge.setItemChecked(householdId, itemId, isChecked, it) }
+        position: Double,
+    ) = write { bridge.setItemChecked(householdId, itemId, isChecked, position, it) }
 
     override suspend fun moveItem(
         householdId: String,

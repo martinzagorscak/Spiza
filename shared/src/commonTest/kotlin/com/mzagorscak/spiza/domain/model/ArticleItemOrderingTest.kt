@@ -11,11 +11,13 @@ class ArticleItemOrderingTest {
 
     private val siblings = listOf(item(1.0), item(2.0), item(4.0))
 
+    // Unsorted on purpose: the result must not depend on the order of the list.
     @Test
-    fun appendPosition_isAfterLast_whenListHasItems() = assertThat(ArticleItemOrdering.appendPosition(siblings)).isGreaterThan(4.0)
+    fun prependPosition_isBeforeFirst_whenListHasItems() =
+        assertThat(ArticleItemOrdering.prependPosition(listOf(item(4.0), item(1.0), item(2.0)))).isLessThan(1.0)
 
     @Test
-    fun appendPosition_isPositive_whenListIsEmpty() = assertThat(ArticleItemOrdering.appendPosition(emptyList())).isGreaterThan(0.0)
+    fun prependPosition_isPositive_whenListIsEmpty() = assertThat(ArticleItemOrdering.prependPosition(emptyList())).isGreaterThan(0.0)
 
     @Test
     fun positionAt_isBetweenNeighbours_whenIndexIsInTheMiddle() = assertThat(ArticleItemOrdering.positionAt(siblings, 2)).isEqualTo(3.0)

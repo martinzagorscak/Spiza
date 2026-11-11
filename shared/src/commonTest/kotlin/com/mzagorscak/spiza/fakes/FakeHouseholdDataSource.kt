@@ -220,9 +220,10 @@ class FakeHouseholdDataSource : HouseholdDataSource {
         householdId: String,
         itemId: String,
         isChecked: Boolean,
+        position: Double,
     ) {
         write()
-        updateItem(itemId) { it.copy(isChecked = isChecked) }
+        updateItem(itemId) { it.copy(isChecked = isChecked, position = position) }
     }
 
     override suspend fun moveItem(

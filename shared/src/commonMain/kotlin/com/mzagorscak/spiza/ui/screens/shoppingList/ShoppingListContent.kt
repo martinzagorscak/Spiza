@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -67,10 +68,6 @@ private const val EMPTY_KEY = "empty"
 private const val ADD_ITEM_KEY = "add-item"
 private const val DONE_HEADER_KEY = "done-header"
 private const val DONE_ITEM_TEMPLATE_KEY = "done-item"
-
-// Index of the first pending item in the LazyColumn: the pending header comes before it. The empty state is shown only
-// when there are no pending items, so it never shifts a draggable item.
-private const val FIRST_PENDING_INDEX = 1
 
 private val AutoScrollEdgeSize = 64.dp
 private val AutoScrollStep = 8.dp
@@ -119,6 +116,7 @@ fun ShoppingListContent(
         draggedKey = draggedKey,
         listState = listState,
         pending = pending,
+        pendingIds = pendingIds,
         dragOffset = { dragOffset },
         onScrolled = { key, consumed ->
             // Keeps the dragged item under the finger while the list moves beneath it.
@@ -152,6 +150,14 @@ fun ShoppingListContent(
                 )
             }
         }
+        if (state.canAddItemToHousehold && state.isLocked.not()) {
+            item(key = ADD_ITEM_KEY) {
+                AddItemRow(
+                    householdId = state.currentHouseholdId,
+                    onAddItem = callbacks.onAddItem,
+                )
+            }
+        }
         items(items = displayedPending, key = PresentableArticleItem::id) { item ->
             val isDragging = draggedKey == item.id
             Draggable(
@@ -168,8 +174,11 @@ fun ShoppingListContent(
                     dragOffset += moveDraggedItem(key = item.id, dragOffset = dragOffset, listState = listState, pending = pending)
                 },
                 onDragEnd = {
-                    val index = pending.indexOfFirst { it.id == item.id }
-                    droppedOrder = pending.map { it.id }
+                    // Items deleted remotely during the drag are still in the local copy; only the remaining ones count, so
+                    // the index matches the shown list and the optimistic order is not discarded (which would snap back).
+                    val remaining = pending.filter { it.id in pendingIds }
+                    val index = remaining.indexOfFirst { it.id == item.id }
+                    droppedOrder = remaining.map { it.id }
                     draggedKey = null
                     dragOffset = 0f
                     if (index != state.pendingItems.indexOfFirst { it.id == item.id }) {
@@ -181,14 +190,6 @@ fun ShoppingListContent(
                     .then(if (isDragging) Modifier else Modifier.animateItem()),
             ) {
                 ArticleRow(item = item, isEditable = state.isLocked.not(), callbacks = callbacks)
-            }
-        }
-        if (state.canAddItemToHousehold && state.isLocked.not()) {
-            item(key = ADD_ITEM_KEY) {
-                AddItemRow(
-                    householdId = state.currentHouseholdId,
-                    onAddItem = callbacks.onAddItem,
-                )
             }
         }
 
@@ -234,35 +235,43 @@ private fun moveDraggedItem(
     val infos = listState.layoutInfo.visibleItemsInfo
     val current = infos.firstOrNull { it.key == key } ?: return 0f
     val center = current.offset + current.size / 2f + dragOffset
-    val target = infos.firstOrNull {
-        it.key != key &&
-            it.index - FIRST_PENDING_INDEX in pending.indices &&
-            center >= it.offset &&
-            center <= it.offset + it.size
+    // Looked up by key, not by LazyColumn index: rows above the pending items (header, add row) come and go, and
+    // items deleted remotely during the drag stay in [pending] but are no longer shown.
+    val target = infos.firstOrNull { info ->
+        info.key != key &&
+            pending.any { it.id == info.key } &&
+            center >= info.offset &&
+            center <= info.offset + info.size
     } ?: return 0f
+    val fromIndex = pending.indexOfFirst { it.id == key }
+    if (fromIndex == -1) return 0f
+    val toIndex = pending.indexOfFirst { it.id == target.key }
     // LazyColumn keeps its scroll position anchored to the key of the first visible item, so moving that item
     // would make the whole list jump with it. Anchoring to the index keeps the list in place.
     listState.requestScrollToItem(
         index = listState.firstVisibleItemIndex,
         scrollOffset = listState.firstVisibleItemScrollOffset,
     )
-    pending.add(target.index - FIRST_PENDING_INDEX, pending.removeAt(current.index - FIRST_PENDING_INDEX))
+    pending.add(toIndex, pending.removeAt(fromIndex))
     return (current.offset - target.offset).toFloat()
 }
 
 /**
  * Scrolls the list by a fixed step every frame while the dragged item is held near its top or bottom edge.
- * [onScrolled] receives the scrolled distance in pixels.
+ * [pendingIds] are the pending items that still exist; [onScrolled] receives the scrolled distance in pixels.
  */
 @Composable
 private fun DragAutoScrollEffect(
     draggedKey: String?,
     listState: LazyListState,
     pending: List<PresentableArticleItem>,
+    pendingIds: Set<String>,
     dragOffset: () -> Float,
     onScrolled: (key: String, consumed: Float) -> Unit,
 ) {
     val density = LocalDensity.current
+    // The effect outlives recompositions during the drag, so it reads the latest ids instead of the ones from its start.
+    val currentPendingIds by rememberUpdatedState(pendingIds)
     LaunchedEffect(draggedKey) {
         val key = draggedKey ?: return@LaunchedEffect
         val edgePx = with(density) { AutoScrollEdgeSize.toPx() }
@@ -272,11 +281,13 @@ private fun DragAutoScrollEffect(
             val layoutInfo = listState.layoutInfo
             val current = layoutInfo.visibleItemsInfo.firstOrNull { it.key == key } ?: continue
             val top = current.offset + dragOffset()
-            val pendingIndex = current.index - FIRST_PENDING_INDEX
+            // Items deleted remotely during the drag are still in the local copy but no longer shown.
+            val remaining = pending.filter { it.id in currentPendingIds }
+            val pendingIndex = remaining.indexOfFirst { it.id == key }
             // Stops at the first and last pending item, so the dragged item is never scrolled out of the viewport.
             val step = when {
                 pendingIndex > 0 && top < layoutInfo.viewportStartOffset + edgePx -> -stepPx
-                pendingIndex < pending.lastIndex && top + current.size > layoutInfo.viewportEndOffset - edgePx -> stepPx
+                pendingIndex < remaining.lastIndex && top + current.size > layoutInfo.viewportEndOffset - edgePx -> stepPx
                 else -> continue
             }
             onScrolled(key, listState.scrollBy(step))

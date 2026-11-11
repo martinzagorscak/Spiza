@@ -204,9 +204,12 @@ final class SwiftHouseholdBridge: NSObject, IosHouseholdBridge {
             .updateData([HouseholdFields.shared.TEXT: text], completion: completion(onComplete))
     }
 
-    func setItemChecked(householdId: String, itemId: String, isChecked: Bool, onComplete: @escaping (BridgeError?) -> Void) {
-        items(householdId).document(itemId)
-            .updateData([HouseholdFields.shared.IS_CHECKED: isChecked], completion: completion(onComplete))
+    func setItemChecked(householdId: String, itemId: String, isChecked: Bool, position: Double, onComplete: @escaping (BridgeError?) -> Void) {
+        let fields = HouseholdFields.shared
+        items(householdId).document(itemId).updateData([
+            fields.IS_CHECKED: isChecked,
+            fields.POSITION: position,
+        ], completion: completion(onComplete))
     }
 
     func moveItem(householdId: String, itemId: String, position: Double, onComplete: @escaping (BridgeError?) -> Void) {

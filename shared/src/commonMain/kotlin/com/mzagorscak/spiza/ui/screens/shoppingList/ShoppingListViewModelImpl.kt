@@ -158,7 +158,9 @@ internal class ShoppingListViewModelImpl(
         isChecked: Boolean,
     ) {
         val loaded = latest ?: return
-        write { setItemChecked(loaded.current.id, itemId, isChecked) }
+        write {
+            setItemChecked(householdId = loaded.current.id, itemId = itemId, isChecked = isChecked, currentItems = loaded.items)
+        }
     }
 
     override fun onItemMoved(

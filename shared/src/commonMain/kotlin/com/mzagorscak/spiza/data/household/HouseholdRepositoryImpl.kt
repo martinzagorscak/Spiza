@@ -264,7 +264,8 @@ internal class HouseholdRepositoryImpl(
         householdId: String,
         itemId: String,
         isChecked: Boolean,
-    ) = dataSource.setItemChecked(householdId = householdId, itemId = itemId, isChecked = isChecked)
+        position: Double,
+    ) = dataSource.setItemChecked(householdId = householdId, itemId = itemId, isChecked = isChecked, position = position)
 
     override suspend fun moveItem(
         householdId: String,

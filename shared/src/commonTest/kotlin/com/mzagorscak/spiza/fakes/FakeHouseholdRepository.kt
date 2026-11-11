@@ -60,9 +60,15 @@ class FakeHouseholdRepository : HouseholdRepository {
 
     val addedItems = mutableListOf<AddedItem>()
 
+    data class CheckedChange(
+        val itemId: String,
+        val isChecked: Boolean,
+        val position: Double,
+    )
+
     /** itemId to the new value of every item write. */
     val updatedTexts = mutableListOf<Pair<String, String>>()
-    val checkedChanges = mutableListOf<Pair<String, Boolean>>()
+    val checkedChanges = mutableListOf<CheckedChange>()
     val movedItems = mutableListOf<Pair<String, Double>>()
     val deletedItems = mutableListOf<String>()
 
@@ -235,11 +241,12 @@ class FakeHouseholdRepository : HouseholdRepository {
         householdId: String,
         itemId: String,
         isChecked: Boolean,
+        position: Double,
     ) {
-        checkedChanges += itemId to isChecked
+        checkedChanges += CheckedChange(itemId = itemId, isChecked = isChecked, position = position)
         itemWriteHouseholdIds += householdId
         write()
-        updateItem(itemId) { it.copy(isChecked = isChecked) }
+        updateItem(itemId) { it.copy(isChecked = isChecked, position = position) }
     }
 
     override suspend fun moveItem(

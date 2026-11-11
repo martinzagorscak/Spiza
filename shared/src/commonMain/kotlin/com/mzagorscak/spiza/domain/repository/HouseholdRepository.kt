@@ -63,6 +63,7 @@ interface HouseholdRepository {
         householdId: String,
         itemId: String,
         isChecked: Boolean,
+        position: Double,
     )
 
     suspend fun moveItem(

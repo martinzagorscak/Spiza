@@ -90,6 +90,7 @@ interface IosHouseholdBridge {
         householdId: String,
         itemId: String,
         isChecked: Boolean,
+        position: Double,
         onComplete: (error: BridgeError?) -> Unit,
     )
 
