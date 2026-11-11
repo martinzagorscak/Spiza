@@ -34,6 +34,7 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import com.mzagorscak.spiza.domain.model.AppLanguage
 import com.mzagorscak.spiza.domain.model.ThemeMode
 import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedRefreshPainter
+import com.mzagorscak.spiza.ui.clipboard.showsSystemCopyConfirmation
 import com.mzagorscak.spiza.ui.components.Avatar
 import com.mzagorscak.spiza.ui.components.AvatarSize
 import com.mzagorscak.spiza.ui.components.Button
@@ -305,7 +306,7 @@ private fun ProfileCard(
                 onCopyJoinKeyClick = { joinKey ->
                     scope.launch {
                         clipboard.setText(AnnotatedString(joinKey))
-                        snackbarHostState.showSnackbar(copiedMessage)
+                        if (showsSystemCopyConfirmation.not()) snackbarHostState.showSnackbar(copiedMessage)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
