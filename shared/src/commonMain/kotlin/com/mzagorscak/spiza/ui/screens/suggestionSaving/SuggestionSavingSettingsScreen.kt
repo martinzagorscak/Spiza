@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.ui.screens.suggestionSaving
 
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.domain.model.SuggestionSortingType
 import com.mzagorscak.spiza.ui.components.Button
@@ -191,29 +193,33 @@ fun SuggestionSavingSettingsScreen(
                     )
                 }
 
-                FlowRow(
-                    verticalArrangement = Arrangement.spacedBy(padding100),
-                    horizontalArrangement = Arrangement.spacedBy(padding100),
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                ) {
-                    state.suggestions.forEach { suggestion ->
-                        key(suggestion.id) {
-                            TextChip(
-                                text = suggestion.name,
-                                trailingContent = {
-                                    IconButton(
-                                        resource = Res.drawable.ic_close,
-                                        onClick = { callbacks.onRemoveSuggestion(suggestion.id) },
-                                        appearance = IconButtonAppearance(
-                                            variant = IconButtonVariant.IconBased,
-                                            size = IconButtonSize.Small,
-                                            tintColor = MaterialTheme.colorScheme.onPrimary,
-                                        ),
-                                    )
-                                },
-                                // TextChip fills the available width; wrap it to its content so short names stay short chips.
-                                modifier = Modifier.width(IntrinsicSize.Max),
-                            )
+                LookaheadScope {
+                    FlowRow(
+                        verticalArrangement = Arrangement.spacedBy(padding100),
+                        horizontalArrangement = Arrangement.spacedBy(padding100),
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                    ) {
+                        state.suggestions.forEach { suggestion ->
+                            key(suggestion.id) {
+                                TextChip(
+                                    text = suggestion.name,
+                                    trailingContent = {
+                                        IconButton(
+                                            resource = Res.drawable.ic_close,
+                                            onClick = { callbacks.onRemoveSuggestion(suggestion.id) },
+                                            appearance = IconButtonAppearance(
+                                                variant = IconButtonVariant.IconBased,
+                                                size = IconButtonSize.Small,
+                                                tintColor = MaterialTheme.colorScheme.onPrimary,
+                                            ),
+                                        )
+                                    },
+                                    // TextChip fills the available width; wrap it to its content so short names stay short chips.
+                                    modifier = Modifier
+                                        .width(IntrinsicSize.Max)
+                                        .animateBounds(lookaheadScope = this@LookaheadScope),
+                                )
+                            }
                         }
                     }
                 }
