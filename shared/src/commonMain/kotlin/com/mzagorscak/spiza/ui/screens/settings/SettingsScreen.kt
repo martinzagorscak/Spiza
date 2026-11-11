@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,6 +33,7 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.mzagorscak.spiza.domain.model.AppLanguage
 import com.mzagorscak.spiza.domain.model.ThemeMode
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedRefreshPainter
 import com.mzagorscak.spiza.ui.components.Avatar
 import com.mzagorscak.spiza.ui.components.AvatarSize
 import com.mzagorscak.spiza.ui.components.Button
@@ -60,7 +62,6 @@ import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.error_offline
 import spiza.shared.generated.resources.error_quota_exceeded
 import spiza.shared.generated.resources.ic_back
-import spiza.shared.generated.resources.ic_refresh
 import spiza.shared.generated.resources.ic_right_chevron
 import spiza.shared.generated.resources.settings_copy_key
 import spiza.shared.generated.resources.settings_delete_account
@@ -322,6 +323,7 @@ private fun HouseholdJoinKeySection(
     onCopyJoinKeyClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var refreshTurns by remember { mutableIntStateOf(0) }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier,
@@ -334,8 +336,11 @@ private fun HouseholdJoinKeySection(
         )
 
         IconButton(
-            resource = Res.drawable.ic_refresh,
-            onClick = onRefreshJoinKeyClick,
+            painter = rememberAnimatedRefreshPainter(turns = refreshTurns),
+            onClick = {
+                refreshTurns++
+                onRefreshJoinKeyClick()
+            },
             isEnabled = isEnabled,
             appearance = IconButtonAppearance(
                 variant = IconButtonVariant.IconBased,
