@@ -7,6 +7,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mzagorscak.spiza.domain.model.ThemeMode
 import com.mzagorscak.spiza.navigation.AppNavigation
+import com.mzagorscak.spiza.ui.components.animatable.CircularRevealTransition
 import com.mzagorscak.spiza.ui.locale.ProvideAppLanguage
 import com.mzagorscak.spiza.ui.screens.app.AppViewModel
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
@@ -25,11 +26,13 @@ fun App() {
         }
 
     ProvideAppLanguage(state.language) {
-        TheAppTheme(darkTheme = darkTheme) {
-            AppNavigation(
-                isSignedIn = state.isSignedIn,
-                isOnboardingCompleted = state.isOnboardingCompleted,
-            )
+        CircularRevealTransition(targetState = darkTheme) { isDarkTheme ->
+            TheAppTheme(darkTheme = isDarkTheme) {
+                AppNavigation(
+                    isSignedIn = state.isSignedIn,
+                    isOnboardingCompleted = state.isOnboardingCompleted,
+                )
+            }
         }
     }
 }
