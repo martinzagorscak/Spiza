@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -26,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
+import com.mzagorscak.spiza.ui.components.FloatingActionButton
 import com.mzagorscak.spiza.ui.components.HouseholdCard
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
@@ -38,7 +37,6 @@ import com.mzagorscak.spiza.ui.model.PresentableHouseholdMember
 import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
@@ -129,18 +127,11 @@ fun HouseholdManagementScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if (state.canUserCreateHousehold) {
-                FloatingActionButton(
-                    onClick = callbacks.onCreateHousehold,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add_household),
-                        contentDescription = null,
-                    )
-                }
-            }
+            FloatingActionButton(
+                icon = Res.drawable.ic_add_household,
+                onClick = callbacks.onCreateHousehold,
+                isVisible = state.canUserCreateHousehold,
+            )
         },
         modifier = modifier.fillMaxSize(),
     ) { paddingValues ->

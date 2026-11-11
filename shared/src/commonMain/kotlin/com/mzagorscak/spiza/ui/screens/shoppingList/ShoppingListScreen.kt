@@ -9,9 +9,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -27,6 +24,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
+import com.mzagorscak.spiza.ui.components.FloatingActionButton
 import com.mzagorscak.spiza.ui.components.LoadingIndicator
 import com.mzagorscak.spiza.ui.components.LoadingIndicatorSize
 import com.mzagorscak.spiza.ui.components.common.CTA
@@ -37,7 +35,6 @@ import com.mzagorscak.spiza.ui.screens.common.MainBottomBar
 import com.mzagorscak.spiza.ui.screens.common.MainTab
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
@@ -119,26 +116,18 @@ fun ShoppingListScreen(
                 )
             },
             floatingActionButton = {
-                if (bodyState as? ShoppingListState.Body.Content != null &&
-                    bodyState.isLocked.not() &&
-                    bodyState.suggestions.isNotEmpty()
-                ) {
-                    FloatingActionButton(
-                        onClick = {
-                            scope.launch {
-                                performHapticFeedback(hapticFeedback)
-                                suggestionsDrawerState.open()
-                            }
-                        },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_plus),
-                            contentDescription = null,
-                        )
-                    }
-                }
+                FloatingActionButton(
+                    icon = Res.drawable.ic_plus,
+                    onClick = {
+                        scope.launch {
+                            performHapticFeedback(hapticFeedback)
+                            suggestionsDrawerState.open()
+                        }
+                    },
+                    isVisible = bodyState is ShoppingListState.Body.Content &&
+                        bodyState.isLocked.not() &&
+                        bodyState.suggestions.isNotEmpty(),
+                )
             },
             bottomBar = {
                 MainBottomBar(

@@ -14,8 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -38,6 +36,7 @@ import com.mzagorscak.spiza.ui.components.ButtonSize
 import com.mzagorscak.spiza.ui.components.ButtonVariant
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
+import com.mzagorscak.spiza.ui.components.FloatingActionButton
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
@@ -53,7 +52,6 @@ import com.mzagorscak.spiza.ui.theme.padding100
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
 import com.mzagorscak.spiza.ui.theme.padding600
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
@@ -135,18 +133,11 @@ fun SuggestionSavingSettingsScreen(
             )
         },
         floatingActionButton = {
-            if (state.hasLoadingError.not()) {
-                FloatingActionButton(
-                    onClick = callbacks.showAddSuggestionDialog,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_plus),
-                        contentDescription = null,
-                    )
-                }
-            }
+            FloatingActionButton(
+                icon = Res.drawable.ic_plus,
+                onClick = callbacks.showAddSuggestionDialog,
+                isVisible = state.hasLoadingError.not(),
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier.fillMaxSize(),
