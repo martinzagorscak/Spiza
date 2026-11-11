@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,11 +56,15 @@ fun LoyaltyCard(
     modifier: Modifier = Modifier,
     onShortcutClick: (() -> Unit)? = null,
 ) {
-    val textColor = if (card.color.luminance() > LUMINANCE_THRESHOLD) Color.Black else Color.White
+    val containerColor by animateColorAsState(targetValue = card.color, label = "cardColor")
+    val textColor by animateColorAsState(
+        targetValue = if (card.color.luminance() > LUMINANCE_THRESHOLD) Color.Black else Color.White,
+        label = "cardTextColor",
+    )
 
     Card(
         shape = roundedShape400,
-        colors = CardDefaults.cardColors(containerColor = card.color),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(
