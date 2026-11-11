@@ -13,23 +13,22 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedLoyaltyCardPainter
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedShoppingListPainter
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
-import org.jetbrains.compose.resources.DrawableResource
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.bottom_navigation_loyalty_cards
 import spiza.shared.generated.resources.bottom_navigation_shopping_list
-import spiza.shared.generated.resources.ic_loyalty_card
-import spiza.shared.generated.resources.ic_shopping_list
 
 private const val TOP_SHADOW_ALPHA = 0.08f
 private val TopShadowHeight = 8.dp
 
 data class BottomNavigationBarItem(
-    val icon: DrawableResource,
+    val icon: Painter,
     val label: String,
     val isSelected: Boolean,
     val onClick: () -> Unit,
@@ -68,7 +67,7 @@ fun BottomNavigationBar(
                 onClick = item.onClick,
                 icon = {
                     Icon(
-                        painter = painterResource(item.icon),
+                        painter = item.icon,
                         contentDescription = null,
                     )
                 },
@@ -88,13 +87,13 @@ private fun BottomNavigationBarLayoutPreview() {
     BottomNavigationBar(
         items = listOf(
             BottomNavigationBarItem(
-                icon = Res.drawable.ic_shopping_list,
+                icon = rememberAnimatedShoppingListPainter(isSelected = true),
                 label = stringResource(Res.string.bottom_navigation_shopping_list),
                 isSelected = true,
                 onClick = {},
             ),
             BottomNavigationBarItem(
-                icon = Res.drawable.ic_loyalty_card,
+                icon = rememberAnimatedLoyaltyCardPainter(isSelected = false),
                 label = stringResource(Res.string.bottom_navigation_loyalty_cards),
                 isSelected = false,
                 onClick = {},

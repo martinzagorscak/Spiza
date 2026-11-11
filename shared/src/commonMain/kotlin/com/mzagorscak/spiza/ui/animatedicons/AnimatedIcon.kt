@@ -4,7 +4,11 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -45,7 +49,8 @@ internal fun rememberAnimatedIconPainter(
 
 /**
  * Same as the on/off variant, but the progress follows any [targetProgress]: for icons that react to an event rather than
- * a state, e.g. one more turn of a gear per click ([targetProgress] = the click count).
+ * a state, e.g. one more turn of a gear per click ([targetProgress] = the click count). With an [initialProgress] different
+ * from [targetProgress] the icon animates as soon as it is composed.
  */
 @Composable
 internal fun rememberAnimatedIconPainter(
@@ -53,11 +58,15 @@ internal fun rememberAnimatedIconPainter(
     label: String,
     viewportSize: Float = DEFAULT_VIEWPORT_SIZE,
     animationSpec: AnimationSpec<Float> = tween(durationMillis = DEFAULT_DURATION_MS),
+    initialProgress: Float = targetProgress,
     @Suppress("ktlint:standard:annotation", "ktlint:standard:function-type-modifier-spacing")
     content: @Composable @VectorComposable (progress: Float) -> Unit,
 ): Painter {
+    // Starts at [initialProgress] and only then follows [targetProgress], so an icon can also animate when it first appears.
+    var animatedTarget by remember { mutableFloatStateOf(initialProgress) }
+    LaunchedEffect(targetProgress) { animatedTarget = targetProgress }
     val progress by animateFloatAsState(
-        targetValue = targetProgress,
+        targetValue = animatedTarget,
         animationSpec = animationSpec,
         label = label,
     )

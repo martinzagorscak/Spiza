@@ -2,16 +2,16 @@ package com.mzagorscak.spiza.ui.screens.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedLoyaltyCardPainter
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedShoppingListPainter
 import com.mzagorscak.spiza.ui.components.BottomNavigationBar
 import com.mzagorscak.spiza.ui.components.BottomNavigationBarItem
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.bottom_navigation_loyalty_cards
 import spiza.shared.generated.resources.bottom_navigation_shopping_list
-import spiza.shared.generated.resources.ic_loyalty_card
-import spiza.shared.generated.resources.ic_shopping_list
 
 enum class MainTab { ShoppingList, LoyaltyCards }
 
@@ -23,10 +23,11 @@ fun MainBottomBar(
 ) {
     BottomNavigationBar(
         items = MainTab.entries.map { tab ->
+            val isSelected = tab == selectedTab
             BottomNavigationBarItem(
-                icon = tab.icon,
+                icon = tab.icon(isSelected = isSelected),
                 label = stringResource(tab.label),
-                isSelected = tab == selectedTab,
+                isSelected = isSelected,
                 onClick = { if (tab != selectedTab) onTabClick(tab) },
             )
         },
@@ -34,10 +35,11 @@ fun MainBottomBar(
     )
 }
 
-private val MainTab.icon: DrawableResource
-    get() = when (this) {
-        MainTab.ShoppingList -> Res.drawable.ic_shopping_list
-        MainTab.LoyaltyCards -> Res.drawable.ic_loyalty_card
+@Composable
+private fun MainTab.icon(isSelected: Boolean): Painter =
+    when (this) {
+        MainTab.ShoppingList -> rememberAnimatedShoppingListPainter(isSelected = isSelected)
+        MainTab.LoyaltyCards -> rememberAnimatedLoyaltyCardPainter(isSelected = isSelected)
     }
 
 private val MainTab.label: StringResource
