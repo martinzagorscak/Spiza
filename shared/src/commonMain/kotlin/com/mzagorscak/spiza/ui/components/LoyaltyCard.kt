@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedPinPainter
 import com.mzagorscak.spiza.ui.components.barcode.Barcode
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
 import com.mzagorscak.spiza.ui.theme.CardColorRed
@@ -37,8 +38,6 @@ import com.mzagorscak.spiza.ui.theme.roundedShape300
 import com.mzagorscak.spiza.ui.theme.roundedShape400
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
-import spiza.shared.generated.resources.ic_pin
-import spiza.shared.generated.resources.ic_pin_filled
 import spiza.shared.generated.resources.loyalty_cards_add_card_name_placeholder
 import spiza.shared.generated.resources.loyalty_cards_shortcut_add
 import spiza.shared.generated.resources.loyalty_cards_shortcut_remove
@@ -136,7 +135,7 @@ private fun ShortcutPin(
         if (isShortcut) Res.string.loyalty_cards_shortcut_remove else Res.string.loyalty_cards_shortcut_add,
     )
     IconButton(
-        resource = if (isShortcut) Res.drawable.ic_pin_filled else Res.drawable.ic_pin,
+        painter = rememberAnimatedPinPainter(isPinned = isShortcut),
         onClick = onClick,
         appearance = IconButtonAppearance(
             variant = IconButtonVariant.IconBased,

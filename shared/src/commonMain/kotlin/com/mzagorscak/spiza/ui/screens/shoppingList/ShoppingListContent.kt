@@ -1,7 +1,6 @@
 package com.mzagorscak.spiza.ui.screens.shoppingList
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
@@ -33,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedChevronPainter
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedLockPainter
 import com.mzagorscak.spiza.ui.components.Draggable
 import com.mzagorscak.spiza.ui.components.EditableCheckListItem
 import com.mzagorscak.spiza.ui.components.FallbackState
@@ -47,10 +48,6 @@ import com.mzagorscak.spiza.ui.theme.padding400
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
-import spiza.shared.generated.resources.ic_filled_chevron_down
-import spiza.shared.generated.resources.ic_filled_chevron_up
-import spiza.shared.generated.resources.ic_lock
-import spiza.shared.generated.resources.ic_lock_open
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.shopping_list_add_item_placeholder
 import spiza.shared.generated.resources.shopping_list_done_section
@@ -389,17 +386,15 @@ private fun PendingHeader(
             modifier = Modifier.weight(1f).padding(horizontal = padding400, vertical = padding200),
         )
 
-        Crossfade(targetState = isLocked, label = "lockIcon") { locked ->
-            IconButton(
-                resource = if (locked) Res.drawable.ic_lock else Res.drawable.ic_lock_open,
-                onClick = onLockToggle,
-                appearance = IconButtonAppearance(
-                    variant = IconButtonVariant.IconBased,
-                    size = IconButtonSize.Medium,
-                    tintColor = MaterialTheme.colorScheme.onBackground,
-                ),
-            )
-        }
+        IconButton(
+            painter = rememberAnimatedLockPainter(isLocked = isLocked),
+            onClick = onLockToggle,
+            appearance = IconButtonAppearance(
+                variant = IconButtonVariant.IconBased,
+                size = IconButtonSize.Medium,
+                tintColor = MaterialTheme.colorScheme.onBackground,
+            ),
+        )
     }
 }
 
@@ -418,9 +413,8 @@ private fun DoneHeader(
             .clickable(onClick = onCheckedItemsCollapse)
             .padding(padding200),
     ) {
-        val checkedIconRes = if (areCheckedItemsCollapsed) Res.drawable.ic_filled_chevron_up else Res.drawable.ic_filled_chevron_down
         IconButton(
-            resource = checkedIconRes,
+            painter = rememberAnimatedChevronPainter(isExpanded = areCheckedItemsCollapsed.not()),
             onClick = onCheckedItemsCollapse,
             appearance = IconButtonAppearance(
                 variant = IconButtonVariant.IconBased,

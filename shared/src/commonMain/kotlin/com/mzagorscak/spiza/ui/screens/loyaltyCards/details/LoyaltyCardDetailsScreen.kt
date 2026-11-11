@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.keepScreenOn
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedPinPainter
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
@@ -37,15 +38,12 @@ import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
 import com.mzagorscak.spiza.ui.screens.loyaltyCards.LoyaltyCardSharedTransition
 import com.mzagorscak.spiza.ui.theme.padding200
 import com.mzagorscak.spiza.ui.theme.padding400
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_edit
-import spiza.shared.generated.resources.ic_pin
-import spiza.shared.generated.resources.ic_pin_filled
 import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.loyalty_card_details_card_missing
 import spiza.shared.generated.resources.loyalty_card_details_delete_button
@@ -216,7 +214,7 @@ private fun ShortcutSection(
             onClick = onToggleShortcut,
             leadingContent = {
                 Icon(
-                    painter = painterResource(if (card.isShortcut) Res.drawable.ic_pin_filled else Res.drawable.ic_pin),
+                    painter = rememberAnimatedPinPainter(isPinned = card.isShortcut),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onBackground,
                 )

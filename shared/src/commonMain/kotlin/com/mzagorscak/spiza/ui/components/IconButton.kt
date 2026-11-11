@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -70,6 +71,24 @@ fun IconButton(
     isEnabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    IconButton(
+        painter = painterResource(resource),
+        appearance = appearance,
+        onClick = onClick,
+        isEnabled = isEnabled,
+        modifier = modifier,
+    )
+}
+
+/** For icons drawn in code, e.g. an animated [androidx.compose.ui.graphics.vector.rememberVectorPainter]. */
+@Composable
+fun IconButton(
+    painter: Painter,
+    appearance: IconButtonAppearance = IconButtonAppearance.Default,
+    onClick: () -> Unit,
+    isEnabled: Boolean = true,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = modifier
             .clip(CircleShape)
@@ -83,7 +102,7 @@ fun IconButton(
         when (appearance.variant) {
             IconButtonVariant.IconBased -> {
                 Icon(
-                    painter = painterResource(resource),
+                    painter = painter,
                     contentDescription = null,
                     tint = appearance.getTintColor(),
                     modifier = Modifier
@@ -94,7 +113,7 @@ fun IconButton(
 
             IconButtonVariant.ImageBased -> {
                 Image(
-                    painter = painterResource(resource),
+                    painter = painter,
                     contentDescription = null,
                     modifier = Modifier
                         .size(appearance.getSizeInDp())

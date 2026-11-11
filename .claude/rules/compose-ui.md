@@ -26,6 +26,11 @@ paths:
 - Reuse `ui/components` (`Button` + `ButtonAppearance`, `IconButton`, `TopBar`, `Dialog` + `CTA`, `FallbackState`, `LoadingIndicator`, `TextField`, ...) before writing new UI. New generic components go in `ui/components`.
 - Colors from `MaterialTheme.colorScheme`, typography from `MaterialTheme.typography`, spacing from `ui/theme/Spacing.kt` tokens (`padding200`, `padding400`, ...). No hard-coded colors or dp spacing in screens (a file-private `val XSize = 160.dp` for a specific size is fine).
 - Error/empty states use `FallbackState` (with `lottie_error.json` for errors and a retry `CTA`).
+- Icons with an on/off state (lock, pin, expand chevron...) are animated icons in `ui/animatedicons/`, one file per icon (`Animated<Name>Icon.kt`)
+  exposing `rememberAnimated<Name>Painter(state): Painter` with light + dark previews. Build them on `rememberAnimatedIconPainter(atEnd, label) { progress -> }`
+  from `AnimatedIcon.kt`: fixed `Path`s (`fill = AnimatedIconFill`) inside `Group`s whose transforms follow the 0..1 progress; stagger moves with
+  `animationPhase(progress, start, end)`. Pass the painter to `IconButton(painter = ...)` / `Icon`, which tint it. Never swap two drawables on a state change.
+  Static icons stay vector drawables in `composeResources/drawable/`.
 - Components get light + dark `@Preview` wrapped in `TheAppTheme { }` / `TheAppTheme(darkTheme = true) { }`.
 
 ## Strings & resources
