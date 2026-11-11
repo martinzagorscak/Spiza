@@ -1,8 +1,11 @@
 package com.mzagorscak.spiza.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -100,14 +103,18 @@ fun LoyaltyCard(
                     shape = roundedShape300,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Box(
+                    // Keyed on the format only, so typing the code redraws it in place instead of fading on every keystroke.
+                    AnimatedContent(
+                        targetState = card.format,
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
                         contentAlignment = Alignment.Center,
+                        label = "barcodeFormat",
                         modifier = Modifier.padding(padding400),
-                    ) {
+                    ) { format ->
                         Barcode(
                             content = card.codeText,
-                            format = card.format,
-                            modifier = if (card.format.isSquare) {
+                            format = format,
+                            modifier = if (format.isSquare) {
                                 Modifier.size(SquareCodeSize)
                             } else {
                                 Modifier
