@@ -31,6 +31,7 @@ import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.animatable.TrashIconButton
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.model.PresentableHousehold
 import com.mzagorscak.spiza.ui.model.PresentableHouseholdMember
@@ -62,7 +63,6 @@ import spiza.shared.generated.resources.ic_add_household
 import spiza.shared.generated.resources.ic_add_user
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_close
-import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.join_key
 import spiza.shared.generated.resources.remove
 import spiza.shared.generated.resources.retry
@@ -167,16 +167,11 @@ fun HouseholdManagementScreen(
                                             Spacer(modifier = Modifier.width(padding100))
                                         }
 
-                                        IconButton(
-                                            resource = Res.drawable.ic_trash,
+                                        TrashIconButton(
                                             onClick = {
                                                 callbacks.showDeleteHouseholdDialog(household)
                                             },
-                                            appearance = IconButtonAppearance(
-                                                variant = IconButtonVariant.IconBased,
-                                                size = IconButtonSize.Medium,
-                                                tintColor = MaterialTheme.colorScheme.background,
-                                            ),
+                                            tintColor = MaterialTheme.colorScheme.background,
                                         )
                                     }
                                 }

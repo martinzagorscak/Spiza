@@ -40,7 +40,7 @@ shared/src/
     domain/di/         domainModule (Koin)
     navigation/        Route (sealed, @Serializable) + AppNavigation (NavDisplay, callbacks wiring)
     ui/components/     reusable design-system composables
-    ui/components/animatable/                icon buttons that animate on click (SettingsIconButton...)
+    ui/components/animatable/                icon buttons that animate on click (SettingsIconButton, TrashIconButton...)
     ui/components/animatable/animatedicons/  animated icons drawn in code, one file per icon (rememberAnimated<Name>Painter)
     ui/model/          Presentable* UI models + toPresentable() mappers
     ui/screens/<feat>/ <X>Screen.kt, <X>ViewModel.kt (state + abstract VM), <X>ViewModelImpl.kt

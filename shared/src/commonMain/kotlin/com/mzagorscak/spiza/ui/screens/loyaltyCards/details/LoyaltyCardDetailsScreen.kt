@@ -31,6 +31,7 @@ import com.mzagorscak.spiza.ui.components.LoyaltyCard
 import com.mzagorscak.spiza.ui.components.ToggleButton
 import com.mzagorscak.spiza.ui.components.ToggleButtonVariant
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.animatable.TrashIconButton
 import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedPinPainter
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.deviceSettings.KeepScreenBrightness
@@ -44,7 +45,6 @@ import spiza.shared.generated.resources.cancel
 import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_edit
-import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.loyalty_card_details_card_missing
 import spiza.shared.generated.resources.loyalty_card_details_delete_button
 import spiza.shared.generated.resources.loyalty_card_details_delete_dialog_description
@@ -118,15 +118,10 @@ fun LoyaltyCardDetailsScreen(
                                 tintColor = MaterialTheme.colorScheme.onPrimary,
                             ),
                         )
-                        IconButton(
-                            resource = Res.drawable.ic_trash,
+                        TrashIconButton(
                             onClick = callbacks.showDeleteConfirmationDialog,
+                            tintColor = MaterialTheme.colorScheme.onPrimary,
                             isEnabled = state.isDeleting.not(),
-                            appearance = IconButtonAppearance(
-                                variant = IconButtonVariant.IconBased,
-                                size = IconButtonSize.Medium,
-                                tintColor = MaterialTheme.colorScheme.onPrimary,
-                            ),
                         )
                     }
                 },

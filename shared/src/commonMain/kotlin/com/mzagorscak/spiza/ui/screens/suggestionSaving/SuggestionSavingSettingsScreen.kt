@@ -45,6 +45,7 @@ import com.mzagorscak.spiza.ui.components.TextChip
 import com.mzagorscak.spiza.ui.components.ToggleButton
 import com.mzagorscak.spiza.ui.components.ToggleButtonVariant
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.animatable.TrashIconButton
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.model.PresentableShoppingItemSuggestion
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
@@ -59,7 +60,6 @@ import spiza.shared.generated.resources.error_generic
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_close
 import spiza.shared.generated.resources.ic_plus
-import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.retry
 import spiza.shared.generated.resources.settings_shopping_items_saving
 import spiza.shared.generated.resources.settings_shopping_items_saving_add_suggestion_dialog_confirm
@@ -185,14 +185,9 @@ fun SuggestionSavingSettingsScreen(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    IconButton(
-                        resource = Res.drawable.ic_trash,
+                    TrashIconButton(
                         onClick = callbacks.showRemoveAllSuggestionsConfirmationDialog,
-                        appearance = IconButtonAppearance(
-                            variant = IconButtonVariant.IconBased,
-                            size = IconButtonSize.Medium,
-                            tintColor = MaterialTheme.colorScheme.error,
-                        ),
+                        tintColor = MaterialTheme.colorScheme.error,
                     )
                 }
 

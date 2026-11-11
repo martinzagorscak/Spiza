@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.mzagorscak.spiza.ui.components.animatable.TrashIconButton
 import com.mzagorscak.spiza.ui.model.PresentableHousehold
 import com.mzagorscak.spiza.ui.model.PresentableHouseholdMember
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
@@ -30,7 +31,6 @@ import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.current_user
 import spiza.shared.generated.resources.ic_close
-import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.member
 import spiza.shared.generated.resources.owner
 
@@ -205,13 +205,9 @@ private fun CardListLayoutPreview() {
             canOwnerAddNewMember = true,
         ),
         nameTrailingContent = {
-            IconButton(
-                resource = Res.drawable.ic_trash,
-                appearance = IconButtonAppearance(
-                    variant = IconButtonVariant.IconBased,
-                    size = IconButtonSize.Medium,
-                ),
+            TrashIconButton(
                 onClick = {},
+                tintColor = MaterialTheme.colorScheme.onBackground,
             )
         },
         onRemoveUserClick = { _, _ -> },

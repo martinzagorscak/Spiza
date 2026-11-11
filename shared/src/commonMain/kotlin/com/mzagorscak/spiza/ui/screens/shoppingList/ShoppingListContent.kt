@@ -39,6 +39,7 @@ import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
+import com.mzagorscak.spiza.ui.components.animatable.TrashIconButton
 import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedChevronPainter
 import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedLockPainter
 import com.mzagorscak.spiza.ui.model.PresentableArticleItem
@@ -48,7 +49,6 @@ import com.mzagorscak.spiza.ui.theme.padding400
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
-import spiza.shared.generated.resources.ic_trash
 import spiza.shared.generated.resources.shopping_list_add_item_placeholder
 import spiza.shared.generated.resources.shopping_list_done_section
 import spiza.shared.generated.resources.shopping_list_empty_description
@@ -431,14 +431,9 @@ private fun DoneHeader(
         )
 
         if (canClearCheckedItems) {
-            IconButton(
-                resource = Res.drawable.ic_trash,
+            TrashIconButton(
                 onClick = showClearCheckedItemsConfirmationDialog,
-                appearance = IconButtonAppearance(
-                    variant = IconButtonVariant.IconBased,
-                    size = IconButtonSize.Medium,
-                    tintColor = MaterialTheme.colorScheme.onBackground,
-                ),
+                tintColor = MaterialTheme.colorScheme.onBackground,
             )
         }
     }
