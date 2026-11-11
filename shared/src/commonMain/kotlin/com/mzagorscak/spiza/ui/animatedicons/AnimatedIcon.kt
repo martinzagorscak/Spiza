@@ -1,5 +1,6 @@
 package com.mzagorscak.spiza.ui.animatedicons
 
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
@@ -20,8 +21,8 @@ private const val DEFAULT_DURATION_MS = 300
 internal val AnimatedIconFill: Brush = SolidColor(Color.Black)
 
 /**
- * Base of every animated icon: animates a progress from 0 (`atEnd = false`) to 1 (`atEnd = true`) and back, and draws
- * [content] with it into a vector painter. An icon maps the progress to the transforms of its `Group`s (rotation,
+ * Base of every on/off animated icon: animates a progress from 0 (`atEnd = false`) to 1 (`atEnd = true`) and back, and
+ * draws [content] with it into a vector painter. An icon maps the progress to the transforms of its `Group`s (rotation,
  * translation, scale) around fixed `Path`s, so the shapes never have to be morphed.
  */
 @Composable
@@ -33,10 +34,31 @@ internal fun rememberAnimatedIconPainter(
     // ktlint's formatter and checker disagree on a function type with two annotations, so the rules are suppressed here.
     @Suppress("ktlint:standard:annotation", "ktlint:standard:function-type-modifier-spacing")
     content: @Composable @VectorComposable (progress: Float) -> Unit,
+): Painter =
+    rememberAnimatedIconPainter(
+        targetProgress = if (atEnd) 1f else 0f,
+        label = label,
+        viewportSize = viewportSize,
+        animationSpec = tween(durationMillis = durationMillis),
+        content = content,
+    )
+
+/**
+ * Same as the on/off variant, but the progress follows any [targetProgress]: for icons that react to an event rather than
+ * a state, e.g. one more turn of a gear per click ([targetProgress] = the click count).
+ */
+@Composable
+internal fun rememberAnimatedIconPainter(
+    targetProgress: Float,
+    label: String,
+    viewportSize: Float = DEFAULT_VIEWPORT_SIZE,
+    animationSpec: AnimationSpec<Float> = tween(durationMillis = DEFAULT_DURATION_MS),
+    @Suppress("ktlint:standard:annotation", "ktlint:standard:function-type-modifier-spacing")
+    content: @Composable @VectorComposable (progress: Float) -> Unit,
 ): Painter {
     val progress by animateFloatAsState(
-        targetValue = if (atEnd) 1f else 0f,
-        animationSpec = tween(durationMillis = durationMillis),
+        targetValue = targetProgress,
+        animationSpec = animationSpec,
         label = label,
     )
     return rememberVectorPainter(

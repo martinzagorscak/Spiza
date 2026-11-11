@@ -16,12 +16,12 @@ import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
+import com.mzagorscak.spiza.ui.components.SettingsIconButton
 import com.mzagorscak.spiza.ui.components.TopBar
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
 import spiza.shared.generated.resources.ic_filled_chevron_down
-import spiza.shared.generated.resources.ic_settings
 import spiza.shared.generated.resources.shopping_list_create_household
 import spiza.shared.generated.resources.shopping_list_default_title
 
@@ -84,14 +84,9 @@ fun ShoppingListTopBar(
             }
         },
         trailingContent = {
-            IconButton(
-                resource = Res.drawable.ic_settings,
+            SettingsIconButton(
                 onClick = callbacks.onSettingsClick,
-                appearance = IconButtonAppearance(
-                    variant = IconButtonVariant.IconBased,
-                    size = IconButtonSize.Medium,
-                    tintColor = MaterialTheme.colorScheme.onPrimary,
-                ),
+                tintColor = MaterialTheme.colorScheme.onPrimary,
             )
         },
         modifier = modifier,
