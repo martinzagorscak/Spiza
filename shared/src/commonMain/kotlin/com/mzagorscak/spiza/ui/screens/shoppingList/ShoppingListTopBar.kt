@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedChevronPainter
 import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
@@ -21,7 +22,6 @@ import com.mzagorscak.spiza.ui.components.TopBar
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res
-import spiza.shared.generated.resources.ic_filled_chevron_down
 import spiza.shared.generated.resources.shopping_list_create_household
 import spiza.shared.generated.resources.shopping_list_default_title
 
@@ -39,7 +39,7 @@ fun ShoppingListTopBar(
 
                 Box {
                     IconButton(
-                        resource = Res.drawable.ic_filled_chevron_down,
+                        painter = rememberAnimatedChevronPainter(isExpanded = isDropdownExpanded.not()),
                         onClick = { isDropdownExpanded = true },
                         appearance = IconButtonAppearance(
                             variant = IconButtonVariant.IconBased,
