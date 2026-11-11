@@ -24,6 +24,9 @@ import kotlin.math.min
 private const val LINEAR_QUIET_ZONE_MODULES = 10
 private const val TWO_DIMENSIONAL_QUIET_ZONE_MODULES = 2
 
+// Share of the draw animation over which the bars start, so the last bar still has time to grow.
+private const val DRAW_STAGGER = 0.6f
+
 private val BarColor = Color.Black
 private val PlaceholderColor = Color.LightGray
 
@@ -31,56 +34,82 @@ private val PlaceholderColor = Color.LightGray
  * Draws [content] as a [format] barcode, black on transparent: place it on a white surface.
  * Modules are snapped to whole pixels because blurred edges are what makes on-screen barcodes fail at checkout.
  * Shows a grey placeholder when the content cannot be encoded.
+ * [drawProgress] from 0 to 1 draws the bars in as a wave from the top left; it is read while drawing, so animating it skips recomposition.
  */
 @Composable
 fun Barcode(
     content: String,
     format: LoyaltyCardFormat,
     modifier: Modifier = Modifier,
+    drawProgress: () -> Float = { 1f },
 ) {
     val matrix = remember(content, format) { encodeBarcode(content = content, format = format) }
     if (matrix == null) {
         Box(modifier = modifier.background(PlaceholderColor))
     } else {
         Canvas(modifier = modifier) {
-            if (matrix.isLinear) drawLinear(matrix) else drawTwoDimensional(matrix)
+            val progress = drawProgress()
+            if (matrix.isLinear) {
+                drawLinear(matrix = matrix, progress = progress)
+            } else {
+                drawTwoDimensional(matrix = matrix, progress = progress)
+            }
         }
     }
 }
 
-private fun DrawScope.drawLinear(matrix: BarcodeMatrix) {
+private fun DrawScope.drawLinear(
+    matrix: BarcodeMatrix,
+    progress: Float,
+) {
     val moduleWidth = (size.width / (matrix.width + 2 * LINEAR_QUIET_ZONE_MODULES)).snapToPixels()
     val left = floor((size.width - matrix.width * moduleWidth) / 2)
-    drawRuns(matrix = matrix, left = left, top = 0f, moduleWidth = moduleWidth, moduleHeight = size.height)
+    drawRuns(matrix = matrix, left = left, top = 0f, moduleWidth = moduleWidth, moduleHeight = size.height, progress = progress)
 }
 
-private fun DrawScope.drawTwoDimensional(matrix: BarcodeMatrix) {
+private fun DrawScope.drawTwoDimensional(
+    matrix: BarcodeMatrix,
+    progress: Float,
+) {
     val quietZone = 2 * TWO_DIMENSIONAL_QUIET_ZONE_MODULES
     val moduleSize = min(size.width / (matrix.width + quietZone), size.height / (matrix.height + quietZone)).snapToPixels()
     val left = floor((size.width - matrix.width * moduleSize) / 2)
     val top = floor((size.height - matrix.height * moduleSize) / 2)
-    drawRuns(matrix = matrix, left = left, top = top, moduleWidth = moduleSize, moduleHeight = moduleSize)
+    drawRuns(matrix = matrix, left = left, top = top, moduleWidth = moduleSize, moduleHeight = moduleSize, progress = progress)
 }
 
-/** Draws each horizontal run of dark modules as one rectangle. */
+/**
+ * Draws each horizontal run of dark modules as one rectangle.
+ * While [progress] < 1 each run grows from its row's centre, starting later the further it is from the top left.
+ */
 private fun DrawScope.drawRuns(
     matrix: BarcodeMatrix,
     left: Float,
     top: Float,
     moduleWidth: Float,
     moduleHeight: Float,
+    progress: Float,
 ) {
+    val diagonal = (matrix.width + matrix.height).toFloat()
     for (y in 0 until matrix.height) {
         var x = 0
         while (x < matrix.width) {
             if (matrix.isDark(x = x, y = y)) {
                 val start = x
                 while (x < matrix.width && matrix.isDark(x = x, y = y)) x++
-                drawRect(
-                    color = BarColor,
-                    topLeft = Offset(x = left + start * moduleWidth, y = top + y * moduleHeight),
-                    size = Size(width = (x - start) * moduleWidth, height = moduleHeight),
-                )
+                val runProgress = if (progress >= 1f) {
+                    1f
+                } else {
+                    ((progress - (start + y) / diagonal * DRAW_STAGGER) / (1f - DRAW_STAGGER)).coerceIn(0f, 1f)
+                }
+                if (runProgress > 0f) {
+                    val height = moduleHeight * runProgress
+                    drawRect(
+                        color = BarColor,
+                        topLeft = Offset(x = left + start * moduleWidth, y = top + y * moduleHeight + (moduleHeight - height) / 2),
+                        size = Size(width = (x - start) * moduleWidth, height = height),
+                    )
+                }
             } else {
                 x++
             }

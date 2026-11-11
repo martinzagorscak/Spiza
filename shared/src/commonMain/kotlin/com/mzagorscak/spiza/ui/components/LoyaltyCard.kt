@@ -1,8 +1,11 @@
 package com.mzagorscak.spiza.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.fadeIn
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +53,7 @@ import spiza.shared.generated.resources.loyalty_cards_shortcut_remove
 private const val LUMINANCE_THRESHOLD = 0.5f
 private const val SINGLE_LINE = 1
 private const val DISPLAY_CODE_MAX_LINES = 2
+private const val BARCODE_DRAW_DURATION_MS = 600
 private val SquareCodeSize = 160.dp
 private val BarcodeHeight = 90.dp
 
@@ -103,14 +107,18 @@ fun LoyaltyCard(
                     shape = roundedShape300,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    // Keyed on the format only, so typing the code redraws it in place instead of fading on every keystroke.
+                    // Keyed on the format only, so typing the code redraws it in place instead of animating on every keystroke.
                     AnimatedContent(
                         targetState = card.format,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        transitionSpec = { EnterTransition.None togetherWith fadeOut() },
                         contentAlignment = Alignment.Center,
                         label = "barcodeFormat",
                         modifier = Modifier.padding(padding400),
                     ) { format ->
+                        val drawProgress by transition.animateFloat(
+                            transitionSpec = { tween(durationMillis = BARCODE_DRAW_DURATION_MS) },
+                            label = "barcodeDraw",
+                        ) { state -> if (state == EnterExitState.PreEnter) 0f else 1f }
                         Barcode(
                             content = card.codeText,
                             format = format,
@@ -121,6 +129,7 @@ fun LoyaltyCard(
                                     .fillMaxWidth()
                                     .height(BarcodeHeight)
                             },
+                            drawProgress = { drawProgress },
                         )
                     }
                 }
