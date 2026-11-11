@@ -31,6 +31,7 @@ import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.animatable.AddUserIconButton
 import com.mzagorscak.spiza.ui.components.animatable.TrashIconButton
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.model.PresentableHousehold
@@ -60,7 +61,6 @@ import spiza.shared.generated.resources.household_management_remove_member_dialo
 import spiza.shared.generated.resources.household_management_remove_member_dialog_title_template
 import spiza.shared.generated.resources.household_management_user_not_found_error
 import spiza.shared.generated.resources.ic_add_household
-import spiza.shared.generated.resources.ic_add_user
 import spiza.shared.generated.resources.ic_back
 import spiza.shared.generated.resources.ic_close
 import spiza.shared.generated.resources.join_key
@@ -154,14 +154,9 @@ fun HouseholdManagementScreen(
                                 if (household.isCurrentUserOwner) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         if (household.canOwnerAddNewMember) {
-                                            IconButton(
-                                                resource = Res.drawable.ic_add_user,
+                                            AddUserIconButton(
                                                 onClick = { callbacks.showAddMemberToHouseholdsDialog(household.id) },
-                                                appearance = IconButtonAppearance(
-                                                    variant = IconButtonVariant.IconBased,
-                                                    size = IconButtonSize.Medium,
-                                                    tintColor = MaterialTheme.colorScheme.background,
-                                                ),
+                                                tintColor = MaterialTheme.colorScheme.background,
                                             )
 
                                             Spacer(modifier = Modifier.width(padding100))
