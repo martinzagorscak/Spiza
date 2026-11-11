@@ -3,10 +3,10 @@ package com.mzagorscak.spiza.ui.screens.common
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedLoyaltyCardPainter
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedShoppingListPainter
 import com.mzagorscak.spiza.ui.components.BottomNavigationBar
 import com.mzagorscak.spiza.ui.components.BottomNavigationBarItem
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedLoyaltyCardPainter
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedShoppingListPainter
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res

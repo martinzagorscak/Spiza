@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.FloatingActionButton
 import com.mzagorscak.spiza.ui.components.LoyaltyCard
-import com.mzagorscak.spiza.ui.components.SettingsIconButton
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.animatable.SettingsIconButton
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
 import com.mzagorscak.spiza.ui.screens.common.MainBottomBar
 import com.mzagorscak.spiza.ui.screens.common.MainTab

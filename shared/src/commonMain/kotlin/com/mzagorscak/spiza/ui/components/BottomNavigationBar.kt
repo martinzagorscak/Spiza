@@ -16,8 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedLoyaltyCardPainter
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedShoppingListPainter
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedLoyaltyCardPainter
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedShoppingListPainter
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 import org.jetbrains.compose.resources.stringResource
 import spiza.shared.generated.resources.Res

@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.keepScreenOn
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedPinPainter
 import com.mzagorscak.spiza.ui.components.Dialog
 import com.mzagorscak.spiza.ui.components.FallbackState
 import com.mzagorscak.spiza.ui.components.IconButton
@@ -32,6 +31,7 @@ import com.mzagorscak.spiza.ui.components.LoyaltyCard
 import com.mzagorscak.spiza.ui.components.ToggleButton
 import com.mzagorscak.spiza.ui.components.ToggleButtonVariant
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedPinPainter
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.deviceSettings.KeepScreenBrightness
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard

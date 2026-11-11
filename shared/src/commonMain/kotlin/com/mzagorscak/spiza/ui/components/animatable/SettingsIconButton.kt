@@ -1,4 +1,4 @@
-package com.mzagorscak.spiza.ui.components
+package com.mzagorscak.spiza.ui.components.animatable
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -9,7 +9,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedSettingsPainter
+import com.mzagorscak.spiza.ui.components.IconButton
+import com.mzagorscak.spiza.ui.components.IconButtonAppearance
+import com.mzagorscak.spiza.ui.components.IconButtonSize
+import com.mzagorscak.spiza.ui.components.IconButtonVariant
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedSettingsPainter
 import com.mzagorscak.spiza.ui.theme.TheAppTheme
 
 /** Settings gear for top bars; it turns on every click as feedback while the settings screen opens. */

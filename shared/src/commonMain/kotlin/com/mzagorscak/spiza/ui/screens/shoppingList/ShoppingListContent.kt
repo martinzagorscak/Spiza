@@ -32,8 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedChevronPainter
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedLockPainter
 import com.mzagorscak.spiza.ui.components.Draggable
 import com.mzagorscak.spiza.ui.components.EditableCheckListItem
 import com.mzagorscak.spiza.ui.components.FallbackState
@@ -41,6 +39,8 @@ import com.mzagorscak.spiza.ui.components.IconButton
 import com.mzagorscak.spiza.ui.components.IconButtonAppearance
 import com.mzagorscak.spiza.ui.components.IconButtonSize
 import com.mzagorscak.spiza.ui.components.IconButtonVariant
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedChevronPainter
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedLockPainter
 import com.mzagorscak.spiza.ui.model.PresentableArticleItem
 import com.mzagorscak.spiza.ui.theme.padding1600
 import com.mzagorscak.spiza.ui.theme.padding200

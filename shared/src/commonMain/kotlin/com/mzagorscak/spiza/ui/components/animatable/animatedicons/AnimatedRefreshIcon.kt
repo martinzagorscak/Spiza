@@ -1,4 +1,4 @@
-package com.mzagorscak.spiza.ui.animatedicons
+package com.mzagorscak.spiza.ui.components.animatable.animatedicons
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween

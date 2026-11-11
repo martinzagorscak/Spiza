@@ -33,7 +33,6 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.mzagorscak.spiza.domain.model.AppLanguage
 import com.mzagorscak.spiza.domain.model.ThemeMode
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedRefreshPainter
 import com.mzagorscak.spiza.ui.clipboard.showsSystemCopyConfirmation
 import com.mzagorscak.spiza.ui.components.Avatar
 import com.mzagorscak.spiza.ui.components.AvatarSize
@@ -50,6 +49,7 @@ import com.mzagorscak.spiza.ui.components.ListingItem
 import com.mzagorscak.spiza.ui.components.LoadingIndicator
 import com.mzagorscak.spiza.ui.components.LoadingIndicatorSize
 import com.mzagorscak.spiza.ui.components.TopBar
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedRefreshPainter
 import com.mzagorscak.spiza.ui.components.common.CTA
 import com.mzagorscak.spiza.ui.model.PresentableUserProfile
 import com.mzagorscak.spiza.ui.theme.TheAppTheme

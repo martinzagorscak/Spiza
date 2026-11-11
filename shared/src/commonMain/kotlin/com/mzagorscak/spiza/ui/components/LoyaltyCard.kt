@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mzagorscak.spiza.domain.model.LoyaltyCardFormat
-import com.mzagorscak.spiza.ui.animatedicons.rememberAnimatedPinPainter
+import com.mzagorscak.spiza.ui.components.animatable.animatedicons.rememberAnimatedPinPainter
 import com.mzagorscak.spiza.ui.components.barcode.Barcode
 import com.mzagorscak.spiza.ui.model.PresentableLoyaltyCard
 import com.mzagorscak.spiza.ui.theme.CardColorRed
